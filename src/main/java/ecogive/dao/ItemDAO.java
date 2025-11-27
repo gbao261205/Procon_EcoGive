@@ -1,0 +1,148 @@
+package ecogive.dao;
+
+import ecogive.Model.GeoPoint;
+import ecogive.Model.Item;
+import ecogive.Model.ItemStatus;
+import ecogive.util.DatabaseConnection;
+
+import java.sql.*;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+public class ItemDAO {
+    private String toWKT(GeoPoint p) {
+        if (p == null) return null;
+        return "POINT(" + p.getLongitude() + " " + p.getLatitude() + ")";
+    }
+
+    private GeoPoint fromResultSet(ResultSet rs) throws SQLException {
+        double lon = rs.getDouble("longitude");
+        double lat = rs.getDouble("latitude");
+        return new GeoPoint(lon, lat);
+    }
+
+    public Item findById(long id) throws SQLException {
+        String sql = "SELECT item_id, giver_id, title, description, category_id, image_url, status, post_date, " +
+                "ST_X(location) AS longitude, ST_Y(location) AS latitude " +
+                "FROM items WHERE item_id = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setLong(1, id);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapRow(rs);
+                }
+            }
+        }catch (Exception e) {
+            throw new SQLException(e);
+        }
+        return null;
+    }
+
+    public List<Item> findAllAvailable() throws SQLException {
+        String sql = "SELECT item_id, giver_id, title, description, category_id, image_url, status, post_date, " +
+                "ST_X(location) AS longitude, ST_Y(location) AS latitude " +
+                "FROM items WHERE status = 'AVAILABLE'";
+
+        List<Item> list = new ArrayList<>();
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                list.add(mapRow(rs));
+            }
+        }catch (Exception e) {
+            throw new SQLException(e);
+        }
+        return list;
+    }
+
+    public boolean insert(Item item) throws SQLException {
+        String sql = "INSERT INTO items (giver_id, title, description, category_id, image_url, status, post_date, location) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ST_GeomFromText(?))";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+            stmt.setLong(1, item.getGiverId());
+            stmt.setString(2, item.getTitle());
+            stmt.setString(3, item.getDescription());
+            stmt.setInt(4, item.getCategoryId());
+            stmt.setString(5, item.getImageUrl());
+            stmt.setString(6, item.getStatus() != null ? item.getStatus().name() : ItemStatus.AVAILABLE.name());
+
+            LocalDateTime postDate = item.getPostDate() != null ? item.getPostDate() : LocalDateTime.now();
+            stmt.setTimestamp(7, Timestamp.valueOf(postDate));
+
+            String wkt = toWKT(item.getLocation());
+            stmt.setString(8, wkt);
+
+            int affected = stmt.executeUpdate();
+            if (affected > 0) {
+                try (ResultSet keys = stmt.getGeneratedKeys()) {
+                    if (keys.next()) {
+                        item.setItemId(keys.getLong(1));
+                    }
+                }
+                return true;
+            }
+        }catch (Exception e) {
+            throw new SQLException(e);
+        }
+        return false;
+    }
+
+    public boolean updateStatus(long itemId, ItemStatus status) throws SQLException {
+        String sql = "UPDATE items SET status = ? WHERE item_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, status.name());
+            stmt.setLong(2, itemId);
+            int affected = stmt.executeUpdate();
+            return affected > 0;
+        }catch (Exception e) {
+            throw new SQLException(e);
+        }
+    }
+
+    public boolean delete(long itemId) throws SQLException {
+        String sql = "DELETE FROM items WHERE item_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setLong(1, itemId);
+            int affected = stmt.executeUpdate();
+            return affected > 0;
+        }catch (Exception e) {
+            throw new SQLException(e);
+        }
+    }
+
+    private Item mapRow(ResultSet rs) throws SQLException {
+        Item item = new Item();
+        item.setItemId(rs.getLong("item_id"));
+        item.setGiverId(rs.getLong("giver_id"));
+        item.setTitle(rs.getString("title"));
+        item.setDescription(rs.getString("description"));
+        item.setCategoryId(rs.getInt("category_id"));
+        item.setImageUrl(rs.getString("image_url"));
+
+        String statusStr = rs.getString("status");
+        if (statusStr != null) {
+            item.setStatus(ItemStatus.valueOf(statusStr));
+        }
+
+        Timestamp ts = rs.getTimestamp("post_date");
+        if (ts != null) {
+            item.setPostDate(ts.toLocalDateTime());
+        }
+
+        item.setLocation(fromResultSet(rs));
+
+        return item;
+    }
+}
