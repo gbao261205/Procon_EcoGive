@@ -7,7 +7,7 @@
     <title>Bản đồ EcoGive</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha255-p4NxAoJBhIIN+hmNHrzRCf9tD/SVRMgTK67qPNStLwY=" crossorigin=""/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
 
     <style>
         .leaflet-popup-content-wrapper { border-radius: 12px; overflow: hidden; padding: 0; }
@@ -80,7 +80,7 @@
     </div>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha255-2Pmvv0kuTBOz8H/uLca/Jk6iZV9hfU33YFkHWe4gTzU=" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 
 <script>
     // --- 1. KHỞI TẠO BẢN ĐỒ CHÍNH ---
@@ -172,7 +172,10 @@
         const description = document.getElementById('itemDescription').value;
         const photo = document.getElementById('itemPhoto').files[0];
 
-        if (!photo) { alert("Vui lòng chọn ảnh!"); return; }
+        if (!photo) {
+            alert("Vui lòng chọn ảnh!");
+            return;
+        }
 
         const formData = new FormData();
         formData.append("title", title);
@@ -180,7 +183,7 @@
         formData.append("latitude", currentLatLng.lat);
         formData.append("longitude", currentLatLng.lng);
         formData.append("itemPhoto", photo);
-        formData.append("category", "1"); // Tạm fix cứng category
+        formData.append("category", "1");
 
         try {
             const response = await fetch('${pageContext.request.contextPath}/post-item', {
@@ -189,16 +192,39 @@
             });
 
             if (response.ok) {
-                alert("Đăng tin thành công! Tin của bạn đang chờ Admin duyệt.");
+                const result = await response.json();
+                const imgUrl = result.imageUrl || 'https://placehold.co/200x150?text=No+Image';
+                const popupContent =
+                    '<div>' +
+                    '<img src="' + imgUrl + '" class="custom-popup-img" onerror="this.src=\'https://placehold.co/200x150?text=Error\'">' +
+                    '<div class="custom-popup-body">' +
+                    '<h3 class="font-bold text-slate-800 text-sm mb-1">' + title + '</h3>' +
+                    '<p class="text-xs text-slate-500 mb-2">' + description + '</p>' +
+                    '<p class="text-xs text-amber-600 font-semibold mb-2">🕐 TIN MỚI - Đang chờ Admin duyệt</p>' +
+                    '<button class="w-full bg-emerald-600 text-white text-xs font-bold py-1.5 rounded hover:bg-emerald-700 transition">' +
+                    'Xem chi tiết' +
+                    '</button>' +
+                    '</div>' +
+                    '</div>';
+
+                // Thêm marker mới vào map
+                L.marker([currentLatLng.lat, currentLatLng.lng])
+                    .addTo(map)
+                    .bindPopup(popupContent)
+                    .openPopup();
+
+                alert('Đăng tin thành công! ID: ' + result.itemId + '. Tin đang chờ Admin duyệt.');
                 closeModal('giveAwayModal');
+
             } else {
-                alert("Có lỗi xảy ra khi đăng tin. Mã lỗi: " + response.status);
+                const errorData = await response.json().catch(() => ({}));
+                alert("Lỗi: " + (errorData.error || "Không thể đăng tin. Mã lỗi: " + response.status));
             }
         } catch (error) {
             console.error(error);
-            alert("Lỗi kết nối.");
+            alert("Lỗi kết nối: " + error.message);
         }
-    } // <-- Đã thêm dấu đóng này
+    }
 </script>
 </body>
 </html>

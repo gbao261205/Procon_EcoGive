@@ -1,6 +1,6 @@
-package ecogive.controller;
+package ecogive.Controller; // Lưu ý: Bạn kiểm tra lại tên package là Controller hay controller nhé (chữ hoa/thường)
 
-import com.google.gson.Gson;
+import com.google.gson.*;
 import ecogive.Model.Item;
 import ecogive.dao.ItemDAO;
 import jakarta.servlet.ServletException;
@@ -10,28 +10,38 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.List;
 
-// Đường dẫn này dành cho code JS gọi, không phải để người dùng vào trực tiếp
 @WebServlet("/api/items")
 public class ItemApiServlet extends HttpServlet {
 
     private final ItemDAO itemDAO = new ItemDAO();
-    private final Gson gson = new Gson();
+
+    // --- SỬA Ở ĐÂY: Cấu hình Gson để xử lý LocalDateTime ---
+    private final Gson gson = new GsonBuilder()
+            .registerTypeAdapter(LocalDateTime.class, new JsonSerializer<LocalDateTime>() {
+                @Override
+                public JsonElement serialize(LocalDateTime src, Type typeOfSrc, JsonSerializationContext context) {
+                    // Chuyển ngày tháng thành chuỗi String (VD: "2023-11-29T21:00:00")
+                    return new JsonPrimitive(src.toString());
+                }
+            })
+            .create();
+    // -------------------------------------------------------
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        // 1. Cấu hình phản hồi là JSON (UTF-8 để không lỗi font tiếng Việt)
         resp.setContentType("application/json");
         resp.setCharacterEncoding("UTF-8");
 
         try {
             // 2. Lấy danh sách vật phẩm "AVAILABLE" từ DB
-            // (Chỉ hiện đồ còn hàng, không hiện đồ chờ duyệt hoặc đã xong)
             List<Item> items = itemDAO.findAllAvailable();
 
-            // 3. Chuyển List<Item> thành chuỗi JSON
+            // 3. Chuyển List<Item> thành chuỗi JSON (Giờ đã hoạt động tốt với ngày tháng)
             String json = gson.toJson(items);
 
             // 4. Gửi về cho Client

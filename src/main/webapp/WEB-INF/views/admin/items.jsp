@@ -64,6 +64,11 @@
                                                 Đang hiển thị
                                             </span>
                                 </c:when>
+                                <c:when test="${item.status == 'CANCELLED'}">
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                Đã hủy
+            </span>
+                                </c:when>
                                 <c:otherwise>
                                             <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
                                                     ${item.status}
