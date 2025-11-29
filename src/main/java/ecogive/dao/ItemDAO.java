@@ -60,7 +60,25 @@ public class ItemDAO {
         }
         return list;
     }
+    public List<Item> findAll() throws SQLException {
+        // Lấy tất cả item, sắp xếp bài đăng mới nhất lên đầu
+        String sql = "SELECT item_id, giver_id, title, description, category_id, image_url, status, post_date, " +
+                "ST_X(location) AS longitude, ST_Y(location) AS latitude " +
+                "FROM items ORDER BY post_date DESC";
 
+        List<Item> list = new ArrayList<>();
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                list.add(mapRow(rs));
+            }
+        } catch (Exception e) {
+            throw new SQLException(e);
+        }
+        return list;
+    }
     public boolean insert(Item item) throws SQLException {
         String sql = "INSERT INTO items (giver_id, title, description, category_id, image_url, status, post_date, location) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ST_GeomFromText(?))";

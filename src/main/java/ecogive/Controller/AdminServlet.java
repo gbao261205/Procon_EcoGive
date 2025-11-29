@@ -9,10 +9,14 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import ecogive.dao.ItemDAO;
+import ecogive.Model.Item;
+import ecogive.Model.ItemStatus;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.SQLException;
+import java.util.List;
 
 @WebServlet("/admin")
 public class AdminServlet extends HttpServlet {
@@ -20,7 +24,7 @@ public class AdminServlet extends HttpServlet {
     private final DashboardDAO dashboardDAO = new DashboardDAO();
     private final CategoryDAO categoryDAO = new CategoryDAO();
     private final UserDAO userDAO = new UserDAO();
-
+    private final ItemDAO itemDAO = new ItemDAO();
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String action = req.getParameter("action");
@@ -39,6 +43,15 @@ public class AdminServlet extends HttpServlet {
                     break;
                 case "delete-category":
                     deleteCategory(req, resp);
+                    break;
+                case "items":
+                    listItems(req, resp);
+                    break;
+                case "approve-item":
+                    updateItemStatus(req, resp, ItemStatus.AVAILABLE);
+                    break;
+                case "reject-item":
+                    updateItemStatus(req, resp, ItemStatus.CANCELLED); // Hoặc REJECTED tùy Enum bạn định nghĩa
                     break;
                 default:
                     showDashboard(req, resp);
@@ -60,9 +73,6 @@ public class AdminServlet extends HttpServlet {
             }
         }
     }
-
-    // --- Logic hiển thị ---
-
     private void showDashboard(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, SQLException {
         // Lấy số liệu từ DB thật
         req.setAttribute("totalUsers", dashboardDAO.countTotalUsers());
@@ -82,9 +92,6 @@ public class AdminServlet extends HttpServlet {
         req.setAttribute("users", userDAO.findAll());
         req.getRequestDispatcher("/WEB-INF/views/admin/users.jsp").forward(req, resp);
     }
-
-    // --- Logic xử lý dữ liệu ---
-
     private void addCategory(HttpServletRequest req, HttpServletResponse resp) throws SQLException, IOException {
         String name = req.getParameter("name");
         String pointsStr = req.getParameter("fixed_points");
@@ -103,5 +110,18 @@ public class AdminServlet extends HttpServlet {
         int id = Integer.parseInt(req.getParameter("id"));
         categoryDAO.delete(id);
         resp.sendRedirect(req.getContextPath() + "/admin?action=categories");
+    }
+    private void listItems(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, SQLException {
+        // Bạn có thể viết thêm hàm findAll() trong ItemDAO để lấy cả item PENDING và AVAILABLE
+        // Tạm thời dùng findAllAvailable() hoặc viết hàm mới lấy tất cả để Admin soi
+        List<Item> items = itemDAO.findAll(); // Cần đảm bảo ItemDAO có hàm này trả về tất cả item
+        req.setAttribute("items", items);
+        req.getRequestDispatcher("/WEB-INF/views/admin/items.jsp").forward(req, resp);
+    }
+
+    private void updateItemStatus(HttpServletRequest req, HttpServletResponse resp, ItemStatus status) throws SQLException, IOException {
+        long id = Long.parseLong(req.getParameter("id"));
+        itemDAO.updateStatus(id, status);
+        resp.sendRedirect(req.getContextPath() + "/admin?action=items");
     }
 }

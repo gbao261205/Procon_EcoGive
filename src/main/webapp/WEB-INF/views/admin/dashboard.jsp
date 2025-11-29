@@ -62,8 +62,24 @@
         </div>
     </div>
 
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-8 text-center text-slate-400 border-dashed border-2">
-        Khu vực biểu đồ thống kê sẽ hiển thị ở đây
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-8 text-center">
+        <div class="mb-4">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-100 mb-4">
+                <span class="text-3xl">🗺️</span>
+            </div>
+            <h3 class="text-xl font-bold text-slate-800">Bản đồ Phân bố Vật phẩm</h3>
+            <p class="text-slate-500 mt-2 max-w-lg mx-auto">
+                Xem trực quan vị trí các vật phẩm đang được chia sẻ trên toàn thành phố để nắm bắt khu vực hoạt động sôi nổi nhất.
+            </p>
+        </div>
+
+        <a href="${pageContext.request.contextPath}/home"
+           class="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white font-bold rounded-xl shadow-lg hover:bg-emerald-700 hover:shadow-xl transition transform hover:-translate-y-0.5">
+            <span>Mở Bản Đồ Toàn Màn Hình</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+        </a>
     </div>
 </main>
 </body>
