@@ -132,7 +132,7 @@ public class UserDAO {
         u.setPasswordHash(rs.getString("password_hash"));
         u.setEcoPoints(rs.getBigDecimal("eco_points"));
         u.setReputationScore(rs.getBigDecimal("reputation_score"));
-
+        u.setRole(rs.getString("role"));
         Timestamp ts = rs.getTimestamp("join_date");
         if (ts != null) {
             u.setJoinDate(ts.toLocalDateTime());

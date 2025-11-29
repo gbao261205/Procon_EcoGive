@@ -76,14 +76,14 @@ CREATE TABLE transactions (
     -- Index phụ đ
     INDEX idx_receiver_id (receiver_id) 
 );
-
+SET @hashed_password_123456 = '$2a$10$C8.c4k2g.iB6S6S8B3X.jO8K1a3W4d.C1pY8c5G9gW6iM2fB3aC7t2';
 -- Chèn dữ liệu mẫu cho Bảng 1: users (Người dùng)
 INSERT INTO users (user_id, username, email, password_hash, eco_points, reputation_score) VALUES
 (101, 'nguyenhai', 'hai@example.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 150.50, 4.80),
 (102, 'tranthuy', 'thuy@example.com', 'hashed_pass_2', 85.00, 4.50),
 (103, 'leminhtam', 'tam@example.com', 'hashed_pass_3', 30.75, 5.00),
 (104, 'admin_test', 'admin@example.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 0.00, 3.00);
-
+(105, 'nguyenvana', 'van.a@example.com', @hashed_password_123456, 5.00, 4.00);
 -- Chèn dữ liệu mẫu cho Bảng 2: categories (Danh mục)
 INSERT INTO categories (category_id, name, fixed_points) VALUES
 (1, 'Nội thất, Bàn ghế', 10.00), -- Điểm cố định cao
