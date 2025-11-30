@@ -74,7 +74,7 @@ public class PostItemServlet extends HttpServlet {
             item.setDescription(description);
             item.setGiverId(currentUser.getUserId());
             item.setCategoryId(categoryId);
-            item.setImageUrl("/uploads/" + uniqueFileName); // Đường dẫn tương đối
+            item.setImageUrl("uploads/" + uniqueFileName);
             item.setStatus(ItemStatus.PENDING); // Chờ admin duyệt
             item.setPostDate(LocalDateTime.now());
 

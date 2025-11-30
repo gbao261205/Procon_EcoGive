@@ -61,6 +61,9 @@
         <div id="step1" class="modal-step">
             <h3 class="text-lg font-semibold mb-3">Bước 1: Thông tin cơ bản</h3>
             <input type="text" id="itemName" placeholder="Tên vật phẩm" class="w-full p-3 mb-3 border rounded-lg focus:ring-emerald-500" required />
+            <select id="itemCategory" class="w-full p-3 mb-3 border rounded-lg focus:ring-emerald-500 bg-white text-slate-700" required>
+                <option value="" disabled selected>-- Chọn danh mục --</option>
+            </select>
             <textarea id="itemDescription" placeholder="Mô tả chi tiết..." rows="3" class="w-full p-3 mb-4 border rounded-lg focus:ring-emerald-500" required></textarea>
             <button onclick="nextStep(2)" class="w-full bg-emerald-600 text-white p-3 rounded-lg font-semibold hover:bg-emerald-700">Tiếp tục (Ảnh)</button>
         </div>
@@ -89,7 +92,7 @@
         attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    // --- 2. HÀM LOAD DỮ LIỆU TỪ API ---
+    // --- 2. HÀM LOAD DỮ LIỆU TỪ API (Đã cập nhật nút Nhận đồ) ---
     async function loadItems() {
         try {
             const response = await fetch('${pageContext.request.contextPath}/api/items');
@@ -99,18 +102,22 @@
                 if (item.location && item.location.latitude && item.location.longitude) {
                     const imgUrl = item.imageUrl || 'https://placehold.co/200x150?text=No+Image';
 
+                    // Nội dung Popup (Có nút Nhận đồ)
                     const popupContent = `
-                            <div>
-                                <img src="\${imgUrl}" class="custom-popup-img" onerror="this.src='https://placehold.co/200x150?text=Error'">
-                                <div class="custom-popup-body">
-                                    <h3 class="font-bold text-slate-800 text-sm mb-1">\${item.title}</h3>
-                                    <p class="text-xs text-slate-500 mb-2">Người tặng: ID \${item.giverId}</p>
-                                    <button class="w-full bg-emerald-600 text-white text-xs font-bold py-1.5 rounded hover:bg-emerald-700 transition">
-                                        Xem chi tiết
-                                    </button>
-                                </div>
+                        <div>
+                            <img src="\${imgUrl}" class="custom-popup-img" onerror="this.src='https://placehold.co/200x150?text=Error'">
+                            <div class="custom-popup-body">
+                                <h3 class="font-bold text-slate-800 text-sm mb-1">\${item.title}</h3>
+                                <p class="text-xs text-slate-500 mb-1">Người tặng: <b>\${item.giverName || 'Ẩn danh'}</b></p>
+                                <p class="text-xs text-slate-500 italic mb-2 line-clamp-2">\${item.description}</p>
+
+                                <button onclick="requestItem(\${item.itemId})"
+                                        class="w-full bg-emerald-600 text-white text-xs font-bold py-1.5 rounded hover:bg-emerald-700 transition shadow-sm">
+                                    🎁 Nhận món này
+                                </button>
                             </div>
-                        `;
+                        </div>
+                    `;
 
                     L.marker([item.location.latitude, item.location.longitude])
                         .addTo(map)
@@ -121,13 +128,12 @@
             console.error("Lỗi tải bản đồ:", error);
         }
     }
-    loadItems();
+    loadItems(); // Gọi hàm load ngay khi trang web chạy
 
     // --- 3. LOGIC MODAL ĐĂNG TIN ---
     let miniMap, locationMarker;
     let currentLatLng = { lat: 10.7769, lng: 106.7009 };
 
-    // Gán sự kiện click cho nút Đăng tin (đã thêm ID btnPostItem)
     document.getElementById('btnPostItem').addEventListener('click', () => {
         document.getElementById('giveAwayModal').classList.remove('hidden');
         resetModalSteps();
@@ -146,7 +152,6 @@
         document.querySelectorAll('.modal-step').forEach(el => el.classList.add('hidden'));
         document.getElementById('step' + step).classList.remove('hidden');
 
-        // Nếu qua bước 3 thì khởi tạo MiniMap
         if (step === 3) {
             setTimeout(() => {
                 if (!miniMap) {
@@ -160,22 +165,46 @@
                         currentLatLng = { lat: position.lat, lng: position.lng };
                     });
                 } else {
-                    miniMap.invalidateSize(); // Fix lỗi map không hiện full
+                    miniMap.invalidateSize();
                 }
             }, 200);
         }
     }
+    async function loadCategories() {
+        try {
+            const response = await fetch('${pageContext.request.contextPath}/api/categories');
+            const categories = await response.json();
 
-    // --- 4. GỬI DỮ LIỆU LÊN SERVER ---
+            const selectElement = document.getElementById('itemCategory');
+
+            // Xóa các option cũ (trừ option đầu tiên)
+            selectElement.innerHTML = '<option value="" disabled selected>-- Chọn danh mục --</option>';
+
+            categories.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat.categoryId; // Giá trị gửi đi là ID
+                option.textContent = cat.name; // Hiển thị là Tên
+                selectElement.appendChild(option);
+            });
+        } catch (error) {
+            console.error("Lỗi tải danh mục:", error);
+        }
+    }
+
+    // Gọi hàm load danh mục ngay khi trang web chạy (cùng lúc load map)
+    loadCategories();
+    // --- 4. GỬI DỮ LIỆU ĐĂNG TIN LÊN SERVER ---
+    // --- 4. GỬI DỮ LIỆU ĐĂNG TIN LÊN SERVER ---
     async function submitItem() {
         const title = document.getElementById('itemName').value;
         const description = document.getElementById('itemDescription').value;
+        const categoryId = document.getElementById('itemCategory').value; // <--- LẤY GIÁ TRỊ TỪ DROPDOWN
         const photo = document.getElementById('itemPhoto').files[0];
 
-        if (!photo) {
-            alert("Vui lòng chọn ảnh!");
-            return;
-        }
+        // Validate dữ liệu
+        if (!title || !description) { alert("Vui lòng điền đầy đủ thông tin!"); return; }
+        if (!categoryId) { alert("Vui lòng chọn danh mục!"); return; }
+        if (!photo) { alert("Vui lòng chọn ảnh!"); return; }
 
         const formData = new FormData();
         formData.append("title", title);
@@ -183,7 +212,7 @@
         formData.append("latitude", currentLatLng.lat);
         formData.append("longitude", currentLatLng.lng);
         formData.append("itemPhoto", photo);
-        formData.append("category", "1");
+        formData.append("category", categoryId); // <--- GỬI ID THẬT LÊN SERVER
 
         try {
             const response = await fetch('${pageContext.request.contextPath}/post-item', {
@@ -192,37 +221,49 @@
             });
 
             if (response.ok) {
-                const result = await response.json();
-                const imgUrl = result.imageUrl || 'https://placehold.co/200x150?text=No+Image';
-                const popupContent =
-                    '<div>' +
-                    '<img src="' + imgUrl + '" class="custom-popup-img" onerror="this.src=\'https://placehold.co/200x150?text=Error\'">' +
-                    '<div class="custom-popup-body">' +
-                    '<h3 class="font-bold text-slate-800 text-sm mb-1">' + title + '</h3>' +
-                    '<p class="text-xs text-slate-500 mb-2">' + description + '</p>' +
-                    '<p class="text-xs text-amber-600 font-semibold mb-2">🕐 TIN MỚI - Đang chờ Admin duyệt</p>' +
-                    '<button class="w-full bg-emerald-600 text-white text-xs font-bold py-1.5 rounded hover:bg-emerald-700 transition">' +
-                    'Xem chi tiết' +
-                    '</button>' +
-                    '</div>' +
-                    '</div>';
-
-                // Thêm marker mới vào map
-                L.marker([currentLatLng.lat, currentLatLng.lng])
-                    .addTo(map)
-                    .bindPopup(popupContent)
-                    .openPopup();
-
-                alert('Đăng tin thành công! ID: ' + result.itemId + '. Tin đang chờ Admin duyệt.');
+                // Đăng thành công -> Chỉ thông báo và đóng modal (Vì tin đang PENDING, chưa hiện lên map)
+                alert("Đăng tin thành công! Tin của bạn đang chờ Admin duyệt.");
                 closeModal('giveAwayModal');
-
             } else {
-                const errorData = await response.json().catch(() => ({}));
-                alert("Lỗi: " + (errorData.error || "Không thể đăng tin. Mã lỗi: " + response.status));
+                const errorData = await response.json(); // Cố gắng đọc lỗi từ JSON server trả về
+                alert("Có lỗi xảy ra: " + (errorData.error || response.status));
             }
         } catch (error) {
             console.error(error);
             alert("Lỗi kết nối: " + error.message);
+        }
+    }
+
+    // --- 5. HÀM NHẬN ĐỒ (Đã đưa ra ngoài scope global) ---
+    async function requestItem(itemId) {
+        if (!confirm("Bạn có chắc chắn muốn nhận vật phẩm này không?")) return;
+
+        try {
+            const formData = new URLSearchParams();
+            formData.append('itemId', itemId);
+
+            const response = await fetch('${pageContext.request.contextPath}/request-item', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.status === 'success') {
+                alert("🎉 " + data.message);
+                location.reload(); // Refresh để ẩn vật phẩm vừa nhận
+            } else {
+                alert("⚠️ " + data.message);
+                if (response.status === 401) {
+                    window.location.href = '${pageContext.request.contextPath}/login';
+                }
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Có lỗi xảy ra khi kết nối server.");
         }
     }
 </script>

@@ -43,9 +43,11 @@ public class ItemDAO {
     }
 
     public List<Item> findAllAvailable() throws SQLException {
-        String sql = "SELECT item_id, giver_id, title, description, category_id, image_url, status, post_date, " +
-                "ST_X(location) AS longitude, ST_Y(location) AS latitude " +
-                "FROM items WHERE status = 'AVAILABLE'";
+        // SỬA SQL: JOIN bảng users để lấy username
+        String sql = "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude, u.username " +
+                "FROM items i " +
+                "JOIN users u ON i.giver_id = u.user_id " +
+                "WHERE i.status = 'AVAILABLE'";
 
         List<Item> list = new ArrayList<>();
         try (Connection conn = DatabaseConnection.getConnection();
@@ -53,9 +55,12 @@ public class ItemDAO {
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
-                list.add(mapRow(rs));
+                Item item = mapRow(rs);
+                // SET THÊM USERNAME VÀO ITEM
+                item.setGiverName(rs.getString("username"));
+                list.add(item);
             }
-        }catch (Exception e) {
+        } catch (Exception e) {
             throw new SQLException(e);
         }
         return list;
