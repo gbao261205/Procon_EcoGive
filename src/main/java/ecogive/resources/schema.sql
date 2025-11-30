@@ -36,8 +36,8 @@ CREATE TABLE items (
                        title VARCHAR(255) NOT NULL,
                        description TEXT,
                        category_id INT NOT NULL,
-                       image_url VARCHAR(255) NOT NULL, -- Cần có URL ảnh
-                       status ENUM('AVAILABLE', 'PENDING', 'COMPLETED', 'CANCELLED') DEFAULT 'AVAILABLE',
+                       image_url VARCHAR(255) NOT NULL,
+                       status ENUM('AVAILABLE', 'PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED') DEFAULT 'AVAILABLE',
                        post_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                        location POINT NOT NULL, -- Kiểu dữ liệu POINT cho GIS
                        FOREIGN KEY (giver_id) REFERENCES users(user_id),
@@ -77,10 +77,19 @@ CREATE TABLE transactions (
     -- Index phụ đ
                               INDEX idx_receiver_id (receiver_id)
 );
-
+CREATE TABLE messages (
+                          message_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                          sender_id BIGINT NOT NULL,
+                          receiver_id BIGINT NOT NULL,
+                          content TEXT CHARACTER SET utf8mb4 NOT NULL,
+                          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                          is_read BOOLEAN DEFAULT FALSE,
+                          FOREIGN KEY (sender_id) REFERENCES users(user_id),
+                          FOREIGN KEY (receiver_id) REFERENCES users(user_id)
+);
 -- Chèn dữ liệu mẫu cho Bảng 1: users (Người dùng)
 INSERT INTO users (user_id, username, email, password_hash, eco_points, reputation_score, role) VALUES
-                                                                                                    (101, 'nguyenhai', 'hai@example.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 150.50, 4.80, 'USER'),
+                                                                                                    (101, 'test', 'test@example.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 150.50, 4.80, 'USER'),
                                                                                                     (102, 'tranthuy', 'thuy@example.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 85.00, 4.50, 'USER'),
                                                                                                     (103, 'leminhtam', 'tam@example.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 30.75, 5.00, 'USER'),
                                                                                                     (104, 'admin', 'admin@example.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 0.00, 3.00, 'ADMIN');

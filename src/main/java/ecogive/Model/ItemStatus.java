@@ -4,5 +4,6 @@ public enum ItemStatus {
     AVAILABLE,
     PENDING,
     COMPLETED,
+    CONFIRMED,
     CANCELLED
 }

@@ -51,7 +51,7 @@ public class AdminServlet extends HttpServlet {
                     updateItemStatus(req, resp, ItemStatus.AVAILABLE);
                     break;
                 case "reject-item":
-                    updateItemStatus(req, resp, ItemStatus.CANCELLED); // Hoặc REJECTED tùy Enum bạn định nghĩa
+                    updateItemStatus(req, resp, ItemStatus.CANCELLED);
                     break;
                 default:
                     showDashboard(req, resp);
