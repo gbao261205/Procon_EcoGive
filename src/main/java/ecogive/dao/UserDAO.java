@@ -60,20 +60,21 @@ public class UserDAO {
     }
 
     public boolean insert(User user) throws SQLException {
-        String sql = "INSERT INTO users (username, email, password_hash, eco_points, reputation_score, join_date) " +
-                "VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO users (username, email, password_hash, role, eco_points, reputation_score, join_date) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             stmt.setString(1, user.getUsername());
             stmt.setString(2, user.getEmail());
             stmt.setString(3, user.getPasswordHash());
-            stmt.setBigDecimal(4, user.getEcoPoints() != null ? user.getEcoPoints() : BigDecimal.ZERO);
-            stmt.setBigDecimal(5, user.getReputationScore() != null ? user.getReputationScore() : BigDecimal.valueOf(1.00));
+            stmt.setString(4, user.getRole());
+            stmt.setBigDecimal(5, user.getEcoPoints() != null ? user.getEcoPoints() : BigDecimal.ZERO);
+            stmt.setBigDecimal(6, user.getReputationScore() != null ? user.getReputationScore() : BigDecimal.valueOf(1.00));
             if (user.getJoinDate() != null) {
-                stmt.setTimestamp(6, Timestamp.valueOf(user.getJoinDate()));
+                stmt.setTimestamp(7, Timestamp.valueOf(user.getJoinDate()));
             } else {
-                stmt.setTimestamp(6, new Timestamp(System.currentTimeMillis()));
+                stmt.setTimestamp(7, new Timestamp(System.currentTimeMillis()));
             }
 
             int affected = stmt.executeUpdate();
@@ -132,7 +133,7 @@ public class UserDAO {
         u.setPasswordHash(rs.getString("password_hash"));
         u.setEcoPoints(rs.getBigDecimal("eco_points"));
         u.setReputationScore(rs.getBigDecimal("reputation_score"));
-
+        u.setRole(rs.getString("role"));
         Timestamp ts = rs.getTimestamp("join_date");
         if (ts != null) {
             u.setJoinDate(ts.toLocalDateTime());

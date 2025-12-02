@@ -11,12 +11,13 @@ public class User {
     private BigDecimal ecoPoints;
     private BigDecimal reputationScore;
     private LocalDateTime joinDate;
+    private String role;
 
     public User() {
     }
 
     public User(long userId, String username, String email, String passwordHash,
-                BigDecimal ecoPoints, BigDecimal reputationScore, LocalDateTime joinDate) {
+                BigDecimal ecoPoints, BigDecimal reputationScore, LocalDateTime joinDate, String role) {
         this.userId = userId;
         this.username = username;
         this.email = email;
@@ -24,6 +25,7 @@ public class User {
         this.ecoPoints = ecoPoints;
         this.reputationScore = reputationScore;
         this.joinDate = joinDate;
+        this.role = role;
     }
 
     public long getUserId() {
@@ -81,4 +83,13 @@ public class User {
     public void setJoinDate(LocalDateTime joinDate) {
         this.joinDate = joinDate;
     }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
 }

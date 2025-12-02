@@ -9,7 +9,6 @@ public class DatabaseConnection {
     private static String url;
     private static String username;
     private static String password;
-    private static String driver;
     private static Dotenv dotenv;
 
     static {
@@ -23,7 +22,7 @@ public class DatabaseConnection {
             url = dotenv.get("DB_URL");
             username = dotenv.get("DB_USERNAME");
             password = dotenv.get("DB_PASSWORD");
-            driver = dotenv.get("DB_DRIVER");
+            String driver = dotenv.get("DB_DRIVER");
 
             // --- Diagnostic Logging ---
             System.out.println("DB_URL: " + url);

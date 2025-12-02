@@ -12,13 +12,14 @@ public class Item {
     private ItemStatus status;
     private LocalDateTime postDate;
     private GeoPoint location;
+    private String giverName;
 
     public Item() {
     }
 
     public Item(long itemId, long giverId, String title, String description,
                 int categoryId, String imageUrl, ItemStatus status,
-                LocalDateTime postDate, GeoPoint location) {
+                LocalDateTime postDate, GeoPoint location, String giverName) {
         this.itemId = itemId;
         this.giverId = giverId;
         this.title = title;
@@ -28,8 +29,15 @@ public class Item {
         this.status = status;
         this.postDate = postDate;
         this.location = location;
+        this.giverName = giverName;
+    }
+    public String getGiverName() {
+        return giverName;
     }
 
+    public void setGiverName(String giverName) {
+        this.giverName = giverName;
+    }
     public long getItemId() {
         return itemId;
     }
