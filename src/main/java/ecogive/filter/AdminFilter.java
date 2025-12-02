@@ -31,7 +31,7 @@ public class AdminFilter implements Filter {
             chain.doFilter(request, response);
         } else {
             // Nếu không phải admin -> Đẩy về trang Login hoặc trang Lỗi 403
-            resp.sendRedirect(req.getContextPath() + "/login.jsp?error=access_denied");
+            resp.sendRedirect(req.getContextPath() + "/login");
         }
     }
 }
