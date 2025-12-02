@@ -93,17 +93,15 @@ public class UserDAO {
     }
 
     public boolean update(User user) throws SQLException {
-        String sql = "UPDATE users SET username = ?, email = ?, password_hash = ?, " +
-                "eco_points = ?, reputation_score = ? WHERE user_id = ?";
+        String sql = "UPDATE users SET username = ?, email = ?, password_hash = ?, role = ? WHERE user_id = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, user.getUsername());
             stmt.setString(2, user.getEmail());
             stmt.setString(3, user.getPasswordHash());
-            stmt.setBigDecimal(4, user.getEcoPoints());
-            stmt.setBigDecimal(5, user.getReputationScore());
-            stmt.setLong(6, user.getUserId());
+            stmt.setString(4, user.getRole());
+            stmt.setLong(5, user.getUserId());
 
             int affected = stmt.executeUpdate();
             return affected > 0;
@@ -124,7 +122,6 @@ public class UserDAO {
         }
     }
 
-    // Map 1 row từ ResultSet sang User
     private User mapRow(ResultSet rs) throws SQLException {
         User u = new User();
         u.setUserId(rs.getLong("user_id"));
