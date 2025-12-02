@@ -7,7 +7,6 @@
     <meta charset="UTF-8">
     <title>Đăng nhập - EcoGive</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="min-h-screen bg-slate-100 flex items-center justify-center">
@@ -19,60 +18,42 @@
             <p class="text-slate-500 text-sm">Đăng nhập để chia sẻ và nhận đồ tái sử dụng</p>
         </div>
 
-        <!-- Thông báo lỗi -->
-        <%
-            String error = (String) request.getAttribute("error");
-        %>
-        <c:if test="${not empty error}">
-            <div class="mb-4 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
-                    ${error}
+        <!-- Thông báo thành công -->
+        <c:if test="${param.success == 'true'}">
+            <div class="mb-4 px-4 py-3 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm">
+                Đăng ký thành công! Vui lòng đăng nhập.
             </div>
         </c:if>
 
-        <!-- Form login -->
+        <!-- Thông báo lỗi -->
+        <c:if test="${not empty error}">
+            <div class="mb-4 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+                ${error}
+            </div>
+        </c:if>
+
         <form id="loginForm" method="post" action="${pageContext.request.contextPath}/login" class="space-y-5">
-            <!-- Username -->
             <div>
-                <label for="username" class="block text-sm font-medium text-slate-700 mb-1">
-                    Tên đăng nhập
-                </label>
-                <input
-                        type="text"
-                        id="username"
-                        name="username"
-                        value="${username}"
-                        class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                        placeholder="Nhập tên đăng nhập"
-                        required
-                />
+                <label for="username" class="block text-sm font-medium text-slate-700 mb-1">Tên đăng nhập</label>
+                <input type="text" id="username" name="username" value="${username}"
+                       class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                       placeholder="Nhập tên đăng nhập" required>
             </div>
 
-            <!-- Password -->
             <div>
-                <label for="password" class="block text-sm font-medium text-slate-700 mb-1">
-                    Mật khẩu
-                </label>
+                <label for="password" class="block text-sm font-medium text-slate-700 mb-1">Mật khẩu</label>
                 <div class="relative">
-                    <input
-                            type="password"
-                            id="password"
-                            name="password"
-                            class="w-full rounded-lg border border-slate-300 px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                            placeholder="Nhập mật khẩu"
-                            required
-                    />
-                    <button
-                            type="button"
-                            id="togglePassword"
+                    <input type="password" id="password" name="password"
+                           class="w-full rounded-lg border border-slate-300 px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                           placeholder="Nhập mật khẩu" required>
+                    <button type="button" id="togglePassword"
                             class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-600 text-xs"
-                            tabindex="-1"
-                    >
+                            tabindex="-1">
                         Hiện
                     </button>
                 </div>
             </div>
 
-            <!-- Remember + Forgot -->
             <div class="flex items-center justify-between text-xs text-slate-500">
                 <label class="inline-flex items-center gap-2">
                     <input type="checkbox" class="rounded border-slate-300 text-emerald-600">
@@ -81,16 +62,12 @@
                 <a href="#" class="hover:text-emerald-600">Quên mật khẩu?</a>
             </div>
 
-            <!-- Submit -->
-            <button
-                    type="submit"
-                    class="w-full mt-2 inline-flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
-            >
+            <button type="submit"
+                    class="w-full mt-2 inline-flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2">
                 Đăng nhập
             </button>
         </form>
 
-        <!-- Đăng ký -->
         <div class="mt-6 text-center text-xs text-slate-500">
             Chưa có tài khoản?
             <a href="${pageContext.request.contextPath}/register" class="text-emerald-600 font-medium hover:underline">
@@ -104,37 +81,9 @@
     </p>
 </div>
 
-<!-- JS: validate + toggle password -->
 <script>
-    const form = document.getElementById('loginForm');
-    const usernameInput = document.getElementById('username');
-    const passwordInput = document.getElementById('password');
     const togglePasswordBtn = document.getElementById('togglePassword');
-
-    // Client-side validate đơn giản
-    form.addEventListener('submit', function (e) {
-        let valid = true;
-
-        if (!usernameInput.value.trim()) {
-            usernameInput.classList.add('border-red-400', 'focus:ring-red-400', 'focus:border-red-400');
-            valid = false;
-        } else {
-            usernameInput.classList.remove('border-red-400', 'focus:ring-red-400', 'focus:border-red-400');
-        }
-
-        if (!passwordInput.value.trim()) {
-            passwordInput.classList.add('border-red-400', 'focus:ring-red-400', 'focus:border-red-400');
-            valid = false;
-        } else {
-            passwordInput.classList.remove('border-red-400', 'focus:ring-red-400', 'focus:border-red-400');
-        }
-
-        if (!valid) {
-            e.preventDefault();
-        }
-    });
-
-    // Toggle show/hide password
+    const passwordInput = document.getElementById('password');
     togglePasswordBtn.addEventListener('click', function () {
         const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
         passwordInput.setAttribute('type', type);
