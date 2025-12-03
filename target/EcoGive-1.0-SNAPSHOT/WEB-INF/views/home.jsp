@@ -28,6 +28,13 @@
         <h1 class="text-2xl font-bold text-emerald-600 tracking-tight">EcoGive <span class="text-slate-400 font-normal text-sm">Map</span></h1>
     </div>
     <div class="flex items-center gap-4">
+        <c:if test="${sessionScope.currentUser.role == 'ADMIN'}">
+            <a href="${pageContext.request.contextPath}/admin?action=dashboard" class="flex items-center gap-2 px-4 py-2 text-sm font-bold text-slate-700 bg-slate-200 hover:bg-slate-300 rounded-lg transition"><span>⬅</span> Dashboard</a>
+            <button id="btnAddPoint" class="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-green-600 hover:bg-green-700 rounded-lg transition shadow-md ml-2">
+                <span>📍</span> Thêm điểm
+            </button>
+        </c:if>
+
         <c:if test="${sessionScope.currentUser != null}">
             <div class="text-right hidden md:block">
                 <div class="text-sm font-bold text-slate-700">${sessionScope.currentUser.username}</div>
@@ -72,6 +79,27 @@
         <div id="step3" class="modal-step hidden">
             <div id="miniMap" class="h-64 w-full rounded-lg mb-4 border"></div>
             <button onclick="submitItem()" class="w-full bg-emerald-600 text-white p-3 rounded-lg font-bold">Đăng tin</button>
+        </div>
+    </div>
+</div>
+
+<div id="addPointModal" class="fixed inset-0 hidden bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
+    <div class="bg-white p-6 rounded-xl w-full max-w-lg shadow-2xl relative">
+        <button onclick="document.getElementById('addPointModal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">✕</button>
+        <h2 class="text-2xl font-bold mb-6 text-green-700 text-center">Thêm Điểm Tập Kết</h2>
+        <div class="space-y-3">
+            <input type="text" id="pointName" placeholder="Tên điểm (VD: Trạm Pin Q1)" class="w-full p-2 border rounded-lg" required />
+            <select id="pointType" class="w-full p-2 border rounded-lg bg-white">
+                <option value="BATTERY">🔋 Thu gom Pin</option>
+                <option value="E_WASTE">💻 Rác thải điện tử</option>
+                <option value="TEXTILE">👕 Quần áo cũ</option>
+            </select>
+            <input type="text" id="pointAddress" placeholder="Địa chỉ hiển thị..." class="w-full p-2 border rounded-lg" required />
+            <div>
+                <label class="block text-xs font-bold text-gray-700 mb-1">Vị trí (Kéo để chỉnh)</label>
+                <div id="pointMiniMap" class="h-48 w-full rounded-lg border z-0"></div>
+            </div>
+            <button onclick="submitCollectionPoint()" class="w-full bg-green-600 text-white p-3 rounded-lg font-bold hover:bg-green-700">Xác nhận Thêm</button>
         </div>
     </div>
 </div>
@@ -132,7 +160,18 @@
     let currentDiscussingItemId = null;
     let isOwnerOfCurrentItem = false;
     let miniMap, locationMarker;
+
+    // Biến cho Admin Modal
+    let pointMap, pointMarker;
+    let pointLatLng = { lat: 10.7769, lng: 106.7009 };
     let currentLatLng = { lat: 10.7769, lng: 106.7009 };
+
+    // Icon Điểm Tập Kết (Xanh lá)
+    var greenIcon = new L.Icon({
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+        iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+    });
 
     document.addEventListener("DOMContentLoaded", function() {
         if (currentUserId) {
@@ -140,9 +179,10 @@
             loadInboxList();
         }
         loadItems();
+        loadCollectionPoints(); // Load điểm tập kết
     });
 
-    // --- 1. LOAD ITEMS ---
+    // --- 1. MAP & LOAD DATA ---
     const map = L.map('map').setView([10.7769, 106.7009], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: 'OSM' }).addTo(map);
 
@@ -151,7 +191,14 @@
             const response = await fetch('${pageContext.request.contextPath}/api/items');
             const items = await response.json();
 
-            map.eachLayer((layer) => { if (layer instanceof L.Marker && layer !== locationMarker) map.removeLayer(layer); });
+            // Xóa marker cũ (trừ point marker nếu có logic riêng, ở đây ta load lại hết)
+            map.eachLayer((layer) => {
+                // Chỉ xóa marker mặc định (xanh dương), giữ lại marker xanh lá (điểm tập kết) nếu muốn
+                // Nhưng đơn giản nhất là xóa hết các marker item
+                if (layer instanceof L.Marker && layer.options.icon !== greenIcon && layer !== locationMarker) {
+                    map.removeLayer(layer);
+                }
+            });
 
             items.forEach(item => {
                 if (item.location) {
@@ -175,7 +222,29 @@
         } catch (e) { console.error(e); }
     }
 
-    // --- 2. XỬ LÝ NÚT BẤM (Fix logic UI) ---
+    async function loadCollectionPoints() {
+        try {
+            const response = await fetch('${pageContext.request.contextPath}/api/collection-points');
+            const points = await response.json();
+
+            // Xóa marker xanh lá cũ trước khi vẽ lại (nếu cần)
+            map.eachLayer((layer) => { if (layer instanceof L.Marker && layer.options.icon === greenIcon) map.removeLayer(layer); });
+
+            points.forEach(p => {
+                let typeName = p.type === 'BATTERY' ? '🔋 Thu gom Pin' : (p.type === 'E_WASTE' ? '💻 Rác điện tử' : '👕 Quần áo cũ');
+                const content = `
+                    <div class="text-center">
+                        <div class="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded mb-2 inline-block">\${typeName}</div>
+                        <h3 class="font-bold text-slate-800 text-sm mb-1">\${p.name}</h3>
+                        <p class="text-xs text-gray-500 mb-2">📍 \${p.address}</p>
+                        <a href="https://www.google.com/maps/search/?api=1&query=\${p.latitude},\${p.longitude}" target="_blank" class="block w-full bg-slate-100 text-slate-600 text-xs font-bold py-1.5 rounded hover:bg-slate-200 border border-slate-300">🗺️ Chỉ đường</a>
+                    </div>`;
+                L.marker([p.latitude, p.longitude], {icon: greenIcon}).addTo(map).bindPopup(content);
+            });
+        } catch (e) { console.error(e); }
+    }
+
+    // --- 2. LOGIC NÚT BẤM (User Items) ---
 
     async function requestItem(itemId, giverId, giverName, itemTitle) {
         if (!currentUserId) { window.location.href = '${pageContext.request.contextPath}/login'; return; }
@@ -213,7 +282,7 @@
         loadInboxList();
     }
 
-    // --- 3. CHAT UI LOGIC (ĐÃ SỬA LỖI MẤT INBOX) ---
+    // --- 3. CHAT UI LOGIC (FIXED RESPONSIVE) ---
 
     function openChatWindow() {
         document.getElementById('chatModal').classList.remove('hidden');
@@ -257,7 +326,7 @@
         } catch (e) {}
     }
 
-    // [QUAN TRỌNG] Đã sửa để không làm mất inbox trên Desktop
+    // FIX: Không ẩn inbox trên desktop khi chọn user
     async function selectUserChat(userId, username) {
         currentReceiverId = userId;
         document.getElementById('chatTitle').innerText = username;
@@ -267,20 +336,14 @@
         input.disabled = false; input.classList.remove('bg-gray-50');
         document.getElementById('btnSend').disabled = false;
 
-        // UI Responsive Logic:
-        // Mobile: Ẩn Inbox, Hiện Detail
-        // Desktop (md): Hiện cả hai (nhờ class md:flex trong HTML)
+        // UI Responsive: Mobile ẩn inbox, Desktop giữ nguyên (nhờ class md:flex trong HTML)
+        document.getElementById('inboxPanel').classList.add('hidden'); // Ẩn trên mobile
 
-        // 1. Inbox Panel: Thêm 'hidden' để ẩn trên Mobile.
-        // Lưu ý: Class 'md:flex' trong HTML sẽ ghi đè 'hidden' trên Desktop.
-        document.getElementById('inboxPanel').classList.add('hidden');
-
-        // 2. Chat Detail Panel: Bỏ 'hidden', thêm 'flex'
         const detailPanel = document.getElementById('chatDetailPanel');
         detailPanel.classList.remove('hidden');
         detailPanel.classList.add('flex');
 
-        // Logic Nút Tặng
+        // Nút Tặng
         const btnConfirm = document.getElementById('btnConfirmGive');
         if (currentDiscussingItemId && isOwnerOfCurrentItem && userId !== currentUserId) {
             btnConfirm.classList.remove('hidden');
@@ -293,17 +356,13 @@
         loadInboxList();
     }
 
-    // Nút Back trên Mobile
     function backToInbox() {
-        // Ẩn Detail
         document.getElementById('chatDetailPanel').classList.add('hidden');
         document.getElementById('chatDetailPanel').classList.remove('flex');
-
-        // Hiện Inbox (Bỏ class hidden)
         document.getElementById('inboxPanel').classList.remove('hidden');
     }
 
-    // --- 4. CÁC HÀM KHÁC (GIỮ NGUYÊN) ---
+    // --- 4. CONFIRM & HISTORY (FIXED MESSAGE) ---
     async function loadHistory(userId) {
         const chatBox = document.getElementById('chatMessages');
         chatBox.innerHTML = '<div class="text-center text-xs text-gray-400 mt-10">Đang tải...</div>';
@@ -313,22 +372,14 @@
             chatBox.innerHTML = '';
 
             msgs.forEach(m => {
-                // Xử lý tin nhắn hệ thống
                 if (m.content.startsWith("SYSTEM_GIFT:")) {
                     let cleanText = m.content.replace("SYSTEM_GIFT:", "");
-
-                    // LOGIC QUAN TRỌNG:
-                    // Nếu mình là người gửi tin nhắn này (Sender == Me) -> Có nghĩa mình là người tặng.
-                    // Nhưng nội dung trong DB lại là "Bạn được tặng..." (do lúc gửi socket ta gửi câu đó).
-                    // Nên ta phải đổi lại câu chữ khi hiển thị lịch sử.
-
+                    // Nếu mình là người gửi (Người tặng) -> Đổi câu thông báo
                     if (m.senderId === currentUserId) {
-                        // Mình là người gửi -> Đổi thành "Bạn đã tặng..."
-                        // Regex đơn giản để thay thế text hiển thị (Tuỳ vào format chuỗi bên trên)
                         cleanText = cleanText.replace("Bạn được tặng món", "Bạn đã tặng món");
-                        cleanText = cleanText.replace("từ " + currentUserName, ""); // Xóa đoạn "từ [tên mình]"
+                        // Xóa đoạn "từ [tên mình]" nếu cần, hoặc để nguyên cũng hiểu được
+                        cleanText = cleanText.replace("từ " + currentUserName, "cho người này");
                     }
-
                     appendSystemMessage(cleanText);
                 } else {
                     appendMessage(m.content, m.senderId === currentUserId ? 'outgoing' : 'incoming');
@@ -340,7 +391,7 @@
 
     async function confirmGiveItem() {
         const receiverName = document.getElementById('chatTitle').innerText;
-        if (!confirm("Bạn chắc chắn muốn chốt tặng món đồ này cho " + receiverName + "?\n\n(Trạng thái sẽ chuyển thành CONFIRMED)")) return;
+        if (!confirm("Bạn chắc chắn muốn chốt tặng món đồ này cho " + receiverName + "?")) return;
 
         try {
             const fd = new URLSearchParams();
@@ -351,43 +402,32 @@
             const data = await res.json();
 
             if (data.status === 'success') {
-                // 1. Thông báo popup cho người tặng (chính mình)
                 alert("✅ Thành công! Đã chốt tặng món " + data.itemName + ".");
 
-                // 2. XỬ LÝ TIN NHẮN (TÁCH BIỆT GỬI VÀ HIỆN)
-
-                // A. Nội dung gửi cho người nhận (qua WebSocket & Lưu DB)
-                // Lưu ý: Ta lưu vào DB câu này, nên khi load lại lịch sử, người tặng sẽ thấy câu này.
-                // Để khắc phục triệt để, ta dùng prefix đặc biệt để xử lý hiển thị sau.
+                // A. Gửi socket cho người nhận
                 const msgForReceiver = "SYSTEM_GIFT:Bạn được tặng món " + data.itemName + " từ " + currentUserName + ". (Trạng thái: CONFIRMED)";
-
                 if (chatSocket && currentReceiverId) {
                     chatSocket.send(JSON.stringify({ receiverId: currentReceiverId, content: msgForReceiver }));
                 }
 
-                // B. Nội dung hiển thị ngay lập tức cho người tặng (Local)
-                const msgForSender = "🎁 Bạn đã tặng món " + data.itemName + " cho " + receiverName + ".";
-                appendSystemMessage(msgForSender);
+                // B. Hiện local cho người gửi
+                appendSystemMessage("🎁 Bạn đã tặng món " + data.itemName + " cho " + receiverName + ".");
 
-                // 3. Reset UI & Reload Map
+                // Reset
                 currentDiscussingItemId = null;
                 isOwnerOfCurrentItem = false;
                 document.getElementById('btnConfirmGive').classList.add('hidden');
                 document.getElementById('chatItemInfo').classList.add('hidden');
 
-                loadItems();
-
-                // Reload inbox sau 1 chút để cập nhật last message
+                loadItems(); // Reload map
                 setTimeout(loadInboxList, 500);
             } else {
                 alert("❌ Lỗi: " + data.message);
             }
-        } catch (e) {
-            console.error(e);
-            alert("❌ Lỗi kết nối");
-        }
+        } catch (e) { alert("❌ Lỗi kết nối"); }
     }
 
+    // --- UTILS & WS ---
     function updateHeaderInfo(title) {
         document.getElementById('chatItemInfo').classList.remove('hidden');
         document.getElementById('chatItemName').innerText = title;
@@ -437,7 +477,48 @@
     }
     document.getElementById('chatInput').addEventListener('keypress', (e) => { if(e.key==='Enter') sendMessage(); });
 
-    // --- ĐĂNG TIN ---
+    // --- LOGIC ADMIN: THÊM ĐIỂM TẬP KẾT ---
+    const btnAddPoint = document.getElementById('btnAddPoint');
+    if (btnAddPoint) {
+        btnAddPoint.addEventListener('click', () => {
+            document.getElementById('addPointModal').classList.remove('hidden');
+            setTimeout(() => {
+                if (!pointMap) {
+                    pointMap = L.map('pointMiniMap').setView([pointLatLng.lat, pointLatLng.lng], 15);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: 'OSM' }).addTo(pointMap);
+                    pointMarker = L.marker([pointLatLng.lat, pointLatLng.lng], { draggable: true, icon: greenIcon }).addTo(pointMap);
+                    pointMarker.on('dragend', function(event) { pointLatLng = event.target.getLatLng(); });
+                } else { pointMap.invalidateSize(); }
+            }, 200);
+        });
+    }
+
+    async function submitCollectionPoint() {
+        const name = document.getElementById('pointName').value;
+        const type = document.getElementById('pointType').value;
+        const address = document.getElementById('pointAddress').value;
+        if (!name || !address) { alert("Vui lòng nhập đủ thông tin!"); return; }
+        if (!confirm("Xác nhận tạo điểm tập kết này?")) return;
+
+        const formData = new URLSearchParams();
+        formData.append("name", name); formData.append("type", type);
+        formData.append("address", address);
+        formData.append("latitude", pointLatLng.lat); formData.append("longitude", pointLatLng.lng);
+
+        try {
+            const res = await fetch('${pageContext.request.contextPath}/api/create-collection-point', {
+                method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'}, body: formData
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                alert("✅ " + data.message);
+                document.getElementById('addPointModal').classList.add('hidden');
+                loadCollectionPoints();
+            } else { alert("❌ Lỗi: " + data.message); }
+        } catch (e) { alert("❌ Lỗi kết nối server"); }
+    }
+
+    // --- ĐĂNG TIN (USER) ---
     document.getElementById('btnPostItem').addEventListener('click', () => { document.getElementById('giveAwayModal').classList.remove('hidden'); document.getElementById('step1').classList.remove('hidden'); });
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
     function nextStep(n) { document.querySelectorAll('.modal-step').forEach(e=>e.classList.add('hidden')); document.getElementById('step'+n).classList.remove('hidden'); if(n===3) setTimeout(()=>{ if(!miniMap) {miniMap=L.map('miniMap').setView([currentLatLng.lat, currentLatLng.lng], 15); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'OSM'}).addTo(miniMap); locationMarker=L.marker([currentLatLng.lat,currentLatLng.lng],{draggable:true}).addTo(miniMap); locationMarker.on('dragend',e=>currentLatLng=e.target.getLatLng()); } else miniMap.invalidateSize(); },200); }

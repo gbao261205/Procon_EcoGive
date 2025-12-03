@@ -28,6 +28,10 @@
            class="group flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${param.action == 'items' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-600 hover:bg-slate-50 hover:text-emerald-600'}">
             <span>📦</span> Vật phẩm
         </a>
+        <a href="${pageContext.request.contextPath}/admin?action=stations"
+           class="group flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${param.action == 'stations' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-600 hover:bg-slate-50 hover:text-emerald-600'}">
+            <span>📍</span> Điểm tập kết
+        </a>
     </nav>
 
     <div class="p-4 border-t border-slate-100">
