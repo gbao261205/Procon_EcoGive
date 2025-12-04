@@ -19,6 +19,9 @@ public class DashboardDAO {
     public int countPendingItems() throws SQLException {
         return executeCount("SELECT COUNT(*) FROM items WHERE status = 'PENDING'");
     }
+    public int countCollectionPoints() throws SQLException {
+        return executeCount("SELECT COUNT(*) FROM collection_points");
+    }
 
     public double sumTotalEcoPoints() throws SQLException {
         String sql = "SELECT SUM(eco_points) FROM users";
@@ -34,7 +37,6 @@ public class DashboardDAO {
         return 0.0;
     }
 
-    // Helper method để đỡ viết lặp code
     private int executeCount(String sql) {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);

@@ -86,7 +86,16 @@ public class CollectionPointDAO {
         }
         return false;
     }
-
+    public boolean delete(long id) throws SQLException {
+        String sql = "DELETE FROM collection_points WHERE point_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setLong(1, id);
+            return stmt.executeUpdate() > 0;
+        } catch (Exception e) {
+            throw new SQLException(e);
+        }
+    }
     private CollectionPoint mapRow(ResultSet rs) throws SQLException {
         CollectionPoint cp = new CollectionPoint();
         cp.setPointId(rs.getLong("point_id"));

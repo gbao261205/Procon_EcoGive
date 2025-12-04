@@ -24,26 +24,26 @@
             <input type="hidden" id="form-action" name="action" value="add-user">
             <input type="hidden" id="user-id" name="user_id" value="">
 
-            <div class="md:col-span-4">
+            <div class="md:col-span-3">
                 <label class="block text-sm font-medium text-slate-700 mb-1">Tên đăng nhập</label>
                 <input type="text" id="username" name="username" required
                        class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-slate-400">
             </div>
 
-            <div class="md:col-span-4">
+            <div class="md:col-span-3">
                 <label class="block text-sm font-medium text-slate-700 mb-1">Email</label>
                 <input type="email" id="email" name="email" required
                        class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-slate-400">
             </div>
 
-            <div class="md:col-span-4">
+            <div class="md:col-span-3">
                 <label class="block text-sm font-medium text-slate-700 mb-1">Mật khẩu</label>
                 <input type="password" id="password" name="password" required
                        class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-slate-400"
                        placeholder="Để trống nếu không muốn thay đổi">
             </div>
             
-            <div class="md:col-span-4">
+            <div class="md:col-span-3">
                 <label class="block text-sm font-medium text-slate-700 mb-1">Vai trò</label>
                 <select id="role" name="role" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
                     <option value="USER">USER</option>
@@ -51,12 +51,12 @@
                 </select>
             </div>
 
-            <div class="md:col-span-8 flex justify-end gap-2">
-                 <button id="cancel-button" type="button" onclick="cancelEdit()" class="hidden w-full md:w-auto inline-flex items-center justify-center rounded-lg bg-gray-300 px-4 py-2 text-sm font-semibold text-gray-800 shadow-sm hover:bg-gray-400 focus:outline-none">
+            <div class="md:col-span-12 flex justify-end gap-2 mt-4">
+                <button id="cancel-button" type="button" onclick="cancelEdit()" class="hidden w-full md:w-auto inline-flex items-center justify-center rounded-lg bg-gray-300 px-4 py-2 text-sm font-semibold text-gray-800 shadow-sm hover:bg-gray-400 focus:outline-none transition-all">
                     Hủy
                 </button>
-                <button id="submit-button" type="submit" class="w-full md:w-auto inline-flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all">
-                    + Thêm người dùng
+                <button id="submit-button" type="submit" class="w-full md:w-auto inline-flex items-center justify-center rounded-lg bg-emerald-600 px-6 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all">
+                    Thêm người dùng
                 </button>
             </div>
         </form>
@@ -143,7 +143,7 @@
 
         // Update UI
         document.getElementById('form-title').innerHTML = '<span>👤</span> Thêm người dùng mới';
-        document.getElementById('submit-button').innerText = '+ Thêm người dùng';
+        document.getElementById('submit-button').innerText = 'Thêm người dùng';
         document.getElementById('password').required = true; // Password is required for new user
         document.getElementById('cancel-button').classList.add('hidden');
     }

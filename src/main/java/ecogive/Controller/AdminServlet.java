@@ -1,15 +1,13 @@
 package ecogive.Controller;
 
 import ecogive.Model.Category;
-import ecogive.dao.CategoryDAO;
-import ecogive.dao.DashboardDAO;
-import ecogive.dao.UserDAO;
+import ecogive.Model.CollectionPoint;
+import ecogive.dao.*;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import ecogive.dao.ItemDAO;
 import ecogive.Model.Item;
 import ecogive.Model.ItemStatus;
 
@@ -25,6 +23,7 @@ public class AdminServlet extends HttpServlet {
     private final CategoryDAO categoryDAO = new CategoryDAO();
     private final UserDAO userDAO = new UserDAO();
     private final ItemDAO itemDAO = new ItemDAO();
+    private final CollectionPointDAO stationDAO = new CollectionPointDAO();
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String action = req.getParameter("action");
@@ -53,6 +52,9 @@ public class AdminServlet extends HttpServlet {
                 case "reject-item":
                     updateItemStatus(req, resp, ItemStatus.CANCELLED);
                     break;
+                case "stations":
+                    listStations(req, resp);
+                    break;
                 default:
                     showDashboard(req, resp);
                     break;
@@ -65,12 +67,15 @@ public class AdminServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String action = req.getParameter("action");
-        if ("add-category".equals(action)) {
-            try {
+        try {
+            if ("add-category".equals(action)) {
                 addCategory(req, resp);
-            } catch (SQLException e) {
-                throw new ServletException(e);
             }
+            else if ("delete-station".equals(action)) {
+                deleteStation(req, resp);
+            }
+        } catch (SQLException e) {
+            throw new ServletException(e);
         }
     }
     private void showDashboard(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, SQLException {
@@ -79,7 +84,7 @@ public class AdminServlet extends HttpServlet {
         req.setAttribute("totalItems", dashboardDAO.countTotalItems());
         req.setAttribute("pendingItems", dashboardDAO.countPendingItems());
         req.setAttribute("totalEcoPoints", dashboardDAO.sumTotalEcoPoints());
-
+        req.setAttribute("totalStations", dashboardDAO.countCollectionPoints());
         req.getRequestDispatcher("/WEB-INF/views/admin/dashboard.jsp").forward(req, resp);
     }
 
@@ -106,6 +111,17 @@ public class AdminServlet extends HttpServlet {
         resp.sendRedirect(req.getContextPath() + "/admin?action=categories");
     }
 
+    private void listStations(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, SQLException {
+        List<CollectionPoint> list = stationDAO.findAll();
+        req.setAttribute("stations", list);
+        req.getRequestDispatcher("/WEB-INF/views/admin/station.jsp").forward(req, resp);
+    }
+
+    private void deleteStation(HttpServletRequest req, HttpServletResponse resp) throws SQLException, IOException {
+        long id = Long.parseLong(req.getParameter("id"));
+        stationDAO.delete(id);
+        resp.sendRedirect(req.getContextPath() + "/admin?action=stations");
+    }
     private void deleteCategory(HttpServletRequest req, HttpServletResponse resp) throws SQLException, IOException {
         int id = Integer.parseInt(req.getParameter("id"));
         categoryDAO.delete(id);
