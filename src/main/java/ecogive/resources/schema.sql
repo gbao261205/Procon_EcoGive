@@ -43,6 +43,22 @@ CREATE TABLE items (
                        FOREIGN KEY (giver_id) REFERENCES users(user_id),
                        FOREIGN KEY (category_id) REFERENCES categories(category_id)
 );
+CREATE TABLE reviews (
+                         review_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                         transaction_id BIGINT NOT NULL,
+                         reviewer_id BIGINT NOT NULL,
+                         rated_user_id BIGINT NOT NULL,
+                         rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+                         comment TEXT,
+                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+                         FOREIGN KEY (transaction_id) REFERENCES transactions(transaction_id),
+                         FOREIGN KEY (reviewer_id) REFERENCES users(user_id),
+                         FOREIGN KEY (rated_user_id) REFERENCES users(user_id),
+
+                         UNIQUE INDEX idx_unique_transaction (transaction_id),
+                         INDEX idx_rated_user (rated_user_id)
+);
 -- TẠO SPATIAL INDEX
 CREATE SPATIAL INDEX sp_index_location ON items (location);
 -- 4. Bảng Điểm Thu gom Cố định (Collection Points) - KHÔNG ĐỔI
@@ -87,7 +103,6 @@ CREATE TABLE messages (
                           FOREIGN KEY (sender_id) REFERENCES users(user_id),
                           FOREIGN KEY (receiver_id) REFERENCES users(user_id)
 );
-
 CREATE TABLE reviews (
                          review_id BIGINT AUTO_INCREMENT PRIMARY KEY,
                          transaction_id BIGINT NOT NULL,
@@ -104,7 +119,6 @@ CREATE TABLE reviews (
                          UNIQUE INDEX idx_unique_transaction (transaction_id),
                          INDEX idx_rated_user (rated_user_id)
 );
-
 -- Chèn dữ liệu mẫu cho Bảng 1: users (Người dùng)
 INSERT INTO users (user_id, username, email, password_hash, eco_points, reputation_score, role) VALUES
                                                                                                     (101, 'test', 'test@example.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 150.50, 4.80, 'USER'),
