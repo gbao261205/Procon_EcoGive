@@ -92,8 +92,12 @@ public class UserDAO {
         return false;
     }
 
+    // Trong file UserDAO.java
+
     public boolean update(User user) throws SQLException {
+        // CHỈ CẬP NHẬT THÔNG TIN CƠ BẢN (Bỏ eco_points và reputation_score ra khỏi SQL update)
         String sql = "UPDATE users SET username = ?, email = ?, password_hash = ?, role = ? WHERE user_id = ?";
+
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 

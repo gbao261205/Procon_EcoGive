@@ -65,11 +65,12 @@ CREATE SPATIAL INDEX sp_index_location ON items (location);
 CREATE TABLE collection_points (
                                    point_id BIGINT AUTO_INCREMENT PRIMARY KEY,
                                    name VARCHAR(255) NOT NULL,
-                                   type ENUM('E_WASTE', 'BATTERY', 'TEXTILE') NOT NULL,
+                                   type ENUM('E_WASTE', 'BATTERY', 'TEXTILE', 'MEDICAL', 'CHEMICAL', 'DEALER', 'INDIVIDUAL') NOT NULL,
                                    address TEXT,
                                    location POINT NOT NULL,
                                    UNIQUE INDEX unique_point_name (name)
 );
+
 -- 5. Bảng Yêu cầu Thu gom Chuyên biệt (Collection Requests) - KHÔNG ĐỔI
 CREATE TABLE collection_requests (
                                      request_id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -146,6 +147,11 @@ INSERT INTO collection_points (point_id, name, type, address, location) VALUES
                                                                             (2001, 'Điểm Thu gom Pin Quận 1', 'BATTERY', '123 Đường Nguyễn Huệ, Quận 1', ST_GeomFromText('POINT(106.701 10.773)')),
                                                                             (2002, 'Điểm Thu gom Đồ điện tử Thủ Đức', 'E_WASTE', '300 Đường Võ Văn Ngân, Thủ Đức', ST_GeomFromText('POINT(106.760 10.850)')),
                                                                             (2003, 'Thùng Thu gom Vải Vóc', 'TEXTILE', 'Công viên Hoàng Văn Thụ', ST_GeomFromText('POINT(106.670 10.795)'));
+INSERT INTO collection_points (name, type, address, location) VALUES
+                                                                  ('Trạm Y Tế Phường 5 - Thu gom thuốc', 'MEDICAL', '10 Nguyễn Văn Nghi, Gò Vấp', ST_GeomFromText('POINT(106.688 10.820)')),
+                                                                  ('Đại lý Phế Liệu Chú Bảy', 'DEALER', '50 Hẻm 123 Quang Trung', ST_GeomFromText('POINT(106.660 10.830)')),
+                                                                  ('Cửa hàng Hóa chất An Toàn', 'CHEMICAL', 'KCN Tân Bình', ST_GeomFromText('POINT(106.620 10.810)')),
+                                                                  ('Anh Ba - Thu mua đồ điện cũ', 'INDIVIDUAL', 'Liên hệ: 0909xxxxxx', ST_GeomFromText('POINT(106.700 10.780)'));
 
 -- Chèn dữ liệu mẫu cho Bảng 5: collection_requests (Yêu cầu Thu gom Chuyên biệt)
 INSERT INTO collection_requests (request_id, user_id, item_type, status, pickup_date, address, location) VALUES

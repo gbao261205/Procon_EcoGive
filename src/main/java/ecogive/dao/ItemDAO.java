@@ -84,6 +84,45 @@ public class ItemDAO {
         }
         return list;
     }
+    // Hàm 1: Lấy đồ mình tặng
+    public List<Item> findItemsByGiverId(long giverId) {
+        List<Item> list = new ArrayList<>();
+        // SỬA SQL: Phải dùng ST_X, ST_Y và đặt tên giả (alias) là longitude, latitude
+        String sql = "SELECT item_id, giver_id, title, description, category_id, image_url, status, post_date, " +
+                "ST_X(location) AS longitude, ST_Y(location) AS latitude " +
+                "FROM items WHERE giver_id = ? ORDER BY post_date DESC";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, giverId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(mapRow(rs)); // Lúc này mapRow mới đọc được cột "longitude"
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return list;
+    }
+
+    // Hàm 2: Lấy đồ mình nhận (JOIN bảng transactions)
+    public List<Item> findItemsByReceiverId(long receiverId) {
+        List<Item> list = new ArrayList<>();
+        // SỬA SQL TƯƠNG TỰ
+        String sql = "SELECT i.item_id, i.giver_id, i.title, i.description, i.category_id, i.image_url, i.status, i.post_date, " +
+                "ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude " +
+                "FROM items i " +
+                "JOIN transactions t ON i.item_id = t.item_id " +
+                "WHERE t.receiver_id = ? ORDER BY t.exchange_date DESC";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, receiverId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(mapRow(rs));
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        return list;
+    }
     public boolean insert(Item item) throws SQLException {
         String sql = "INSERT INTO items (giver_id, title, description, category_id, image_url, status, post_date, location) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ST_GeomFromText(?))";

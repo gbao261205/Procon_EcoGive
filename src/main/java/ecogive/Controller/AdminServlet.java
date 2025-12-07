@@ -1,15 +1,12 @@
 package ecogive.Controller;
 
-import ecogive.Model.Category;
-import ecogive.Model.CollectionPoint;
+import ecogive.Model.*;
 import ecogive.dao.*;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import ecogive.Model.Item;
-import ecogive.Model.ItemStatus;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -24,6 +21,7 @@ public class AdminServlet extends HttpServlet {
     private final UserDAO userDAO = new UserDAO();
     private final ItemDAO itemDAO = new ItemDAO();
     private final CollectionPointDAO stationDAO = new CollectionPointDAO();
+
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String action = req.getParameter("action");
@@ -39,6 +37,9 @@ public class AdminServlet extends HttpServlet {
                     break;
                 case "users":
                     listUsers(req, resp);
+                    break;
+                case "delete-user":
+                    deleteUser(req, resp);
                     break;
                 case "delete-category":
                     deleteCategory(req, resp);
@@ -71,15 +72,138 @@ public class AdminServlet extends HttpServlet {
             if ("add-category".equals(action)) {
                 addCategory(req, resp);
             }
+            else if ("update-category".equals(action)) {
+                updateCategory(req, resp);
+            }
+            else if ("add-user".equals(action)) {
+                addUser(req, resp);
+            }
+            else if ("update-user".equals(action)) {
+                updateUser(req, resp);
+            }
             else if ("delete-station".equals(action)) {
                 deleteStation(req, resp);
             }
+            else if ("add-station".equals(action)) {
+                addStation(req, resp);
+            }
+            else if ("update-station".equals(action)) {
+                updateStation(req, resp);
+            }
         } catch (SQLException e) {
             throw new ServletException(e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
+
+// --- QUẢN LÝ USER ---
+
+    private void addUser(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        try {
+            String username = req.getParameter("username");
+            String email = req.getParameter("email");
+            String password = req.getParameter("password"); // Nên hash password trước khi lưu (BCrypt)
+            String role = req.getParameter("role");
+
+            User u = new User();
+            u.setUsername(username);
+            u.setEmail(email);
+
+            // Trong thực tế, bạn nên dùng BCrypt để hash password:
+            // u.setPasswordHash(BCrypt.hashpw(password, BCrypt.gensalt()));
+            // Ở đây demo lưu text thuần (không khuyến khích) hoặc hash đơn giản
+            u.setPasswordHash(password);
+
+            u.setRole(role);
+
+            userDAO.insert(u);
+            resp.sendRedirect(req.getContextPath() + "/admin?action=users");
+        } catch (Exception e) {
+            e.printStackTrace();
+            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Lỗi thêm user: " + e.getMessage());
+        }
+    }
+
+    // Trong AdminServlet.java -> hàm updateUser
+
+    private void updateUser(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        try {
+            long id = Long.parseLong(req.getParameter("user_id"));
+            String username = req.getParameter("username");
+            String email = req.getParameter("email");
+            String password = req.getParameter("password");
+            String role = req.getParameter("role");
+
+            User oldUser = userDAO.findById(id);
+            if (oldUser != null) {
+                oldUser.setUsername(username);
+                oldUser.setEmail(email);
+                oldUser.setRole(role);
+
+                // KHÔNG setEcoPoints và KHÔNG setReputationScore ở đây
+                // Vì Admin không có quyền sửa 2 thông số này
+
+                if (password != null && !password.trim().isEmpty()) {
+                    oldUser.setPasswordHash(password);
+                }
+
+                userDAO.update(oldUser);
+            }
+            resp.sendRedirect(req.getContextPath() + "/admin?action=users");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void deleteUser(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        try {
+            long id = Long.parseLong(req.getParameter("id"));
+            userDAO.delete(id);
+            resp.sendRedirect(req.getContextPath() + "/admin?action=users");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    private void addStation(HttpServletRequest req, HttpServletResponse resp) throws IOException, SQLException {
+        String name = req.getParameter("name");
+        String typeStr = req.getParameter("type"); // Lấy chuỗi từ form
+        String address = req.getParameter("address");
+        double lat = Double.parseDouble(req.getParameter("latitude"));
+        double lng = Double.parseDouble(req.getParameter("longitude"));
+
+        // Chuyển đổi String sang Enum
+        CollectionPointType type = CollectionPointType.valueOf(typeStr);
+
+        // Sử dụng Constructor tiện ích đã tạo trong Model
+        CollectionPoint p = new CollectionPoint(name, type, address, lat, lng);
+
+        stationDAO.insert(p);
+        resp.sendRedirect(req.getContextPath() + "/admin?action=stations");
+    }
+
+    private void updateStation(HttpServletRequest req, HttpServletResponse resp) throws IOException, SQLException {
+        long id = Long.parseLong(req.getParameter("id"));
+        String name = req.getParameter("name");
+        String typeStr = req.getParameter("type");
+        String address = req.getParameter("address");
+        double lat = Double.parseDouble(req.getParameter("latitude"));
+        double lng = Double.parseDouble(req.getParameter("longitude"));
+
+        // Chuyển đổi String sang Enum
+        CollectionPointType type = CollectionPointType.valueOf(typeStr);
+
+        // Tạo đối tượng và set ID
+        CollectionPoint p = new CollectionPoint(name, type, address, lat, lng);
+        p.setPointId(id);
+
+        stationDAO.update(p); // Gọi hàm update trong DAO (cần đảm bảo DAO đã có hàm này)
+        resp.sendRedirect(req.getContextPath() + "/admin?action=stations");
+    }
+
+    // --- CÁC HÀM KHÁC GIỮ NGUYÊN ---
+
     private void showDashboard(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, SQLException {
-        // Lấy số liệu từ DB thật
         req.setAttribute("totalUsers", dashboardDAO.countTotalUsers());
         req.setAttribute("totalItems", dashboardDAO.countTotalItems());
         req.setAttribute("pendingItems", dashboardDAO.countPendingItems());
@@ -97,6 +221,7 @@ public class AdminServlet extends HttpServlet {
         req.setAttribute("users", userDAO.findAll());
         req.getRequestDispatcher("/WEB-INF/views/admin/users.jsp").forward(req, resp);
     }
+
     private void addCategory(HttpServletRequest req, HttpServletResponse resp) throws SQLException, IOException {
         String name = req.getParameter("name");
         String pointsStr = req.getParameter("fixed_points");
@@ -106,11 +231,21 @@ public class AdminServlet extends HttpServlet {
         c.setFixedPoints(new BigDecimal(pointsStr));
 
         categoryDAO.insert(c);
-
-        // Reload lại trang danh mục
         resp.sendRedirect(req.getContextPath() + "/admin?action=categories");
     }
+    private void updateCategory(HttpServletRequest req, HttpServletResponse resp) throws Exception {
+        int id = Integer.parseInt(req.getParameter("id"));
+        String name = req.getParameter("name");
+        String pointsStr = req.getParameter("fixed_points");
 
+        Category c = new Category();
+        c.setCategoryId(id);
+        c.setName(name);
+        c.setFixedPoints(new BigDecimal(pointsStr));
+
+        categoryDAO.update(c);
+        resp.sendRedirect(req.getContextPath() + "/admin?action=categories");
+    }
     private void listStations(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, SQLException {
         List<CollectionPoint> list = stationDAO.findAll();
         req.setAttribute("stations", list);
@@ -122,15 +257,25 @@ public class AdminServlet extends HttpServlet {
         stationDAO.delete(id);
         resp.sendRedirect(req.getContextPath() + "/admin?action=stations");
     }
+
     private void deleteCategory(HttpServletRequest req, HttpServletResponse resp) throws SQLException, IOException {
         int id = Integer.parseInt(req.getParameter("id"));
         categoryDAO.delete(id);
         resp.sendRedirect(req.getContextPath() + "/admin?action=categories");
     }
+
     private void listItems(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, SQLException {
-        // Bạn có thể viết thêm hàm findAll() trong ItemDAO để lấy cả item PENDING và AVAILABLE
-        // Tạm thời dùng findAllAvailable() hoặc viết hàm mới lấy tất cả để Admin soi
-        List<Item> items = itemDAO.findAll(); // Cần đảm bảo ItemDAO có hàm này trả về tất cả item
+        String statusStr = req.getParameter("status");
+        List<Item> items;
+
+        if (statusStr != null && !statusStr.isEmpty()) {
+            items = itemDAO.findAll().stream()
+                    .filter(i -> i.getStatus().name().equals(statusStr))
+                    .toList();
+        } else {
+            items = itemDAO.findAll();
+        }
+
         req.setAttribute("items", items);
         req.getRequestDispatcher("/WEB-INF/views/admin/items.jsp").forward(req, resp);
     }
