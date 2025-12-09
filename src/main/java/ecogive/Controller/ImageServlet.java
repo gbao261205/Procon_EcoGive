@@ -23,7 +23,6 @@ public class ImageServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
-        // Lấy đường dẫn file từ query parameter
         String imagePath = req.getParameter("path");
 
         System.out.println("=== IMAGE SERVLET DEBUG ===");

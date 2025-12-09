@@ -13,24 +13,50 @@ public class DatabaseConnection {
 
     static {
         try {
-            // Load .env file from the project root.
-            // Dotenv will automatically search for it.
-            dotenv = Dotenv.load();
+            // Print working directory for diagnostics (helps locate .env at runtime)
+            String userDir = System.getProperty("user.dir");
+            System.out.println("[DatabaseConnection] user.dir=" + userDir);
 
-            System.out.println("Attempting to load database configuration from .env file...");
+            // Try to load .env if present, but don't fail if missing - we'll fallback to other sources
+            dotenv = Dotenv.configure().ignoreIfMissing().load();
+            System.out.println("[DatabaseConnection] Attempting to load database configuration from .env (if present)...");
 
-            url = dotenv.get("DB_URL");
-            username = dotenv.get("DB_USERNAME");
-            password = dotenv.get("DB_PASSWORD");
-            String driver = dotenv.get("DB_DRIVER");
+            // First try dotenv values
+            url = (dotenv != null) ? dotenv.get("DB_URL") : null;
+            username = (dotenv != null) ? dotenv.get("DB_USERNAME") : null;
+            password = (dotenv != null) ? dotenv.get("DB_PASSWORD") : null;
+            String driver = (dotenv != null) ? dotenv.get("DB_DRIVER") : null;
+
+            // If any required value is missing, fallback to OS environment variables
+            if (url == null) url = System.getenv("DB_URL");
+            if (username == null) username = System.getenv("DB_USERNAME");
+            if (password == null) password = System.getenv("DB_PASSWORD");
+            if (driver == null) driver = System.getenv("DB_DRIVER");
+
+            // Also try common Tomcat system property / env (useful when running under Tomcat)
+            if (url == null) {
+                String catalinaBase = System.getProperty("catalina.base");
+                if (catalinaBase == null) catalinaBase = System.getenv("CATALINA_BASE");
+                if (catalinaBase != null) {
+                    java.io.File f = new java.io.File(catalinaBase, ".env");
+                    if (f.exists()) {
+                        System.out.println("[DatabaseConnection] Found .env under catalina.base: " + f.getAbsolutePath());
+                        Dotenv alt = Dotenv.configure().directory(f.getParent()).filename(f.getName()).load();
+                        url = (url == null) ? alt.get("DB_URL") : url;
+                        username = (username == null) ? alt.get("DB_USERNAME") : username;
+                        password = (password == null) ? alt.get("DB_PASSWORD") : password;
+                        driver = (driver == null) ? alt.get("DB_DRIVER") : driver;
+                    }
+                }
+            }
 
             // --- Diagnostic Logging ---
-            System.out.println("DB_URL: " + url);
-            System.out.println("DB_USERNAME: " + username);
-            System.out.println("DB_DRIVER: " + driver);
+            System.out.println("[DatabaseConnection] DB_URL: " + url);
+            System.out.println("[DatabaseConnection] DB_USERNAME: " + username);
+            System.out.println("[DatabaseConnection] DB_DRIVER: " + (driver != null ? driver : "(null)"));
 
             if (url == null || username == null || password == null || driver == null) {
-                System.err.println("ERROR: One or more required database variables are missing. Check your .env file and its location.");
+                System.err.println("ERROR: One or more required database variables are missing. Check your .env file, environment vars, or Tomcat config.");
                 throw new Exception("Missing database configuration.");
             }
 
