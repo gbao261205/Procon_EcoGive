@@ -8,159 +8,163 @@ CREATE DATABASE EcoGive
 
 USE EcoGive;
 
--- Cấu hình Database: Sử dụng engine InnoDB với hỗ trợ SPATIAL INDEX
--- 1. Bảng Người dùng (Users) 
+-- ===========================
+-- 2. TẠO BẢNG
+-- ===========================
+
+-- Bảng 1: Người dùng (Users)
 CREATE TABLE users (
-                       user_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-                       username VARCHAR(50) NOT NULL UNIQUE,
-                       email VARCHAR(100) NOT NULL UNIQUE,
-                       password_hash VARCHAR(255) NOT NULL,
-                       eco_points DECIMAL(10, 2) DEFAULT 0.00,
-                       reputation_score DECIMAL(3, 2) DEFAULT 1.00, -- Điểm đánh giá tin cậy (1.00 - 5.00)
-                       join_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                       role ENUM('USER', 'ADMIN') NOT NULL DEFAULT 'USER'
+    user_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    eco_points DECIMAL(10, 2) DEFAULT 0.00,
+    reputation_score DECIMAL(3, 2) DEFAULT 1.00,
+    join_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    role ENUM('USER', 'ADMIN', 'COLLECTOR_COMPANY') NOT NULL DEFAULT 'USER',
+    phone_number VARCHAR(20) NULL,
+    address TEXT NULL
 );
 
--- 2. Bảng Danh mục (Categories)
--- Phân loại vật phẩm và định nghĩa ĐIỂM CỐ ĐỊNH theo danh mục
+-- Bảng 2: Danh mục (Categories) - ĐÃ KHÔI PHỤC
 CREATE TABLE categories (
-                            category_id INT AUTO_INCREMENT PRIMARY KEY,
-                            name VARCHAR(100) NOT NULL UNIQUE, -- Ví dụ: Nội thất, Quần áo, Thiết bị điện tử
-                            fixed_points DECIMAL(5, 2) NOT NULL -- Điểm EcoPoints CỐ ĐỊNH được thưởng (Ví dụ: Nội thất = 10 điểm, Quần áo = 3 điểm)
+    category_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    fixed_points DECIMAL(5, 2) NOT NULL DEFAULT 0.00
 );
 
--- 3. Bảng Vật phẩm (Items)
+-- Bảng 3: Vật phẩm (Items)
 CREATE TABLE items (
-                       item_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-                       giver_id BIGINT NOT NULL,
-                       title VARCHAR(255) NOT NULL,
-                       description TEXT,
-                       category_id INT NOT NULL,
-                       image_url VARCHAR(255) NOT NULL,
-                       status ENUM('AVAILABLE', 'PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED') DEFAULT 'AVAILABLE',
-                       post_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                       location POINT NOT NULL, -- Kiểu dữ liệu POINT cho GIS
-                       FOREIGN KEY (giver_id) REFERENCES users(user_id),
-                       FOREIGN KEY (category_id) REFERENCES categories(category_id)
+    item_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    giver_id BIGINT NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    category_id INT, -- Khóa ngoại trỏ đến categories
+    image_url VARCHAR(255) NOT NULL,
+    status ENUM('AVAILABLE', 'PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED') DEFAULT 'AVAILABLE',
+    post_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    location POINT NOT NULL,
+    eco_points DECIMAL(10, 2) DEFAULT 0.00, -- Điểm cụ thể cho item này (có thể khác fixed_points)
+    FOREIGN KEY (giver_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (category_id) REFERENCES categories(category_id) ON DELETE SET NULL
 );
-CREATE TABLE reviews (
-                         review_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-                         transaction_id BIGINT NOT NULL,
-                         reviewer_id BIGINT NOT NULL,
-                         rated_user_id BIGINT NOT NULL,
-                         rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
-                         comment TEXT,
-                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-                         FOREIGN KEY (transaction_id) REFERENCES transactions(transaction_id),
-                         FOREIGN KEY (reviewer_id) REFERENCES users(user_id),
-                         FOREIGN KEY (rated_user_id) REFERENCES users(user_id),
-
-                         UNIQUE INDEX idx_unique_transaction (transaction_id),
-                         INDEX idx_rated_user (rated_user_id)
-);
--- TẠO SPATIAL INDEX
 CREATE SPATIAL INDEX sp_index_location ON items (location);
--- 4. Bảng Điểm Thu gom Cố định (Collection Points) - KHÔNG ĐỔI
+
+-- Bảng 4: Điểm Thu gom (Collection Points)
 CREATE TABLE collection_points (
-                                   point_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-                                   name VARCHAR(255) NOT NULL,
-                                   type ENUM('E_WASTE', 'BATTERY', 'TEXTILE', 'MEDICAL', 'CHEMICAL', 'DEALER', 'INDIVIDUAL') NOT NULL,
-                                   address TEXT,
-                                   location POINT NOT NULL,
-                                   UNIQUE INDEX unique_point_name (name)
+    point_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    type ENUM('E_WASTE', 'BATTERY', 'TEXTILE', 'MEDICAL', 'CHEMICAL', 'DEALER', 'INDIVIDUAL') NOT NULL,
+    address TEXT,
+    location POINT NOT NULL,
+    owner_id BIGINT NULL,
+    FOREIGN KEY (owner_id) REFERENCES users(user_id) ON DELETE SET NULL
 );
+CREATE SPATIAL INDEX sp_index_cp_location ON collection_points (location);
 
--- 5. Bảng Yêu cầu Thu gom Chuyên biệt (Collection Requests) - KHÔNG ĐỔI
-CREATE TABLE collection_requests (
-                                     request_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-                                     user_id BIGINT NOT NULL,
-                                     item_type VARCHAR(100) NOT NULL, -- Ví dụ: Pin cũ, Quần áo nát
-                                     status ENUM('SCHEDULED', 'COMPLETED', 'CANCELLED') DEFAULT 'SCHEDULED',
-                                     pickup_date TIMESTAMP NOT NULL,
-                                     address TEXT,
-                                     location POINT NOT NULL, -- Vị trí lấy hàng chính xác
-                                     FOREIGN KEY (user_id) REFERENCES users(user_id)
-);
--- 6. Bảng Giao dịch (Transactions) - KHÔNG ĐỔI
+-- Bảng 5: Giao dịch (Transactions)
 CREATE TABLE transactions (
-                              transaction_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-                              item_id BIGINT NOT NULL,
-                              receiver_id BIGINT NOT NULL,
-                              exchange_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                              status ENUM('CONFIRMED', 'COMPLETED', 'CANCELED') DEFAULT 'CONFIRMED',
-                              FOREIGN KEY (item_id) REFERENCES items(item_id),
-                              FOREIGN KEY (receiver_id) REFERENCES users(user_id),
-    -- Index phụ đ
-                              INDEX idx_receiver_id (receiver_id)
+    transaction_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    item_id BIGINT NOT NULL,
+    receiver_id BIGINT NOT NULL,
+    exchange_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status ENUM('CONFIRMED', 'COMPLETED', 'CANCELED') DEFAULT 'CONFIRMED',
+    FOREIGN KEY (item_id) REFERENCES items(item_id) ON DELETE CASCADE,
+    FOREIGN KEY (receiver_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
-CREATE TABLE messages (
-                          message_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-                          sender_id BIGINT NOT NULL,
-                          receiver_id BIGINT NOT NULL,
-                          content TEXT CHARACTER SET utf8mb4 NOT NULL,
-                          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                          is_read BOOLEAN DEFAULT FALSE,
-                          FOREIGN KEY (sender_id) REFERENCES users(user_id),
-                          FOREIGN KEY (receiver_id) REFERENCES users(user_id)
-);
+
+-- Bảng 6: Đánh giá (Reviews)
 CREATE TABLE reviews (
-                         review_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-                         transaction_id BIGINT NOT NULL,
-                         reviewer_id BIGINT NOT NULL,
-                         rated_user_id BIGINT NOT NULL,
-                         rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
-                         comment TEXT,
-                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-                         FOREIGN KEY (transaction_id) REFERENCES transactions(transaction_id),
-                         FOREIGN KEY (reviewer_id) REFERENCES users(user_id),
-                         FOREIGN KEY (rated_user_id) REFERENCES users(user_id),
-
-                         UNIQUE INDEX idx_unique_transaction (transaction_id),
-                         INDEX idx_rated_user (rated_user_id)
+    review_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    transaction_id BIGINT NOT NULL,
+    reviewer_id BIGINT NOT NULL,
+    rated_user_id BIGINT NOT NULL,
+    rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    comment TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (transaction_id) REFERENCES transactions(transaction_id) ON DELETE CASCADE,
+    FOREIGN KEY (reviewer_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (rated_user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    UNIQUE INDEX idx_unique_transaction (transaction_id)
 );
--- Chèn dữ liệu mẫu cho Bảng 1: users (Người dùng)
-INSERT INTO users (user_id, username, email, password_hash, eco_points, reputation_score, role) VALUES
-                                                                                                    (101, 'test', 'test@example.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 150.50, 4.80, 'USER'),
-                                                                                                    (102, 'tranthuy', 'thuy@example.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 85.00, 4.50, 'USER'),
-                                                                                                    (103, 'leminhtam', 'tam@example.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 30.75, 5.00, 'USER'),
-                                                                                                    (104, 'admin', 'admin@example.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 0.00, 3.00, 'ADMIN');
--- Chèn dữ liệu mẫu cho Bảng 2: categories (Danh mục)
-INSERT INTO categories (category_id, name, fixed_points) VALUES
-                                                             (1, 'Nội thất, Bàn ghế', 10.00), -- Điểm cố định cao
-                                                             (2, 'Quần áo, Giày dép', 3.50),
-                                                             (3, 'Thiết bị điện tử nhỏ', 7.50),
-                                                             (4, 'Sách, Văn phòng phẩm', 1.00);
 
--- Chèn dữ liệu mẫu cho Bảng 3: items (Vật phẩm)
--- Sử dụng ST_GeomFromText('POINT(Kinh độ Vĩ độ)')
-INSERT INTO items (item_id, giver_id, title, description, category_id, image_url, status, location) VALUES
-                                                                                                        (1001, 101, 'Ghế làm việc xoay', 'Ghế còn mới 90%, cần thanh lý gấp.', 1, 'https://ecogive-storage.com/chair-001.jpg', 'AVAILABLE', ST_GeomFromText('POINT(106.698 10.771)')),
-                                                                                                        (1002, 102, 'Đống quần áo trẻ em', 'Size 3-5 tuổi, còn rất sạch sẽ.', 2, 'https://ecogive-storage.com/clothes-002.jpg', 'AVAILABLE', ST_GeomFromText('POINT(106.695 10.775)')),
-                                                                                                        (1003, 101, 'Bàn học sinh gỗ ép', 'Kích thước nhỏ, chân hơi xước.', 1, 'https://ecogive-storage.com/desk-003.jpg', 'AVAILABLE', ST_GeomFromText('POINT(106.690 10.768)')),
-                                                                                                        (1004, 103, 'Quạt điện mini (hỏng)', 'Đã hỏng motor, phù hợp cho ai muốn lấy linh kiện.', 3, 'https://ecogive-storage.com/fan-004.jpg', 'PENDING', ST_GeomFromText('POINT(106.705 10.772)')),
-                                                                                                        (1005, 102, 'Sách giáo trình cũ', 'Sách kinh tế, còn nguyên vẹn.', 4, 'https://ecogive-storage.com/book-005.jpg', 'AVAILABLE', ST_GeomFromText('POINT(106.700 10.779)'));
+-- Bảng 7: Tin nhắn (Messages)
+CREATE TABLE messages (
+    message_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    sender_id BIGINT NOT NULL,
+    receiver_id BIGINT NOT NULL,
+    content TEXT CHARACTER SET utf8mb4 NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_read BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (sender_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (receiver_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
 
--- Chèn dữ liệu mẫu cho Bảng 4: collection_points (Điểm Thu gom Cố định)
-INSERT INTO collection_points (point_id, name, type, address, location) VALUES
-                                                                            (2001, 'Điểm Thu gom Pin Quận 1', 'BATTERY', '123 Đường Nguyễn Huệ, Quận 1', ST_GeomFromText('POINT(106.701 10.773)')),
-                                                                            (2002, 'Điểm Thu gom Đồ điện tử Thủ Đức', 'E_WASTE', '300 Đường Võ Văn Ngân, Thủ Đức', ST_GeomFromText('POINT(106.760 10.850)')),
-                                                                            (2003, 'Thùng Thu gom Vải Vóc', 'TEXTILE', 'Công viên Hoàng Văn Thụ', ST_GeomFromText('POINT(106.670 10.795)'));
-INSERT INTO collection_points (name, type, address, location) VALUES
-                                                                  ('Trạm Y Tế Phường 5 - Thu gom thuốc', 'MEDICAL', '10 Nguyễn Văn Nghi, Gò Vấp', ST_GeomFromText('POINT(106.688 10.820)')),
-                                                                  ('Đại lý Phế Liệu Chú Bảy', 'DEALER', '50 Hẻm 123 Quang Trung', ST_GeomFromText('POINT(106.660 10.830)')),
-                                                                  ('Cửa hàng Hóa chất An Toàn', 'CHEMICAL', 'KCN Tân Bình', ST_GeomFromText('POINT(106.620 10.810)')),
-                                                                  ('Anh Ba - Thu mua đồ điện cũ', 'INDIVIDUAL', 'Liên hệ: 0909xxxxxx', ST_GeomFromText('POINT(106.700 10.780)'));
+-- Bảng 8: Yêu cầu Thu gom (Collection Requests)
+CREATE TABLE collection_requests (
+    request_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    item_type VARCHAR(100) NOT NULL,
+    status ENUM('SCHEDULED', 'COMPLETED', 'CANCELLED') DEFAULT 'SCHEDULED',
+    pickup_date TIMESTAMP NOT NULL,
+    address TEXT,
+    location POINT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
 
--- Chèn dữ liệu mẫu cho Bảng 5: collection_requests (Yêu cầu Thu gom Chuyên biệt)
-INSERT INTO collection_requests (request_id, user_id, item_type, status, pickup_date, address, location) VALUES
-                                                                                                             (3001, 101, 'Pin AA/AAA', 'SCHEDULED', '2025-12-01 10:00:00', '15 đường Đề Thám, Q1', ST_GeomFromText('POINT(106.705 10.771)')),
-                                                                                                             (3002, 103, 'Quần áo nát', 'COMPLETED', '2025-11-20 14:30:00', '290 đường Hai Bà Trưng, Q3', ST_GeomFromText('POINT(106.690 10.785)')),
-                                                                                                             (3003, 102, 'Máy tính bảng cũ hỏng', 'SCHEDULED', '2025-12-03 09:00:00', '35 đường Cộng Hòa, Tân Bình', ST_GeomFromText('POINT(106.660 10.800)'));
+-- ===========================
+-- 3. CHÈN DỮ LIỆU MẪU (SEED DATA)
+-- ===========================
 
--- Chèn dữ liệu mẫu cho Bảng 6: transactions (Giao dịch)
-INSERT INTO transactions (transaction_id, item_id, receiver_id, exchange_date, status) VALUES
-                                                                                           (4001, 1004, 103, '2025-11-26 11:00:00', 'COMPLETED'), -- Fan đã được trao cho Tam
-                                                                                           (4002, 1001, 104, '2025-11-27 15:00:00', 'CONFIRMED'), -- Ghế đang chờ xác nhận
-                                                                                           (4003, 1005, 101, '2025-11-27 18:00:00', 'COMPLETED'); -- Sách đã được trao cho Hải
+-- 3.1 Users
+INSERT INTO users (username, email, password_hash, role, phone_number, address, eco_points, reputation_score) VALUES
+('admin', 'admin@ecogive.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 'ADMIN', '0900000001', 'HQ EcoGive, TP.HCM', 1000.00, 5.00),
+('greencorp', 'contact@greencorp.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 'COLLECTOR_COMPANY', '0900000002', 'KCN Tân Bình, TP.HCM', 500.00, 4.80),
+('recycle_vn', 'info@recyclevn.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 'COLLECTOR_COMPANY', '0900000003', 'Quận 7, TP.HCM', 300.00, 4.50),
+('nguyenvana', 'vana@gmail.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 'USER', '0912345678', 'Quận 1, TP.HCM', 50.00, 4.20),
+('tranthib', 'thib@gmail.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 'USER', '0912345679', 'Quận 3, TP.HCM', 120.00, 4.90),
+('lethic', 'thic@gmail.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 'USER', '0912345680', 'Quận 5, TP.HCM', 10.00, 3.50),
+('phamvand', 'vand@gmail.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 'USER', '0912345681', 'Quận 10, TP.HCM', 200.00, 5.00),
+('hoangthie', 'thie@gmail.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 'USER', '0912345682', 'Bình Thạnh, TP.HCM', 80.00, 4.00),
+('vothif', 'thif@gmail.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 'USER', '0912345683', 'Gò Vấp, TP.HCM', 0.00, 1.00),
+('dangvang', 'vang@gmail.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 'USER', '0912345684', 'Thủ Đức, TP.HCM', 30.00, 3.80);
+
+-- 3.2 Categories - ĐÃ KHÔI PHỤC
+INSERT INTO categories (name, fixed_points) VALUES
+('Nội thất, Bàn ghế', 10.00),
+('Quần áo, Giày dép', 3.50),
+('Thiết bị điện tử nhỏ', 7.50),
+('Sách, Văn phòng phẩm', 1.00),
+('Nhựa tái chế', 2.00);
+
+-- 3.3 Items
+INSERT INTO items (giver_id, title, description, image_url, status, location, eco_points, category_id) VALUES
+(4, 'Bàn học sinh cũ', 'Bàn gỗ ép, còn dùng tốt, hơi trầy xước.', 'https://via.placeholder.com/300?text=Ban+Hoc', 'AVAILABLE', ST_GeomFromText('POINT(106.698 10.771)'), 15.00, 1),
+(4, 'Sách giáo khoa lớp 12', 'Trọn bộ sách giáo khoa, tặng cho em nào cần.', 'https://via.placeholder.com/300?text=Sach+GK', 'AVAILABLE', ST_GeomFromText('POINT(106.698 10.771)'), 5.00, 4),
+(5, 'Quần áo trẻ em 5 tuổi', 'Đồ bé trai, khoảng 5kg quần áo.', 'https://via.placeholder.com/300?text=Quan+Ao', 'AVAILABLE', ST_GeomFromText('POINT(106.690 10.780)'), 10.00, 2),
+(5, 'Xe đạp mini', 'Xe đạp cho bé tập đi, bị hỏng phanh.', 'https://via.placeholder.com/300?text=Xe+Dap', 'PENDING', ST_GeomFromText('POINT(106.690 10.780)'), 20.00, 1),
+(6, 'Laptop Dell cũ hỏng', 'Hỏng main, bán xác hoặc tặng thợ.', 'https://via.placeholder.com/300?text=Laptop', 'AVAILABLE', ST_GeomFromText('POINT(106.660 10.750)'), 50.00, 3),
+(7, 'Tủ lạnh mini Sanyo', 'Vẫn chạy tốt, phù hợp sinh viên.', 'https://via.placeholder.com/300?text=Tu+Lanh', 'COMPLETED', ST_GeomFromText('POINT(106.670 10.760)'), 100.00, 3),
+(8, 'Giày thể thao size 42', 'Ít đi, còn mới 90%.', 'https://via.placeholder.com/300?text=Giay', 'AVAILABLE', ST_GeomFromText('POINT(106.710 10.800)'), 8.00, 2),
+(9, 'Chai nhựa rỗng (10kg)', 'Đã phân loại sạch sẽ.', 'https://via.placeholder.com/300?text=Chai+Nhua', 'AVAILABLE', ST_GeomFromText('POINT(106.680 10.820)'), 12.00, 5),
+(10, 'Ghế sofa đơn', 'Màu xám, nệm êm.', 'https://via.placeholder.com/300?text=Sofa', 'CONFIRMED', ST_GeomFromText('POINT(106.750 10.850)'), 30.00, 1),
+(4, 'Màn hình máy tính 19 inch', 'Bị sọc màn hình nhẹ.', 'https://via.placeholder.com/300?text=Man+Hinh', 'AVAILABLE', ST_GeomFromText('POINT(106.698 10.771)'), 15.00, 3);
+
+-- 3.4 Collection Points
+INSERT INTO collection_points (name, type, address, location, owner_id) VALUES
+('Trạm thu gom Pin Q1', 'BATTERY', '123 Nguyễn Huệ, Q1', ST_GeomFromText('POINT(106.700 10.770)'), 1),
+('Điểm thu gom rác điện tử GreenCorp', 'E_WASTE', 'KCN Tân Bình', ST_GeomFromText('POINT(106.620 10.810)'), 2),
+('Thùng quần áo từ thiện Q3', 'TEXTILE', 'Công viên Lê Văn Tám', ST_GeomFromText('POINT(106.695 10.785)'), 1),
+('Trạm tái chế RecycleVN Q7', 'DEALER', 'Nguyễn Văn Linh, Q7', ST_GeomFromText('POINT(106.720 10.730)'), 3),
+('Điểm thu hồi thuốc hết hạn', 'MEDICAL', 'Bệnh viện Quận 5', ST_GeomFromText('POINT(106.665 10.755)'), 1),
+('Cửa hàng thu mua phế liệu An Bình', 'INDIVIDUAL', 'Bình Thạnh', ST_GeomFromText('POINT(106.710 10.800)'), 2),
+('Trạm xử lý hóa chất', 'CHEMICAL', 'KCN Hiệp Phước', ST_GeomFromText('POINT(106.750 10.650)'), 3),
+('Điểm thu gom giấy vụn trường ĐH', 'DEALER', 'Thủ Đức (Làng ĐH)', ST_GeomFromText('POINT(106.800 10.870)'), 1),
+('Trạm thu gom pin cũ siêu thị', 'BATTERY', 'Siêu thị BigC Gò Vấp', ST_GeomFromText('POINT(106.680 10.830)'), 2),
+('Thùng thu gom quần áo cũ Q10', 'TEXTILE', 'Nhà văn hóa Q10', ST_GeomFromText('POINT(106.670 10.770)'), 3);
+
+-- 3.5 Transactions
+INSERT INTO transactions (item_id, receiver_id, exchange_date, status) VALUES
+(6, 4, '2023-10-25 10:00:00', 'COMPLETED'),
+(4, 8, '2023-10-26 14:00:00', 'CONFIRMED'),
+(9, 5, '2023-10-27 09:00:00', 'CONFIRMED');

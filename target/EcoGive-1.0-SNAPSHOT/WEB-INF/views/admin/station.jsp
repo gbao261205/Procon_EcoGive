@@ -33,6 +33,7 @@
                         <th class="px-6 py-4 border-b">Tên trạm</th>
                         <th class="px-6 py-4 border-b">Loại hình</th>
                         <th class="px-6 py-4 border-b">Địa chỉ</th>
+                        <th class="px-6 py-4 border-b">Chủ sở hữu</th>
                         <th class="px-6 py-4 border-b text-right">Hành động</th>
                     </tr>
                     </thead>
@@ -43,64 +44,27 @@
                             <td class="px-6 py-4 font-medium">${st.name}</td>
                             <td class="px-6 py-4">
                                 <c:choose>
-                                    <%-- 1. Pin cũ (Vàng) --%>
-                                    <c:when test="${st.type == 'BATTERY'}">
-        <span class="inline-flex items-center gap-1 bg-yellow-100 text-yellow-800 px-2.5 py-0.5 rounded-full text-xs font-bold border border-yellow-200">
-            🔋 Pin cũ
-        </span>
-                                    </c:when>
-
-                                    <%-- 2. Rác điện tử (Xanh dương) --%>
-                                    <c:when test="${st.type == 'E_WASTE'}">
-        <span class="inline-flex items-center gap-1 bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full text-xs font-bold border border-blue-200">
-            💻 Điện tử
-        </span>
-                                    </c:when>
-
-                                    <%-- 3. Quần áo/Vải (Tím) --%>
-                                    <c:when test="${st.type == 'TEXTILE'}">
-        <span class="inline-flex items-center gap-1 bg-purple-100 text-purple-800 px-2.5 py-0.5 rounded-full text-xs font-bold border border-purple-200">
-            👕 Quần áo
-        </span>
-                                    </c:when>
-
-                                    <%-- 4. Y tế/Thuốc (Đỏ) --%>
-                                    <c:when test="${st.type == 'MEDICAL'}">
-        <span class="inline-flex items-center gap-1 bg-red-100 text-red-800 px-2.5 py-0.5 rounded-full text-xs font-bold border border-red-200">
-            💊 Vật dụng Y tế
-        </span>
-                                    </c:when>
-
-                                    <%-- 5. Hóa chất (Cam) --%>
-                                    <c:when test="${st.type == 'CHEMICAL'}">
-        <span class="inline-flex items-center gap-1 bg-orange-100 text-orange-800 px-2.5 py-0.5 rounded-full text-xs font-bold border border-orange-200">
-            🧪 Hóa chất
-        </span>
-                                    </c:when>
-
-                                    <%-- 6. Đại lý/Vựa ve chai (Chàm - Indigo) --%>
-                                    <c:when test="${st.type == 'DEALER'}">
-        <span class="inline-flex items-center gap-1 bg-indigo-100 text-indigo-800 px-2.5 py-0.5 rounded-full text-xs font-bold border border-indigo-200">
-            🏪 Đại lý ve chai
-        </span>
-                                    </c:when>
-
-                                    <%-- 7. Cá nhân thu mua (Xanh Teal) --%>
-                                    <c:when test="${st.type == 'INDIVIDUAL'}">
-        <span class="inline-flex items-center gap-1 bg-teal-100 text-teal-800 px-2.5 py-0.5 rounded-full text-xs font-bold border border-teal-200">
-            👤 Vật dụng cá nhân
-        </span>
-                                    </c:when>
-
-                                    <%-- Mặc định (Xám) --%>
-                                    <c:otherwise>
-        <span class="inline-flex items-center gap-1 bg-gray-100 text-gray-800 px-2.5 py-0.5 rounded-full text-xs font-bold border border-gray-200">
-            ❓ Khác
-        </span>
-                                    </c:otherwise>
+                                    <c:when test="${st.type == 'BATTERY'}"><span class="inline-flex items-center gap-1 bg-yellow-100 text-yellow-800 px-2.5 py-0.5 rounded-full text-xs font-bold border border-yellow-200">🔋 Pin cũ</span></c:when>
+                                    <c:when test="${st.type == 'E_WASTE'}"><span class="inline-flex items-center gap-1 bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full text-xs font-bold border border-blue-200">💻 Điện tử</span></c:when>
+                                    <c:when test="${st.type == 'TEXTILE'}"><span class="inline-flex items-center gap-1 bg-purple-100 text-purple-800 px-2.5 py-0.5 rounded-full text-xs font-bold border border-purple-200">👕 Quần áo</span></c:when>
+                                    <c:when test="${st.type == 'MEDICAL'}"><span class="inline-flex items-center gap-1 bg-red-100 text-red-800 px-2.5 py-0.5 rounded-full text-xs font-bold border border-red-200">💊 Y tế</span></c:when>
+                                    <c:when test="${st.type == 'CHEMICAL'}"><span class="inline-flex items-center gap-1 bg-orange-100 text-orange-800 px-2.5 py-0.5 rounded-full text-xs font-bold border border-orange-200">🧪 Hóa chất</span></c:when>
+                                    <c:when test="${st.type == 'DEALER'}"><span class="inline-flex items-center gap-1 bg-indigo-100 text-indigo-800 px-2.5 py-0.5 rounded-full text-xs font-bold border border-indigo-200">🏪 Đại lý</span></c:when>
+                                    <c:when test="${st.type == 'INDIVIDUAL'}"><span class="inline-flex items-center gap-1 bg-teal-100 text-teal-800 px-2.5 py-0.5 rounded-full text-xs font-bold border border-teal-200">👤 Cá nhân</span></c:when>
+                                    <c:otherwise><span class="inline-flex items-center gap-1 bg-gray-100 text-gray-800 px-2.5 py-0.5 rounded-full text-xs font-bold border border-gray-200">❓ Khác</span></c:otherwise>
                                 </c:choose>
                             </td>
                             <td class="px-6 py-4 truncate max-w-xs" title="${st.address}">${st.address}</td>
+                            <td class="px-6 py-4">
+                                <c:choose>
+                                    <c:when test="${not empty st.ownerName}">
+                                        <span class="font-semibold text-gray-700">${st.ownerName}</span>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <span class="text-gray-500 italic">Công cộng</span>
+                                    </c:otherwise>
+                                </c:choose>
+                            </td>
                             <td class="px-6 py-4 text-right flex justify-end gap-2">
                                 <button onclick="openModal('${st.pointId}', '${st.name}', '${st.type}', '${st.address}', ${st.location.latitude}, ${st.location.longitude})"
                                         class="text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded border border-blue-200 font-medium text-xs transition">
@@ -180,7 +144,6 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
     let map, marker;
-    // Tọa độ mặc định (HCM)
     const defaultLat = 10.7769;
     const defaultLng = 106.7009;
 
@@ -188,10 +151,7 @@
         if (map) return;
         map = L.map('miniMap').setView([defaultLat, defaultLng], 13);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: 'OSM' }).addTo(map);
-
-        // Marker
         marker = L.marker([defaultLat, defaultLng], {draggable: true}).addTo(map);
-
         marker.on('dragend', function(e) {
             const pos = e.target.getLatLng();
             document.getElementById('lat').value = pos.lat;
@@ -199,41 +159,28 @@
         });
     }
 
-    // Mở Modal (Mode: Add hoặc Edit)
     function openModal(id, name, type, address, lat, lng) {
         document.getElementById('stationModal').classList.remove('hidden');
-
-        // Khởi tạo map sau khi modal hiện (để tránh lỗi size)
         setTimeout(() => {
             initMap();
-
             if (id) {
-                // --- CHẾ ĐỘ SỬA ---
                 document.getElementById('modalTitle').innerText = "Cập nhật Điểm tập kết";
                 document.getElementById('formAction').value = "update-station";
                 document.getElementById('stationId').value = id;
-
                 document.getElementById('name').value = name;
                 document.getElementById('type').value = type;
                 document.getElementById('address').value = address;
                 document.getElementById('lat').value = lat;
                 document.getElementById('lng').value = lng;
-
-                // Cập nhật vị trí marker
                 const newLatLng = new L.LatLng(lat, lng);
                 marker.setLatLng(newLatLng);
                 map.setView(newLatLng, 15);
             } else {
-                // --- CHẾ ĐỘ THÊM MỚI ---
                 document.getElementById('modalTitle').innerText = "Thêm Điểm tập kết";
                 document.getElementById('formAction').value = "add-station";
                 document.getElementById('stationId').value = "";
-
-                // Reset form
                 document.getElementById('name').value = "";
                 document.getElementById('address').value = "";
-
-                // Reset marker về mặc định
                 const defLatLng = new L.LatLng(defaultLat, defaultLng);
                 marker.setLatLng(defLatLng);
                 map.setView(defLatLng, 13);

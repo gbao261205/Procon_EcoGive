@@ -1,5 +1,6 @@
 package ecogive.Controller;
 
+import ecogive.Model.Role;
 import ecogive.Model.User;
 import ecogive.dao.UserDAO;
 import jakarta.servlet.ServletException;
@@ -69,7 +70,7 @@ public class AdminUserServlet extends HttpServlet {
         String username = request.getParameter("username");
         String email = request.getParameter("email");
         String plainPassword = request.getParameter("password");
-        String role = request.getParameter("role");
+        String roleStr = request.getParameter("role");
 
         String hashedPassword = BCrypt.hashpw(plainPassword, BCrypt.gensalt());
 
@@ -77,7 +78,15 @@ public class AdminUserServlet extends HttpServlet {
         newUser.setUsername(username);
         newUser.setEmail(email);
         newUser.setPasswordHash(hashedPassword);
-        newUser.setRole(role);
+        
+        // SỬA LỖI: Chuyển đổi String thành Enum Role
+        try {
+            newUser.setRole(Role.valueOf(roleStr.toUpperCase()));
+        } catch (IllegalArgumentException | NullPointerException e) {
+            // Nếu role không hợp lệ hoặc null, gán vai trò mặc định
+            newUser.setRole(Role.USER);
+        }
+        
         newUser.setEcoPoints(BigDecimal.ZERO);
         newUser.setReputationScore(BigDecimal.valueOf(1.00));
         newUser.setJoinDate(LocalDateTime.now());
@@ -93,21 +102,25 @@ public class AdminUserServlet extends HttpServlet {
         String username = request.getParameter("username");
         String email = request.getParameter("email");
         String plainPassword = request.getParameter("password");
-        String role = request.getParameter("role");
+        String roleStr = request.getParameter("role");
 
-        // Fetch the existing user
         User user = userDAO.findById(id);
         if (user == null) {
-            // Handle error: user not found
             response.sendRedirect(request.getContextPath() + "/admin/users");
             return;
         }
 
         user.setUsername(username);
         user.setEmail(email);
-        user.setRole(role);
 
-        // Only update password if a new one is provided
+        // SỬA LỖI: Chuyển đổi String thành Enum Role
+        try {
+            user.setRole(Role.valueOf(roleStr.toUpperCase()));
+        } catch (IllegalArgumentException | NullPointerException e) {
+            // Giữ nguyên vai trò cũ nếu giá trị mới không hợp lệ
+            // Hoặc có thể log lỗi
+        }
+
         if (plainPassword != null && !plainPassword.isEmpty()) {
             String hashedPassword = BCrypt.hashpw(plainPassword, BCrypt.gensalt());
             user.setPasswordHash(hashedPassword);

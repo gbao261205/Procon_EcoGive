@@ -1,5 +1,6 @@
 package ecogive.Model;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class Item {
@@ -13,13 +14,13 @@ public class Item {
     private LocalDateTime postDate;
     private GeoPoint location;
     private String giverName;
+    private BigDecimal ecoPoints; // Số điểm thưởng cho vật phẩm
 
     public Item() {
     }
 
-    public Item(long itemId, long giverId, String title, String description,
-                int categoryId, String imageUrl, ItemStatus status,
-                LocalDateTime postDate, GeoPoint location, String giverName) {
+    // Constructor đầy đủ
+    public Item(long itemId, long giverId, String title, String description, int categoryId, String imageUrl, ItemStatus status, LocalDateTime postDate, GeoPoint location, String giverName, BigDecimal ecoPoints) {
         this.itemId = itemId;
         this.giverId = giverId;
         this.title = title;
@@ -30,7 +31,10 @@ public class Item {
         this.postDate = postDate;
         this.location = location;
         this.giverName = giverName;
+        this.ecoPoints = ecoPoints;
     }
+
+    // Getters and Setters
     public String getGiverName() {
         return giverName;
     }
@@ -38,6 +42,7 @@ public class Item {
     public void setGiverName(String giverName) {
         this.giverName = giverName;
     }
+
     public long getItemId() {
         return itemId;
     }
@@ -108,5 +113,13 @@ public class Item {
 
     public void setLocation(GeoPoint location) {
         this.location = location;
+    }
+
+    public BigDecimal getEcoPoints() {
+        return ecoPoints;
+    }
+
+    public void setEcoPoints(BigDecimal ecoPoints) {
+        this.ecoPoints = ecoPoints;
     }
 }

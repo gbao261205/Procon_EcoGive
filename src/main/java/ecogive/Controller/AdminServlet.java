@@ -7,6 +7,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.mindrot.jbcrypt.BCrypt;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -97,86 +98,74 @@ public class AdminServlet extends HttpServlet {
         }
     }
 
-// --- QUẢN LÝ USER ---
+    private void addUser(HttpServletRequest req, HttpServletResponse resp) throws IOException, SQLException {
+        String username = req.getParameter("username");
+        String email = req.getParameter("email");
+        String password = req.getParameter("password");
+        String roleStr = req.getParameter("role");
 
-    private void addUser(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        User u = new User();
+        u.setUsername(username);
+        u.setEmail(email);
+        u.setPasswordHash(BCrypt.hashpw(password, BCrypt.gensalt()));
+
         try {
-            String username = req.getParameter("username");
-            String email = req.getParameter("email");
-            String password = req.getParameter("password"); // Nên hash password trước khi lưu (BCrypt)
-            String role = req.getParameter("role");
-
-            User u = new User();
-            u.setUsername(username);
-            u.setEmail(email);
-
-            // Trong thực tế, bạn nên dùng BCrypt để hash password:
-            // u.setPasswordHash(BCrypt.hashpw(password, BCrypt.gensalt()));
-            // Ở đây demo lưu text thuần (không khuyến khích) hoặc hash đơn giản
-            u.setPasswordHash(password);
-
-            u.setRole(role);
-
-            userDAO.insert(u);
-            resp.sendRedirect(req.getContextPath() + "/admin?action=users");
-        } catch (Exception e) {
-            e.printStackTrace();
-            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Lỗi thêm user: " + e.getMessage());
+            u.setRole(Role.valueOf(roleStr.toUpperCase()));
+        } catch (IllegalArgumentException | NullPointerException e) {
+            u.setRole(Role.USER); // Default to USER if role is invalid
         }
+
+        userDAO.insert(u);
+        resp.sendRedirect(req.getContextPath() + "/admin?action=users");
     }
 
-    // Trong AdminServlet.java -> hàm updateUser
+    private void updateUser(HttpServletRequest req, HttpServletResponse resp) throws IOException, SQLException {
+        long id = Long.parseLong(req.getParameter("user_id"));
+        String username = req.getParameter("username");
+        String email = req.getParameter("email");
+        String password = req.getParameter("password");
+        String roleStr = req.getParameter("role");
 
-    private void updateUser(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        try {
-            long id = Long.parseLong(req.getParameter("user_id"));
-            String username = req.getParameter("username");
-            String email = req.getParameter("email");
-            String password = req.getParameter("password");
-            String role = req.getParameter("role");
+        User oldUser = userDAO.findById(id);
+        if (oldUser != null) {
+            oldUser.setUsername(username);
+            oldUser.setEmail(email);
 
-            User oldUser = userDAO.findById(id);
-            if (oldUser != null) {
-                oldUser.setUsername(username);
-                oldUser.setEmail(email);
-                oldUser.setRole(role);
-
-                // KHÔNG setEcoPoints và KHÔNG setReputationScore ở đây
-                // Vì Admin không có quyền sửa 2 thông số này
-
-                if (password != null && !password.trim().isEmpty()) {
-                    oldUser.setPasswordHash(password);
-                }
-
-                userDAO.update(oldUser);
+            try {
+                oldUser.setRole(Role.valueOf(roleStr.toUpperCase()));
+            } catch (IllegalArgumentException | NullPointerException e) {
+                // Keep the old role if the new one is invalid
             }
-            resp.sendRedirect(req.getContextPath() + "/admin?action=users");
-        } catch (Exception e) {
-            e.printStackTrace();
+
+            if (password != null && !password.trim().isEmpty()) {
+                oldUser.setPasswordHash(BCrypt.hashpw(password, BCrypt.gensalt()));
+            }
+
+            userDAO.update(oldUser);
         }
+        resp.sendRedirect(req.getContextPath() + "/admin?action=users");
     }
 
-    private void deleteUser(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        try {
-            long id = Long.parseLong(req.getParameter("id"));
-            userDAO.delete(id);
-            resp.sendRedirect(req.getContextPath() + "/admin?action=users");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    private void deleteUser(HttpServletRequest req, HttpServletResponse resp) throws IOException, SQLException {
+        long id = Long.parseLong(req.getParameter("id"));
+        userDAO.delete(id);
+        resp.sendRedirect(req.getContextPath() + "/admin?action=users");
     }
+    
     private void addStation(HttpServletRequest req, HttpServletResponse resp) throws IOException, SQLException {
         String name = req.getParameter("name");
-        String typeStr = req.getParameter("type"); // Lấy chuỗi từ form
+        String typeStr = req.getParameter("type");
         String address = req.getParameter("address");
         double lat = Double.parseDouble(req.getParameter("latitude"));
         double lng = Double.parseDouble(req.getParameter("longitude"));
 
-        // Chuyển đổi String sang Enum
         CollectionPointType type = CollectionPointType.valueOf(typeStr);
-
-        // Sử dụng Constructor tiện ích đã tạo trong Model
-        CollectionPoint p = new CollectionPoint(name, type, address, lat, lng);
+        CollectionPoint p = new CollectionPoint();
+        p.setName(name);
+        p.setType(type);
+        p.setAddress(address);
+        p.setLocation(new GeoPoint(lng, lat));
+        // Note: owner_id is not set here, so it will be NULL (or default), indicating an admin-created point.
 
         stationDAO.insert(p);
         resp.sendRedirect(req.getContextPath() + "/admin?action=stations");
@@ -190,18 +179,17 @@ public class AdminServlet extends HttpServlet {
         double lat = Double.parseDouble(req.getParameter("latitude"));
         double lng = Double.parseDouble(req.getParameter("longitude"));
 
-        // Chuyển đổi String sang Enum
         CollectionPointType type = CollectionPointType.valueOf(typeStr);
-
-        // Tạo đối tượng và set ID
-        CollectionPoint p = new CollectionPoint(name, type, address, lat, lng);
+        CollectionPoint p = new CollectionPoint();
         p.setPointId(id);
+        p.setName(name);
+        p.setType(type);
+        p.setAddress(address);
+        p.setLocation(new GeoPoint(lng, lat));
 
-        stationDAO.update(p); // Gọi hàm update trong DAO (cần đảm bảo DAO đã có hàm này)
+        stationDAO.update(p);
         resp.sendRedirect(req.getContextPath() + "/admin?action=stations");
     }
-
-    // --- CÁC HÀM KHÁC GIỮ NGUYÊN ---
 
     private void showDashboard(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, SQLException {
         req.setAttribute("totalUsers", dashboardDAO.countTotalUsers());
@@ -233,6 +221,7 @@ public class AdminServlet extends HttpServlet {
         categoryDAO.insert(c);
         resp.sendRedirect(req.getContextPath() + "/admin?action=categories");
     }
+    
     private void updateCategory(HttpServletRequest req, HttpServletResponse resp) throws Exception {
         int id = Integer.parseInt(req.getParameter("id"));
         String name = req.getParameter("name");
@@ -246,6 +235,7 @@ public class AdminServlet extends HttpServlet {
         categoryDAO.update(c);
         resp.sendRedirect(req.getContextPath() + "/admin?action=categories");
     }
+    
     private void listStations(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, SQLException {
         List<CollectionPoint> list = stationDAO.findAll();
         req.setAttribute("stations", list);

@@ -6,6 +6,7 @@ import ecogive.Model.CollectionPoint;
 import ecogive.Model.CollectionPointType;
 import ecogive.Model.GeoPoint;
 import ecogive.Model.User;
+import ecogive.Model.Role;
 import ecogive.dao.CollectionPointDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -19,7 +20,7 @@ import java.io.IOException;
 @WebServlet("/api/create-collection-point")
 public class CreateCollectionPointServlet extends HttpServlet {
 
-    private final CollectionPointDAO stationDAO = new CollectionPointDAO();
+    private final CollectionPointDAO collectionPointDAO = new CollectionPointDAO();
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -29,43 +30,43 @@ public class CreateCollectionPointServlet extends HttpServlet {
         Gson gson = new Gson();
 
         try {
-            // 1. Check Admin
             HttpSession session = req.getSession(false);
             User currentUser = (session != null) ? (User) session.getAttribute("currentUser") : null;
 
-            if (currentUser == null || !"ADMIN".equals(currentUser.getRole())) { // Sửa lại logic check Role tùy theo Enum của bạn
+            // 1. Check Authorization (Admin or Collector Company)
+            if (currentUser == null || (currentUser.getRole() != Role.ADMIN && currentUser.getRole() != Role.COLLECTOR_COMPANY)) {
+                resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.addProperty("status", "error");
                 response.addProperty("message", "Không có quyền truy cập!");
                 resp.getWriter().write(gson.toJson(response));
                 return;
             }
 
-            // 2. Lấy dữ liệu
+            // 2. Get data
             String name = req.getParameter("name");
             String typeStr = req.getParameter("type");
             String address = req.getParameter("address");
             double lat = Double.parseDouble(req.getParameter("latitude"));
             double lng = Double.parseDouble(req.getParameter("longitude"));
 
-            // 3. Tạo Object Model
+            // 3. Create Model Object
             CollectionPoint cp = new CollectionPoint();
             cp.setName(name);
             cp.setAddress(address);
-
-            // Xử lý Enum Type
+            cp.setOwnerId(currentUser.getUserId()); // Set owner
+            
             try {
                 cp.setType(CollectionPointType.valueOf(typeStr));
             } catch (IllegalArgumentException e) {
-                cp.setType(CollectionPointType.E_WASTE); // Default nếu lỗi
+                cp.setType(CollectionPointType.E_WASTE); // Default
             }
 
-            // Xử lý GeoPoint
-            cp.setLocation(new GeoPoint(lng, lat)); // Lưu ý constructor GeoPoint(lng, lat) hay (lat, lng) tùy bạn định nghĩa
+            cp.setLocation(new GeoPoint(lng, lat));
 
-            // 4. Gọi DAO
-            if (stationDAO.insert(cp)) {
+            // 4. Call DAO
+            if (collectionPointDAO.insert(cp)) {
                 response.addProperty("status", "success");
-                response.addProperty("message", "Thêm trạm thành công!");
+                response.addProperty("message", "Thêm điểm thu gom thành công!");
             } else {
                 response.addProperty("status", "error");
                 response.addProperty("message", "Lỗi khi lưu vào Database.");
@@ -73,6 +74,7 @@ public class CreateCollectionPointServlet extends HttpServlet {
 
         } catch (Exception e) {
             e.printStackTrace();
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             response.addProperty("status", "error");
             response.addProperty("message", "Lỗi server: " + e.getMessage());
         }

@@ -1,5 +1,6 @@
 package ecogive.dao;
 
+import ecogive.Model.Role;
 import ecogive.Model.User;
 import ecogive.util.DatabaseConnection;
 
@@ -60,15 +61,15 @@ public class UserDAO {
     }
 
     public boolean insert(User user) throws SQLException {
-        String sql = "INSERT INTO users (username, email, password_hash, role, eco_points, reputation_score, join_date) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO users (username, email, password_hash, role, eco_points, reputation_score, join_date, phone_number, address) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             stmt.setString(1, user.getUsername());
             stmt.setString(2, user.getEmail());
             stmt.setString(3, user.getPasswordHash());
-            stmt.setString(4, user.getRole());
+            stmt.setString(4, user.getRole().name());
             stmt.setBigDecimal(5, user.getEcoPoints() != null ? user.getEcoPoints() : BigDecimal.ZERO);
             stmt.setBigDecimal(6, user.getReputationScore() != null ? user.getReputationScore() : BigDecimal.valueOf(1.00));
             if (user.getJoinDate() != null) {
@@ -76,6 +77,8 @@ public class UserDAO {
             } else {
                 stmt.setTimestamp(7, new Timestamp(System.currentTimeMillis()));
             }
+            stmt.setString(8, user.getPhoneNumber());
+            stmt.setString(9, user.getAddress());
 
             int affected = stmt.executeUpdate();
             if (affected > 0) {
@@ -92,11 +95,8 @@ public class UserDAO {
         return false;
     }
 
-    // Trong file UserDAO.java
-
     public boolean update(User user) throws SQLException {
-        // CHỈ CẬP NHẬT THÔNG TIN CƠ BẢN (Bỏ eco_points và reputation_score ra khỏi SQL update)
-        String sql = "UPDATE users SET username = ?, email = ?, password_hash = ?, role = ? WHERE user_id = ?";
+        String sql = "UPDATE users SET username = ?, email = ?, password_hash = ?, role = ?, phone_number = ?, address = ? WHERE user_id = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -104,11 +104,25 @@ public class UserDAO {
             stmt.setString(1, user.getUsername());
             stmt.setString(2, user.getEmail());
             stmt.setString(3, user.getPasswordHash());
-            stmt.setString(4, user.getRole());
-            stmt.setLong(5, user.getUserId());
+            stmt.setString(4, user.getRole().name());
+            stmt.setString(5, user.getPhoneNumber());
+            stmt.setString(6, user.getAddress());
+            stmt.setLong(7, user.getUserId());
 
             int affected = stmt.executeUpdate();
             return affected > 0;
+        } catch (Exception e) {
+            throw new SQLException(e);
+        }
+    }
+    
+    public boolean addEcoPoints(long userId, BigDecimal pointsToAdd) throws SQLException {
+        String sql = "UPDATE users SET eco_points = eco_points + ? WHERE user_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setBigDecimal(1, pointsToAdd);
+            stmt.setLong(2, userId);
+            return stmt.executeUpdate() > 0;
         } catch (Exception e) {
             throw new SQLException(e);
         }
@@ -134,7 +148,21 @@ public class UserDAO {
         u.setPasswordHash(rs.getString("password_hash"));
         u.setEcoPoints(rs.getBigDecimal("eco_points"));
         u.setReputationScore(rs.getBigDecimal("reputation_score"));
-        u.setRole(rs.getString("role"));
+        u.setPhoneNumber(rs.getString("phone_number"));
+        u.setAddress(rs.getString("address"));
+        
+        String roleStr = rs.getString("role");
+        if (roleStr != null && !roleStr.isEmpty()) {
+            try {
+                u.setRole(Role.valueOf(roleStr.toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                System.err.println("Invalid role value in database: " + roleStr);
+                u.setRole(Role.USER);
+            }
+        } else {
+            u.setRole(Role.USER);
+        }
+
         Timestamp ts = rs.getTimestamp("join_date");
         if (ts != null) {
             u.setJoinDate(ts.toLocalDateTime());

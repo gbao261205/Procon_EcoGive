@@ -1,5 +1,6 @@
 package ecogive.filter;
 
+import ecogive.Model.Role;
 import ecogive.Model.User;
 import jakarta.servlet.*;
 import jakarta.servlet.annotation.WebFilter;
@@ -21,8 +22,9 @@ public class AdminFilter implements Filter {
 
         if (session != null && session.getAttribute("currentUser") != null) {
             User user = (User) session.getAttribute("currentUser");
+            Role userRole = user.getRole();
 
-            if ("ADMIN".equals(user.getRole())) {
+            if (userRole == Role.ADMIN || userRole == Role.COLLECTOR_COMPANY) {
                 isAuthorized = true;
             }
         }

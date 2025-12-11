@@ -48,7 +48,6 @@ public class RateTransactionServlet extends HttpServlet {
             long reviewerId = currentUser.getUserId();
 
             // 1. Tìm transaction liên quan đang ở trạng thái CONFIRMED
-            // Chỉ người nhận (receiver_id) mới được phép confirm hoàn tất
             String findTransSql = "SELECT t.transaction_id, t.item_id, i.giver_id " +
                     "FROM transactions t " +
                     "JOIN items i ON t.item_id = i.item_id " +

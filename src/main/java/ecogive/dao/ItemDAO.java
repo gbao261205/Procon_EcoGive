@@ -5,6 +5,7 @@ import ecogive.Model.Item;
 import ecogive.Model.ItemStatus;
 import ecogive.util.DatabaseConnection;
 
+import java.math.BigDecimal;
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -23,9 +24,8 @@ public class ItemDAO {
     }
 
     public Item findById(long id) throws SQLException {
-        String sql = "SELECT item_id, giver_id, title, description, category_id, image_url, status, post_date, " +
-                "ST_X(location) AS longitude, ST_Y(location) AS latitude " +
-                "FROM items WHERE item_id = ?";
+        String sql = "SELECT *, ST_X(location) AS longitude, ST_Y(location) AS latitude " +
+                     "FROM items WHERE item_id = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -43,7 +43,6 @@ public class ItemDAO {
     }
 
     public List<Item> findAllAvailable() throws SQLException {
-        // SỬA SQL: JOIN bảng users để lấy username
         String sql = "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude, u.username " +
                 "FROM items i " +
                 "JOIN users u ON i.giver_id = u.user_id " +
@@ -56,7 +55,6 @@ public class ItemDAO {
 
             while (rs.next()) {
                 Item item = mapRow(rs);
-                // SET THÊM USERNAME VÀO ITEM
                 item.setGiverName(rs.getString("username"));
                 list.add(item);
             }
@@ -65,11 +63,10 @@ public class ItemDAO {
         }
         return list;
     }
+    
     public List<Item> findAll() throws SQLException {
-        // Lấy tất cả item, sắp xếp bài đăng mới nhất lên đầu
-        String sql = "SELECT item_id, giver_id, title, description, category_id, image_url, status, post_date, " +
-                "ST_X(location) AS longitude, ST_Y(location) AS latitude " +
-                "FROM items ORDER BY post_date DESC";
+        String sql = "SELECT *, ST_X(location) AS longitude, ST_Y(location) AS latitude " +
+                     "FROM items ORDER BY post_date DESC";
 
         List<Item> list = new ArrayList<>();
         try (Connection conn = DatabaseConnection.getConnection();
@@ -84,31 +81,26 @@ public class ItemDAO {
         }
         return list;
     }
-    // Hàm 1: Lấy đồ mình tặng
+
     public List<Item> findItemsByGiverId(long giverId) {
         List<Item> list = new ArrayList<>();
-        // SỬA SQL: Phải dùng ST_X, ST_Y và đặt tên giả (alias) là longitude, latitude
-        String sql = "SELECT item_id, giver_id, title, description, category_id, image_url, status, post_date, " +
-                "ST_X(location) AS longitude, ST_Y(location) AS latitude " +
-                "FROM items WHERE giver_id = ? ORDER BY post_date DESC";
+        String sql = "SELECT *, ST_X(location) AS longitude, ST_Y(location) AS latitude " +
+                     "FROM items WHERE giver_id = ? ORDER BY post_date DESC";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, giverId);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                list.add(mapRow(rs)); // Lúc này mapRow mới đọc được cột "longitude"
+                list.add(mapRow(rs));
             }
         } catch (Exception e) { e.printStackTrace(); }
         return list;
     }
 
-    // Hàm 2: Lấy đồ mình nhận (JOIN bảng transactions)
     public List<Item> findItemsByReceiverId(long receiverId) {
         List<Item> list = new ArrayList<>();
-        // SỬA SQL TƯƠNG TỰ
-        String sql = "SELECT i.item_id, i.giver_id, i.title, i.description, i.category_id, i.image_url, i.status, i.post_date, " +
-                "ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude " +
+        String sql = "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude " +
                 "FROM items i " +
                 "JOIN transactions t ON i.item_id = t.item_id " +
                 "WHERE t.receiver_id = ? ORDER BY t.exchange_date DESC";
@@ -123,9 +115,10 @@ public class ItemDAO {
         } catch (Exception e) { e.printStackTrace(); }
         return list;
     }
+
     public boolean insert(Item item) throws SQLException {
-        String sql = "INSERT INTO items (giver_id, title, description, category_id, image_url, status, post_date, location) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ST_GeomFromText(?))";
+        String sql = "INSERT INTO items (giver_id, title, description, category_id, image_url, status, post_date, location, eco_points) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ST_GeomFromText(?), ?)";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
@@ -135,12 +128,10 @@ public class ItemDAO {
             stmt.setInt(4, item.getCategoryId());
             stmt.setString(5, item.getImageUrl());
             stmt.setString(6, item.getStatus() != null ? item.getStatus().name() : ItemStatus.AVAILABLE.name());
-
             LocalDateTime postDate = item.getPostDate() != null ? item.getPostDate() : LocalDateTime.now();
             stmt.setTimestamp(7, Timestamp.valueOf(postDate));
-
-            String wkt = toWKT(item.getLocation());
-            stmt.setString(8, wkt);
+            stmt.setString(8, toWKT(item.getLocation()));
+            stmt.setBigDecimal(9, item.getEcoPoints());
 
             int affected = stmt.executeUpdate();
             if (affected > 0) {
@@ -161,11 +152,9 @@ public class ItemDAO {
         String sql = "UPDATE items SET status = ? WHERE item_id = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-
             stmt.setString(1, status.name());
             stmt.setLong(2, itemId);
-            int affected = stmt.executeUpdate();
-            return affected > 0;
+            return stmt.executeUpdate() > 0;
         }catch (Exception e) {
             throw new SQLException(e);
         }
@@ -175,10 +164,8 @@ public class ItemDAO {
         String sql = "DELETE FROM items WHERE item_id = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-
             stmt.setLong(1, itemId);
-            int affected = stmt.executeUpdate();
-            return affected > 0;
+            return stmt.executeUpdate() > 0;
         }catch (Exception e) {
             throw new SQLException(e);
         }
@@ -192,6 +179,7 @@ public class ItemDAO {
         item.setDescription(rs.getString("description"));
         item.setCategoryId(rs.getInt("category_id"));
         item.setImageUrl(rs.getString("image_url"));
+        item.setEcoPoints(rs.getBigDecimal("eco_points"));
 
         String statusStr = rs.getString("status");
         if (statusStr != null) {

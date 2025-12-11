@@ -1,5 +1,6 @@
 package ecogive.Controller;
 
+import ecogive.Model.Role;
 import ecogive.Model.User;
 import ecogive.dao.UserDAO;
 import jakarta.servlet.ServletException;
@@ -56,23 +57,19 @@ public class LoginServlet extends HttpServlet {
                 return;
             }
 
-            // === SỬA LỖI 500 Ở ĐÂY ===
             String storedHash = user.getPasswordHash();
             boolean match = false;
 
             if (storedHash == null) {
                 match = false;
             }
-            // Kiểm tra xem có phải định dạng BCrypt không ($2a$, $2y$, $2b$)
             else if (storedHash.startsWith("$2a$") || storedHash.startsWith("$2y$") || storedHash.startsWith("$2b$")) {
                 try {
                     match = BCrypt.checkpw(password, storedHash);
                 } catch (IllegalArgumentException e) {
-                    // Nếu hash bị lỗi format dù có tiền tố -> coi như sai pass
                     match = false;
                 }
             }
-            // Nếu không phải BCrypt, so sánh chuỗi thường (cho dữ liệu cũ/test)
             else {
                 match = storedHash.equals(password);
             }
@@ -82,11 +79,10 @@ public class LoginServlet extends HttpServlet {
                 return;
             }
 
-            // Đăng nhập thành công
             HttpSession session = request.getSession(true);
             session.setAttribute("currentUser", user);
-            session.setMaxInactiveInterval(30 * 60); // 30 phút
-            //PHÂN QUYỀN
+            session.setMaxInactiveInterval(30 * 60); 
+            
             redirectBasedOnRole(request, response, user);
 
         } catch (SQLException e) {
@@ -94,17 +90,22 @@ public class LoginServlet extends HttpServlet {
             handleError(request, response, "Lỗi hệ thống. Vui lòng thử lại.", username);
         }
     }
+    
     private void redirectBasedOnRole(HttpServletRequest request, HttpServletResponse response, User user) throws IOException {
-        if ("ADMIN".equals(user.getRole())) {
-            // Nếu là Admin -> Vào Dashboard
+        Role userRole = user.getRole();
+
+        if (userRole == Role.ADMIN) {
+            // Admin -> /admin?action=dashboard
             response.sendRedirect(request.getContextPath() + "/admin?action=dashboard");
+        } else if (userRole == Role.COLLECTOR_COMPANY) {
+            // Collector Company -> /dashboard/company
+            response.sendRedirect(request.getContextPath() + "/dashboard/company");
         } else {
-            // Nếu là User -> Vào trang chủ (Nếu chưa có file home thì tạm để /)
+            // User -> /
             response.sendRedirect(request.getContextPath() + "/");
         }
     }
 
-    // Hàm phụ trợ xử lý lỗi hiển thị lại trang login
     private void handleError(HttpServletRequest req, HttpServletResponse resp, String msg, String username) throws ServletException, IOException {
         req.setAttribute("error", msg);
         req.setAttribute("username", username);

@@ -11,13 +11,16 @@ public class User {
     private BigDecimal ecoPoints;
     private BigDecimal reputationScore;
     private LocalDateTime joinDate;
-    private String role;
+    private Role role;
+    private String phoneNumber; // Thêm số điện thoại
+    private String address;     // Thêm địa chỉ
 
     public User() {
     }
 
+    // Constructor cũ vẫn giữ
     public User(long userId, String username, String email, String passwordHash,
-                BigDecimal ecoPoints, BigDecimal reputationScore, LocalDateTime joinDate, String role) {
+                BigDecimal ecoPoints, BigDecimal reputationScore, LocalDateTime joinDate, Role role) {
         this.userId = userId;
         this.username = username;
         this.email = email;
@@ -27,7 +30,22 @@ public class User {
         this.joinDate = joinDate;
         this.role = role;
     }
+    
+    // Thêm constructor mới đầy đủ hơn (tùy chọn)
+    public User(long userId, String username, String email, String passwordHash, BigDecimal ecoPoints, BigDecimal reputationScore, LocalDateTime joinDate, Role role, String phoneNumber, String address) {
+        this.userId = userId;
+        this.username = username;
+        this.email = email;
+        this.passwordHash = passwordHash;
+        this.ecoPoints = ecoPoints;
+        this.reputationScore = reputationScore;
+        this.joinDate = joinDate;
+        this.role = role;
+        this.phoneNumber = phoneNumber;
+        this.address = address;
+    }
 
+    // Getters and Setters
     public long getUserId() {
         return userId;
     }
@@ -84,12 +102,27 @@ public class User {
         this.joinDate = joinDate;
     }
 
-    public String getRole() {
+    public Role getRole() {
         return role;
     }
 
-    public void setRole(String role) {
+    public void setRole(Role role) {
         this.role = role;
     }
 
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
 }

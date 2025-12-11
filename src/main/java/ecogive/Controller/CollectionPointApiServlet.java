@@ -26,8 +26,6 @@ public class CollectionPointApiServlet extends HttpServlet {
         try {
             List<CollectionPoint> points = stationDAO.findAll();
 
-            // Chuyển đổi sang DTO để giữ cấu trúc JSON phẳng (dễ dùng cho map)
-            // Hoặc nếu bạn đã sửa frontend để dùng p.location.latitude thì có thể trả về points trực tiếp
             List<StationDTO> dtos = new ArrayList<>();
             for (CollectionPoint p : points) {
                 dtos.add(new StationDTO(p));
@@ -40,7 +38,7 @@ public class CollectionPointApiServlet extends HttpServlet {
         }
     }
 
-    // Class phụ để định dạng JSON trả về cho khớp với Frontend cũ
+    // Sửa DTO để thêm ownerRole
     private static class StationDTO {
         long pointId;
         String name;
@@ -48,12 +46,14 @@ public class CollectionPointApiServlet extends HttpServlet {
         String address;
         double latitude;
         double longitude;
+        String ownerRole; // Thêm trường này
 
         public StationDTO(CollectionPoint p) {
             this.pointId = p.getPointId();
             this.name = p.getName();
             this.type = p.getType().name();
             this.address = p.getAddress();
+            this.ownerRole = p.getOwnerRole(); // Lấy dữ liệu từ model
             if (p.getLocation() != null) {
                 this.latitude = p.getLocation().getLatitude();
                 this.longitude = p.getLocation().getLongitude();

@@ -12,6 +12,7 @@ import jakarta.servlet.http.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
@@ -26,65 +27,29 @@ public class PostItemServlet extends HttpServlet {
 
     private final ItemDAO itemDAO = new ItemDAO();
 
-    /**
-     * Helper: Lấy đường dẫn tuyệt đối đến thư mục source code (src/main/webapp/img_items)
-     * Để tránh việc mất ảnh khi redeploy server.
-     */
     private String getProjectUploadDirectory() {
-        System.out.println("=== UPLOAD DIRECTORY DEBUG ===");
-
-        // Lấy đường dẫn thư mục hiện tại (nơi JVM đang chạy)
         String currentDir = System.getProperty("user.dir");
-        System.out.println("Current working directory (user.dir): " + currentDir);
-
         File currentDirFile = new File(currentDir);
         String projectRoot = null;
-
-        // 1. Kiểm tra thư mục hiện tại có chứa src không
         if (new File(currentDirFile, "src").exists()) {
             projectRoot = currentDirFile.getAbsolutePath();
-        }
-        // 2. Nếu không, tìm ngược lên các thư mục cha (thường gặp khi chạy trong Tomcat/bin)
-        else {
+        } else {
             File parent = currentDirFile;
             int maxLevels = 10;
-
             for (int i = 0; i < maxLevels; i++) {
                 parent = parent.getParentFile();
                 if (parent == null) break;
-
-                // Tìm thư mục tên "ecogive" (tên project) có chứa src
-                File[] subdirs = parent.listFiles(File::isDirectory);
-                if (subdirs != null) {
-                    for (File subdir : subdirs) {
-                        if (subdir.getName().equals("ecogive") && new File(subdir, "src").exists()) {
-                            projectRoot = subdir.getAbsolutePath();
-                            break;
-                        }
-                    }
-                }
-                if (projectRoot != null) break;
-
-                // Hoặc kiểm tra trực tiếp parent
                 if (new File(parent, "src").exists()) {
                     projectRoot = parent.getAbsolutePath();
                     break;
                 }
             }
         }
-
-        // Fallback: Nếu không tìm thấy, dùng thư mục hiện tại
         if (projectRoot == null) {
-            System.out.println("WARNING: Could not find project root automatically, using current dir.");
             projectRoot = currentDir;
         }
-
-        // Tạo đường dẫn đến folder img_items trong webapp
-        String uploadPath = projectRoot + File.separator + "src" + File.separator +
+        return projectRoot + File.separator + "src" + File.separator +
                 "main" + File.separator + "webapp" + File.separator + "img_items";
-
-        System.out.println("Final upload path: " + uploadPath);
-        return uploadPath;
     }
 
     @Override
@@ -95,7 +60,6 @@ public class PostItemServlet extends HttpServlet {
         resp.setCharacterEncoding("UTF-8");
 
         try {
-            // 1. Kiểm tra đăng nhập
             HttpSession session = req.getSession(false);
             User currentUser = (session != null)
                     ? (User) session.getAttribute("currentUser")
@@ -107,68 +71,63 @@ public class PostItemServlet extends HttpServlet {
                 return;
             }
 
-            // 2. Lấy dữ liệu từ form
             String title = req.getParameter("title");
             String description = req.getParameter("description");
             double latitude = Double.parseDouble(req.getParameter("latitude"));
             double longitude = Double.parseDouble(req.getParameter("longitude"));
             int categoryId = Integer.parseInt(req.getParameter("category"));
-
-            // 3. Xử lý file ảnh (Logic mới kết hợp)
-            Part filePart = req.getPart("itemPhoto");
-            String fileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
-
-            // Tạo tên file unique
-            String uniqueFileName = System.currentTimeMillis() + "_" + fileName;
-
-            // Sử dụng hàm helper để lấy đường dẫn lưu file an toàn
-            String uploadPath = getProjectUploadDirectory();
-            File uploadDir = new File(uploadPath);
-
-            if (!uploadDir.exists()) {
-                uploadDir.mkdirs(); // Tạo thư mục nếu chưa có
+            
+            // Xử lý ecoPoints an toàn
+            String ecoPointsStr = req.getParameter("ecoPoints");
+            BigDecimal ecoPoints;
+            if (ecoPointsStr != null && !ecoPointsStr.trim().isEmpty()) {
+                try {
+                    ecoPoints = new BigDecimal(ecoPointsStr);
+                } catch (NumberFormatException e) {
+                    ecoPoints = BigDecimal.ZERO; 
+                }
+            } else {
+                ecoPoints = BigDecimal.ZERO; 
             }
 
+            Part filePart = req.getPart("itemPhoto");
+            String fileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
+            String uniqueFileName = System.currentTimeMillis() + "_" + fileName;
+            String uploadPath = getProjectUploadDirectory();
+            File uploadDir = new File(uploadPath);
+            if (!uploadDir.exists()) {
+                uploadDir.mkdirs();
+            }
             String filePath = uploadPath + File.separator + uniqueFileName;
-
-            // Ghi file ra ổ cứng
             filePart.write(filePath);
-            System.out.println("File saved at: " + filePath);
-
-            // Chuẩn hóa đường dẫn cho DB (thay thế dấu \ bằng /)
-            // Đây là bước quan trọng để JSP đọc được ảnh qua Servlet
             String imageUrlForDB = filePath.replace("\\", "/");
 
-            // 4. Tạo đối tượng Item
             Item item = new Item();
             item.setTitle(title);
             item.setDescription(description);
             item.setGiverId(currentUser.getUserId());
             item.setCategoryId(categoryId);
-
-            // LƯU Ý: Lưu đường dẫn tuyệt đối vào DB
             item.setImageUrl(imageUrlForDB);
-
+            
+            // KHÔI PHỤC LOGIC CŨ: Trạng thái mặc định là PENDING (chờ duyệt)
             item.setStatus(ItemStatus.PENDING);
+            
             item.setPostDate(LocalDateTime.now());
             item.setLocation(new GeoPoint(longitude, latitude));
+            item.setEcoPoints(ecoPoints);
 
-            // 5. Lưu vào database
             boolean success = itemDAO.insert(item);
             if (!success) {
                 throw new SQLException("Không thể lưu item vào database");
             }
 
-            // 6. Trả về thành công (Giữ format JSON chi tiết của bạn)
             resp.setStatus(HttpServletResponse.SC_OK);
-
-            // Escape đường dẫn ảnh cho chuỗi JSON (tránh lỗi cú pháp JSON)
             String escapedImageUrl = item.getImageUrl().replace("\"", "\\\"");
-
             String jsonResponse = String.format(
-                    "{\"success\": true, \"itemId\": %d, \"imageUrl\": \"%s\", \"ecoPointsAwarded\": 5, \"message\": \"Đăng tin thành công!\"}",
+                    "{\"success\": true, \"itemId\": %d, \"imageUrl\": \"%s\", \"ecoPointsAwarded\": %s, \"message\": \"Đăng tin thành công! Vui lòng chờ Admin duyệt.\"}",
                     item.getItemId(),
-                    escapedImageUrl
+                    escapedImageUrl,
+                    item.getEcoPoints().toPlainString()
             );
             resp.getWriter().write(jsonResponse);
 

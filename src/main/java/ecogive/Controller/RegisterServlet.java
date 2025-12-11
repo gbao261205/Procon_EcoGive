@@ -1,5 +1,6 @@
 package ecogive.Controller;
 
+import ecogive.Model.Role;
 import ecogive.Model.User;
 import ecogive.dao.UserDAO;
 import jakarta.servlet.ServletException;
@@ -38,11 +39,9 @@ public class RegisterServlet extends HttpServlet {
         String password = request.getParameter("password");
         String confirmPassword = request.getParameter("confirmPassword");
 
-        // Keep user input in case of error
         request.setAttribute("username", username);
         request.setAttribute("email", email);
 
-        // --- Validation ---
         if (!password.equals(confirmPassword)) {
             request.setAttribute("error", "Mật khẩu xác nhận không khớp.");
             request.getRequestDispatcher("/WEB-INF/views/register.jsp").forward(request, response);
@@ -50,28 +49,25 @@ public class RegisterServlet extends HttpServlet {
         }
 
         try {
-            // Check if username already exists
             if (userDAO.findByUsername(username) != null) {
                 request.setAttribute("error", "Tên đăng nhập đã tồn tại.");
                 request.getRequestDispatcher("/WEB-INF/views/register.jsp").forward(request, response);
                 return;
             }
             
-            // --- Create New User ---
             String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt());
 
             User newUser = new User();
             newUser.setUsername(username);
             newUser.setEmail(email);
             newUser.setPasswordHash(hashedPassword);
-            newUser.setRole("USER"); // Default role
+            newUser.setRole(Role.USER);
             newUser.setEcoPoints(BigDecimal.ZERO);
             newUser.setReputationScore(BigDecimal.valueOf(1.00));
             newUser.setJoinDate(LocalDateTime.now());
 
             userDAO.insert(newUser);
 
-            // Redirect to login page with a success message
             response.sendRedirect(request.getContextPath() + "/login?success=true");
 
         } catch (SQLException e) {
