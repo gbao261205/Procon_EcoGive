@@ -29,11 +29,14 @@ public class CreateCollectionPointServlet extends HttpServlet {
         Gson gson = new Gson();
 
         try {
-            // 1. Check Admin
+            // 1. Check Authorization
             HttpSession session = req.getSession(false);
             User currentUser = (session != null) ? (User) session.getAttribute("currentUser") : null;
 
-            if (currentUser == null || !"ADMIN".equals(currentUser.getRole())) { // Sửa lại logic check Role tùy theo Enum của bạn
+            boolean isAdmin = currentUser != null && "ADMIN".equals(currentUser.getRole());
+            boolean isCompany = currentUser != null && "ENTERPRISE_COLLECTOR".equals(currentUser.getRole());
+
+            if (!isAdmin && !isCompany) {
                 response.addProperty("status", "error");
                 response.addProperty("message", "Không có quyền truy cập!");
                 resp.getWriter().write(gson.toJson(response));
@@ -52,6 +55,11 @@ public class CreateCollectionPointServlet extends HttpServlet {
             cp.setName(name);
             cp.setAddress(address);
 
+            // Set company ID if the user is a company
+            if (isCompany) {
+                cp.setCompanyId(currentUser.getUserId());
+            }
+
             // Xử lý Enum Type
             try {
                 cp.setType(CollectionPointType.valueOf(typeStr));
@@ -60,12 +68,12 @@ public class CreateCollectionPointServlet extends HttpServlet {
             }
 
             // Xử lý GeoPoint
-            cp.setLocation(new GeoPoint(lng, lat)); // Lưu ý constructor GeoPoint(lng, lat) hay (lat, lng) tùy bạn định nghĩa
+            cp.setLocation(new GeoPoint(lng, lat));
 
             // 4. Gọi DAO
             if (stationDAO.insert(cp)) {
                 response.addProperty("status", "success");
-                response.addProperty("message", "Thêm trạm thành công!");
+                response.addProperty("message", "Thêm điểm thu gom thành công!");
             } else {
                 response.addProperty("status", "error");
                 response.addProperty("message", "Lỗi khi lưu vào Database.");

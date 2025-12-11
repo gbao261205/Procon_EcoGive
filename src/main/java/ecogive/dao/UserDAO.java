@@ -91,6 +91,41 @@ public class UserDAO {
         }
         return false;
     }
+    
+    public boolean insertCollectorCompany(User user) throws SQLException {
+        String sql = "INSERT INTO users (username, email, password_hash, phone, address, role, eco_points, reputation_score, join_date) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+            stmt.setString(1, user.getUsername());
+            stmt.setString(2, user.getEmail());
+            stmt.setString(3, user.getPasswordHash());
+            stmt.setString(4, user.getPhone());
+            stmt.setString(5, user.getAddress());
+            stmt.setString(6, user.getRole());
+            stmt.setBigDecimal(7, user.getEcoPoints() != null ? user.getEcoPoints() : BigDecimal.ZERO);
+            stmt.setBigDecimal(8, user.getReputationScore() != null ? user.getReputationScore() : BigDecimal.valueOf(1.00));
+            if (user.getJoinDate() != null) {
+                stmt.setTimestamp(9, Timestamp.valueOf(user.getJoinDate()));
+            } else {
+                stmt.setTimestamp(9, new Timestamp(System.currentTimeMillis()));
+            }
+
+            int affected = stmt.executeUpdate();
+            if (affected > 0) {
+                try (ResultSet keys = stmt.getGeneratedKeys()) {
+                    if (keys.next()) {
+                        user.setUserId(keys.getLong(1));
+                    }
+                }
+                return true;
+            }
+        } catch (Exception e) {
+            throw new SQLException(e);
+        }
+        return false;
+    }
 
     public boolean update(User user) throws SQLException {
         String sql = "UPDATE users SET username = ?, email = ?, password_hash = ?, role = ? WHERE user_id = ?";
@@ -122,12 +157,26 @@ public class UserDAO {
         }
     }
 
+    public boolean addEcoPoints(long userId, BigDecimal pointsToAdd) throws SQLException {
+        String sql = "UPDATE users SET eco_points = eco_points + ? WHERE user_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setBigDecimal(1, pointsToAdd);
+            stmt.setLong(2, userId);
+            return stmt.executeUpdate() > 0;
+        } catch (Exception e) {
+            throw new SQLException(e);
+        }
+    }
+
     private User mapRow(ResultSet rs) throws SQLException {
         User u = new User();
         u.setUserId(rs.getLong("user_id"));
         u.setUsername(rs.getString("username"));
         u.setEmail(rs.getString("email"));
         u.setPasswordHash(rs.getString("password_hash"));
+        u.setPhone(rs.getString("phone"));
+        u.setAddress(rs.getString("address"));
         u.setEcoPoints(rs.getBigDecimal("eco_points"));
         u.setReputationScore(rs.getBigDecimal("reputation_score"));
         u.setRole(rs.getString("role"));

@@ -8,6 +8,8 @@ public class User {
     private String username;
     private String email;
     private String passwordHash;
+    private String phone;
+    private String address;
     private BigDecimal ecoPoints;
     private BigDecimal reputationScore;
     private LocalDateTime joinDate;
@@ -16,12 +18,14 @@ public class User {
     public User() {
     }
 
-    public User(long userId, String username, String email, String passwordHash,
+    public User(long userId, String username, String email, String passwordHash, String phone, String address,
                 BigDecimal ecoPoints, BigDecimal reputationScore, LocalDateTime joinDate, String role) {
         this.userId = userId;
         this.username = username;
         this.email = email;
         this.passwordHash = passwordHash;
+        this.phone = phone;
+        this.address = address;
         this.ecoPoints = ecoPoints;
         this.reputationScore = reputationScore;
         this.joinDate = joinDate;
@@ -58,6 +62,22 @@ public class User {
 
     public void setPasswordHash(String passwordHash) {
         this.passwordHash = passwordHash;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
     }
 
     public BigDecimal getEcoPoints() {

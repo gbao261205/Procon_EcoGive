@@ -15,10 +15,12 @@ CREATE TABLE users (
                        username VARCHAR(50) NOT NULL UNIQUE,
                        email VARCHAR(100) NOT NULL UNIQUE,
                        password_hash VARCHAR(255) NOT NULL,
+                       phone VARCHAR(20) NULL,
+                       address TEXT NULL,
                        eco_points DECIMAL(10, 2) DEFAULT 0.00,
                        reputation_score DECIMAL(3, 2) DEFAULT 1.00, -- Điểm đánh giá tin cậy (1.00 - 5.00)
                        join_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                       role ENUM('USER', 'ADMIN') NOT NULL DEFAULT 'USER'
+                       role ENUM('USER', 'ADMIN', 'ENTERPRISE_COLLECTOR') NOT NULL DEFAULT 'USER'
 );
 
 -- 2. Bảng Danh mục (Categories)
@@ -43,31 +45,17 @@ CREATE TABLE items (
                        FOREIGN KEY (giver_id) REFERENCES users(user_id),
                        FOREIGN KEY (category_id) REFERENCES categories(category_id)
 );
-CREATE TABLE reviews (
-                         review_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-                         transaction_id BIGINT NOT NULL,
-                         reviewer_id BIGINT NOT NULL,
-                         rated_user_id BIGINT NOT NULL,
-                         rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
-                         comment TEXT,
-                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-                         FOREIGN KEY (transaction_id) REFERENCES transactions(transaction_id),
-                         FOREIGN KEY (reviewer_id) REFERENCES users(user_id),
-                         FOREIGN KEY (rated_user_id) REFERENCES users(user_id),
-
-                         UNIQUE INDEX idx_unique_transaction (transaction_id),
-                         INDEX idx_rated_user (rated_user_id)
-);
 -- TẠO SPATIAL INDEX
 CREATE SPATIAL INDEX sp_index_location ON items (location);
--- 4. Bảng Điểm Thu gom Cố định (Collection Points) - KHÔNG ĐỔI
+-- 4. Bảng Điểm Thu gom Cố định (Collection Points)
 CREATE TABLE collection_points (
                                    point_id BIGINT AUTO_INCREMENT PRIMARY KEY,
                                    name VARCHAR(255) NOT NULL,
                                    type ENUM('E_WASTE', 'BATTERY', 'TEXTILE') NOT NULL,
                                    address TEXT,
                                    location POINT NOT NULL,
+                                   company_id BIGINT NULL,
+                                   FOREIGN KEY (company_id) REFERENCES users(user_id) ON DELETE SET NULL,
                                    UNIQUE INDEX unique_point_name (name)
 );
 -- 5. Bảng Yêu cầu Thu gom Chuyên biệt (Collection Requests) - KHÔNG ĐỔI

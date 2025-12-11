@@ -65,6 +65,12 @@
                 Đăng nhập ngay
             </a>
         </div>
+        <div class="mt-2 text-center text-xs text-slate-500">
+            Bạn là doanh nghiệp thu gom?
+            <a href="${pageContext.request.contextPath}/register/collector-company" class="text-emerald-600 font-medium hover:underline">
+                Đăng ký tại đây
+            </a>
+        </div>
     </div>
 </div>
 

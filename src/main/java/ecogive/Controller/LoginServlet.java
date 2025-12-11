@@ -95,11 +95,15 @@ public class LoginServlet extends HttpServlet {
         }
     }
     private void redirectBasedOnRole(HttpServletRequest request, HttpServletResponse response, User user) throws IOException {
-        if ("ADMIN".equals(user.getRole())) {
-            // Nếu là Admin -> Vào Dashboard
+        String role = user.getRole();
+        if ("ADMIN".equals(role)) {
+            // Nếu là Admin -> Vào Dashboard Admin
             response.sendRedirect(request.getContextPath() + "/admin?action=dashboard");
+        } else if ("ENTERPRISE_COLLECTOR".equals(role)) {
+            // Nếu là Doanh nghiệp -> Vào Dashboard Doanh nghiệp
+            response.sendRedirect(request.getContextPath() + "/dashboard/company");
         } else {
-            // Nếu là User -> Vào trang chủ (Nếu chưa có file home thì tạm để /)
+            // Nếu là User -> Vào trang chủ
             response.sendRedirect(request.getContextPath() + "/");
         }
     }

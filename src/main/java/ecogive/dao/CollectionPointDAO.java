@@ -21,8 +21,28 @@ public class CollectionPointDAO {
         return new GeoPoint(lon, lat);
     }
 
+    public CollectionPoint findById(long id) throws SQLException {
+        String sql = "SELECT point_id, name, type, address, company_id, " +
+                "ST_X(location) AS longitude, ST_Y(location) AS latitude " +
+                "FROM collection_points WHERE point_id = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setLong(1, id);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapRow(rs);
+                }
+            }
+        } catch (Exception e) {
+            throw new SQLException(e);
+        }
+        return null;
+    }
+
     public List<CollectionPoint> findAll() throws SQLException {
-        String sql = "SELECT point_id, name, type, address, " +
+        String sql = "SELECT point_id, name, type, address, company_id, " +
                 "ST_X(location) AS longitude, ST_Y(location) AS latitude " +
                 "FROM collection_points";
 
@@ -40,8 +60,29 @@ public class CollectionPointDAO {
         return list;
     }
 
+    public List<CollectionPoint> findByCompanyId(long companyId) throws SQLException {
+        String sql = "SELECT point_id, name, type, address, company_id, " +
+                "ST_X(location) AS longitude, ST_Y(location) AS latitude " +
+                "FROM collection_points WHERE company_id = ?";
+
+        List<CollectionPoint> list = new ArrayList<>();
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setLong(1, companyId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
+            }
+        }catch (Exception e) {
+            throw new SQLException(e);
+        }
+        return list;
+    }
+
     public List<CollectionPoint> findByType(CollectionPointType type) throws SQLException {
-        String sql = "SELECT point_id, name, type, address, " +
+        String sql = "SELECT point_id, name, type, address, company_id, " +
                 "ST_X(location) AS longitude, ST_Y(location) AS latitude " +
                 "FROM collection_points WHERE type = ?";
 
@@ -62,8 +103,8 @@ public class CollectionPointDAO {
     }
 
     public boolean insert(CollectionPoint p) throws SQLException {
-        String sql = "INSERT INTO collection_points (name, type, address, location) " +
-                "VALUES (?, ?, ?, ST_GeomFromText(?))";
+        String sql = "INSERT INTO collection_points (name, type, address, location, company_id) " +
+                "VALUES (?, ?, ?, ST_GeomFromText(?), ?)";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
@@ -71,6 +112,11 @@ public class CollectionPointDAO {
             stmt.setString(2, p.getType().name());
             stmt.setString(3, p.getAddress());
             stmt.setString(4, toWKT(p.getLocation()));
+            if (p.getCompanyId() > 0) {
+                stmt.setLong(5, p.getCompanyId());
+            } else {
+                stmt.setNull(5, Types.BIGINT);
+            }
 
             int affected = stmt.executeUpdate();
             if (affected > 0) {
@@ -108,6 +154,7 @@ public class CollectionPointDAO {
 
         cp.setAddress(rs.getString("address"));
         cp.setLocation(fromResultSet(rs));
+        cp.setCompanyId(rs.getLong("company_id"));
         return cp;
     }
 }

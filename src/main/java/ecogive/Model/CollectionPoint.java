@@ -6,17 +6,19 @@ public class CollectionPoint {
     private CollectionPointType type;
     private String address;
     private GeoPoint location;
+    private long companyId;
 
     public CollectionPoint() {
     }
 
     public CollectionPoint(long pointId, String name, CollectionPointType type,
-                           String address, GeoPoint location) {
+                           String address, GeoPoint location, long companyId) {
         this.pointId = pointId;
         this.name = name;
         this.type = type;
         this.address = address;
         this.location = location;
+        this.companyId = companyId;
     }
 
     public long getPointId() {
@@ -57,5 +59,13 @@ public class CollectionPoint {
 
     public void setLocation(GeoPoint location) {
         this.location = location;
+    }
+
+    public long getCompanyId() {
+        return companyId;
+    }
+
+    public void setCompanyId(long companyId) {
+        this.companyId = companyId;
     }
 }
