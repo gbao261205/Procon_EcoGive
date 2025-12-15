@@ -24,7 +24,7 @@
             </div>
         </c:if>
 
-        <form id="registerCompanyForm" method="post" action="${pageContext.request.contextPath}/register/collector-company" class="space-y-5">
+        <form id="registerCompanyForm" method="post" action="${pageContext.request.contextPath}/register-collector" class="space-y-5">
             <div>
                 <label for="companyName" class="block text-sm font-medium text-slate-700 mb-1">Tên doanh nghiệp</label>
                 <input type="text" id="companyName" name="companyName" value="${companyName}"

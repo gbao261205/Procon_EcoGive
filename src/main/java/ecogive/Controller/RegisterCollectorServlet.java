@@ -15,7 +15,7 @@ import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 
-@WebServlet("/register/collector-company")
+@WebServlet("/register-collector")
 public class RegisterCollectorServlet extends HttpServlet {
     private UserDAO userDAO;
 

@@ -1,163 +1,105 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="ecogive.Model.User" %>
-<%@ page import="java.util.List" %>
-<%@ page import="ecogive.Model.CollectionPoint" %>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
-
-<%
-    User currentUser = (User) session.getAttribute("currentUser");
-    if (currentUser == null) {
-        response.sendRedirect(request.getContextPath() + "/login");
-        return;
-    }
-%>
-
-<html>
+<%@ page contentType="text/html; charset=UTF-8" language="java" %>
+<%@ page isELIgnored="false" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<!DOCTYPE html>
+<html lang="vi">
 <head>
-    <title>Dashboard - ${currentUser.username}</title>
-    <style>
-        body { font-family: sans-serif; margin: 2em; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        .form-container { margin-top: 2em; padding: 1em; border: 1px solid #ccc; }
-        .form-container div { margin-bottom: 1em; }
-        .form-container label { display: block; margin-bottom: .5em; }
-        .form-container input, .form-container select { width: 100%; padding: 8px; }
-        .btn-delete { color: red; cursor: pointer; }
-    </style>
+    <meta charset="UTF-8">
+    <title>Trang quản lý Doanh nghiệp - EcoGive</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <h1>Dashboard Doanh nghiệp: ${currentUser.username}</h1>
-    <a href="${pageContext.request.contextPath}/logout">Đăng xuất</a>
+<body class="bg-slate-100 font-sans">
 
-    <hr>
+<div class="flex min-h-screen">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white shadow-md flex-shrink-0">
+        <div class="p-6 bg-emerald-600 text-white">
+            <h2 class="text-xl font-bold">EcoGive</h2>
+            <p class="text-sm opacity-80">Doanh nghiệp</p>
+        </div>
+        <nav class="mt-4">
+            <a href="#" class="flex items-center px-6 py-3 text-emerald-700 bg-emerald-50 font-bold">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                Điểm thu gom
+            </a>
+            <a href="${pageContext.request.contextPath}/logout" class="flex items-center px-6 py-3 text-slate-600 hover:bg-slate-50">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H3"></path></svg>
+                Đăng xuất
+            </a>
+        </nav>
+    </aside>
 
-    <h2>Quản lý Điểm thu gom</h2>
+    <!-- Main Content -->
+    <main class="flex-1 p-8">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold text-slate-800">Quản lý Điểm thu gom</h1>
+            <a href="${pageContext.request.contextPath}/home" class="bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-emerald-700 transition shadow-md flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                Thêm Điểm Mới (trên bản đồ)
+            </a>
+        </div>
 
-    <!-- Form Thêm Điểm Thu Gom -->
-    <div class="form-container">
-        <h3>Thêm Điểm thu gom mới</h3>
-        <form id="addPointForm">
-            <div>
-                <label for="name">Tên điểm:</label>
-                <input type="text" id="name" name="name" required>
+        <c:if test="${not empty sessionScope.errorMessage}">
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                <span class="block sm:inline">${sessionScope.errorMessage}</span>
+                <% session.removeAttribute("errorMessage"); %>
             </div>
-            <div>
-                <label for="address">Địa chỉ:</label>
-                <input type="text" id="address" name="address" required>
+        </c:if>
+
+        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <div class="p-6">
+                <h3 class="text-lg font-semibold text-slate-700">Danh sách điểm thu gom của bạn</h3>
             </div>
-            <div>
-                <label for="type">Loại:</label>
-                <select id="type" name="type">
-                    <c:forEach var="type" items="${ecogive.Model.CollectionPointType.values()}">
-                        <option value="${type.name()}">${type.name()}</option>
-                    </c:forEach>
-                </select>
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-sm">
+                    <thead class="bg-slate-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left font-medium text-slate-600 uppercase tracking-wider">Tên Điểm</th>
+                            <th class="px-6 py-3 text-left font-medium text-slate-600 uppercase tracking-wider">Địa chỉ</th>
+                            <th class="px-6 py-3 text-left font-medium text-slate-600 uppercase tracking-wider">Loại</th>
+                            <th class="px-6 py-3 text-right font-medium text-slate-600 uppercase tracking-wider">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200">
+                        <c:choose>
+                            <c:when test="${not empty collectionPoints}">
+                                <c:forEach var="point" items="${collectionPoints}">
+                                    <tr class="hover:bg-slate-50">
+                                        <td class="px-6 py-4 whitespace-nowrap font-medium text-slate-800">${point.name}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-slate-600">${point.address}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                                ${point.type == 'BATTERY' ? 'bg-yellow-100 text-yellow-800' : 
+                                                 point.type == 'E_WASTE' ? 'bg-blue-100 text-blue-800' : 
+                                                 'bg-green-100 text-green-800'}">
+                                                ${point.type.displayName}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right">
+                                            <form action="${pageContext.request.contextPath}/dashboard/company" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn xóa điểm này?');" style="display:inline;">
+                                                <input type="hidden" name="action" value="delete">
+                                                <input type="hidden" name="pointId" value="${point.pointId}">
+                                                <button type="submit" class="text-red-600 hover:text-red-900 font-medium">Xóa</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                </c:forEach>
+                            </c:when>
+                            <c:otherwise>
+                                <tr>
+                                    <td colspan="4" class="px-6 py-10 text-center text-slate-500">
+                                        Bạn chưa có điểm thu gom nào. Hãy thêm điểm mới!
+                                    </td>
+                                </tr>
+                            </c:otherwise>
+                        </c:choose>
+                    </tbody>
+                </table>
             </div>
-            <div>
-                <label for="latitude">Vĩ độ (Latitude):</label>
-                <input type="number" step="any" id="latitude" name="latitude" required>
-            </div>
-            <div>
-                <label for="longitude">Kinh độ (Longitude):</label>
-                <input type="number" step="any" id="longitude" name="longitude" required>
-            </div>
-            <button type="submit">Thêm mới</button>
-        </form>
-        <p id="formMessage" style="margin-top: 1em;"></p>
-    </div>
+        </div>
+    </main>
+</div>
 
-    <!-- Bảng Liệt Kê Điểm Thu Gom -->
-    <h3>Danh sách Điểm thu gom của bạn</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Tên</th>
-                <th>Địa chỉ</th>
-                <th>Loại</th>
-                <th>Vĩ độ</th>
-                <th>Kinh độ</th>
-                <th>Hành động</th>
-            </tr>
-        </thead>
-        <tbody>
-            <c:forEach var="point" items="${collectionPoints}">
-                <tr id="point-${point.pointId}">
-                    <td>${point.pointId}</td>
-                    <td>${point.name}</td>
-                    <td>${point.address}</td>
-                    <td>${point.type}</td>
-                    <td>${point.latitude}</td>
-                    <td>${point.longitude}</td>
-                    <td>
-                        <button class="btn-delete" onclick="deletePoint(${point.pointId})">Xóa</button>
-                    </td>
-                </tr>
-            </c:forEach>
-        </tbody>
-    </table>
-
-    <script>
-        // Add new point
-        document.getElementById('addPointForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const form = e.target;
-            const formData = new FormData(form);
-            const messageEl = document.getElementById('formMessage');
-
-            fetch('${pageContext.request.contextPath}/company/collect-point/add', { // <-- SỬA ENDPOINT
-                method: 'POST',
-                body: new URLSearchParams(formData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                messageEl.textContent = data.message;
-                if (data.status === 'success') {
-                    messageEl.style.color = 'green';
-                    form.reset();
-                    // Reload page to see the new point
-                    setTimeout(() => window.location.reload(), 1000);
-                } else {
-                    messageEl.style.color = 'red';
-                }
-            })
-            .catch(err => {
-                messageEl.textContent = 'Lỗi kết nối. Vui lòng thử lại.';
-                messageEl.style.color = 'red';
-            });
-        });
-
-        // Delete a point
-        function deletePoint(pointId) {
-            if (!confirm('Bạn có chắc chắn muốn xóa điểm thu gom này không?')) {
-                return;
-            }
-
-            fetch('${pageContext.request.contextPath}/api/delete-collection-point', { // <-- GIỮ NGUYÊN ENDPOINT XÓA
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: 'pointId=' + pointId
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    alert(data.message);
-                    const row = document.getElementById('point-' + pointId);
-                    if (row) {
-                        row.remove();
-                    }
-                } else {
-                    alert('Lỗi: ' + data.message);
-                }
-            })
-            .catch(err => {
-                alert('Lỗi kết nối. Vui lòng thử lại.');
-            });
-        }
-    </script>
 </body>
 </html>

@@ -60,6 +60,13 @@
         </form>
 
         <div class="mt-6 text-center text-xs text-slate-500">
+            Bạn là doanh nghiệp?
+            <a href="${pageContext.request.contextPath}/register-collector" class="text-emerald-600 font-medium hover:underline">
+                Đăng ký tài khoản doanh nghiệp
+            </a>
+        </div>
+
+        <div class="mt-6 text-center text-xs text-slate-500">
             Đã có tài khoản?
             <a href="${pageContext.request.contextPath}/login" class="text-emerald-600 font-medium hover:underline">
                 Đăng nhập ngay

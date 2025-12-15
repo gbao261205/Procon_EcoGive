@@ -7,6 +7,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import org.mindrot.jbcrypt.BCrypt;
 
 import java.io.IOException;
@@ -23,8 +24,21 @@ public class AdminServlet extends HttpServlet {
     private final ItemDAO itemDAO = new ItemDAO();
     private final CollectionPointDAO stationDAO = new CollectionPointDAO();
 
+    private boolean checkAdmin(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        HttpSession session = req.getSession(false);
+        User currentUser = (session != null) ? (User) session.getAttribute("currentUser") : null;
+
+        if (currentUser == null || currentUser.getRole() != Role.ADMIN) {
+            resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Bạn không có quyền truy cập trang này.");
+            return false;
+        }
+        return true;
+    }
+
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        if (!checkAdmin(req, resp)) return;
+
         String action = req.getParameter("action");
         if (action == null) action = "dashboard";
 
@@ -68,6 +82,8 @@ public class AdminServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        if (!checkAdmin(req, resp)) return;
+
         String action = req.getParameter("action");
         try {
             if ("add-category".equals(action)) {

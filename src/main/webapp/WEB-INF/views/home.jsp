@@ -31,13 +31,19 @@
 
     <div class="flex items-center gap-3">
         <div class="flex items-center gap-2 border-r border-slate-200 pr-4 mr-2">
-            <c:if test="${sessionScope.currentUser.role == 'ADMIN' || sessionScope.currentUser.role == 'COLLECTOR_COMPANY'}">
+            <c:if test="${sessionScope.currentUser.role == 'ADMIN'}">
                 <a href="${pageContext.request.contextPath}/admin?action=dashboard"
-                   class="flex items-center gap-2 px-3 py-2 text-sm font-bold text-white bg-emerald-600 hover:bg-blue-700 rounded-lg shadow-sm transition" title="Trang quản trị">
+                   class="flex items-center gap-2 px-3 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition" title="Trang quản trị">
                     <span>📊</span>
                 </a>
             </c:if>
-             <c:if test="${sessionScope.currentUser.role == 'ADMIN'}">
+            <c:if test="${sessionScope.currentUser.role == 'COLLECTOR_COMPANY'}">
+                <a href="${pageContext.request.contextPath}/dashboard/company"
+                   class="flex items-center gap-2 px-3 py-2 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition" title="Trang quản lý Doanh nghiệp">
+                    <span>🏢</span>
+                </a>
+            </c:if>
+             <c:if test="${sessionScope.currentUser.role == 'ADMIN' || sessionScope.currentUser.role == 'COLLECTOR_COMPANY'}">
                 <button id="btnAddPoint"
                         class="flex items-center gap-2 px-3 py-2 text-sm font-bold text-white bg-emerald-600 hover:bg-blue-700 rounded-lg shadow-sm transition" title="Thêm điểm tập kết">
                     <span>📍</span>
@@ -227,6 +233,7 @@
     // --- KHỞI TẠO ---
     const currentUserIdStr = "${sessionScope.currentUser != null ? sessionScope.currentUser.userId : ''}";
     const currentUserName = "${sessionScope.currentUser != null ? sessionScope.currentUser.username : ''}";
+    const currentUserRole = "${sessionScope.currentUser != null ? sessionScope.currentUser.role : ''}";
     const currentUserId = currentUserIdStr ? Number(currentUserIdStr) : null;
 
     let chatSocket = null;
@@ -608,18 +615,22 @@
     function appendAiHtml(htmlContent) { const chatBox = document.getElementById('aiChatBody'); const wrapper = `<div class="flex items-start gap-2 justify-start"><div class="w-8 h-8"></div><div class="w-[85%]">\${htmlContent}</div></div>`; chatBox.insertAdjacentHTML('beforeend', wrapper); chatBox.scrollTop = chatBox.scrollHeight; }
     function flyToLocation(lat, lng, name) { map.flyTo([lat, lng], 16, { animate: true, duration: 1.5 }); L.popup().setLatLng([lat, lng]).setContent(`<div class="text-center font-bold text-sm">📍 \${name}</div>`).openOn(map); if (window.innerWidth < 768) { document.getElementById('aiModal').classList.add('hidden'); } }
 
-    // --- LOGIC ADMIN ---
+    // --- LOGIC ADMIN/COMPANY ---
     const btnAddPoint = document.getElementById('btnAddPoint');
     if (btnAddPoint) {
         btnAddPoint.addEventListener('click', () => {
             document.getElementById('addPointModal').classList.remove('hidden');
             setTimeout(() => {
+                const markerIcon = (currentUserRole === 'COLLECTOR_COMPANY') ? yellowIcon : greenIcon;
                 if (!pointMap) {
                     pointMap = L.map('pointMiniMap').setView([pointLatLng.lat, pointLatLng.lng], 15);
                     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: 'OSM' }).addTo(pointMap);
-                    pointMarker = L.marker([pointLatLng.lat, pointLatLng.lng], { draggable: true, icon: greenIcon }).addTo(pointMap);
+                    pointMarker = L.marker([pointLatLng.lat, pointLatLng.lng], { draggable: true, icon: markerIcon }).addTo(pointMap);
                     pointMarker.on('dragend', function(event) { pointLatLng = event.target.getLatLng(); });
-                } else { pointMap.invalidateSize(); }
+                } else {
+                    pointMap.invalidateSize();
+                    if(pointMarker) pointMarker.setIcon(markerIcon);
+                }
             }, 200);
         });
     }

@@ -44,4 +44,39 @@ public class CompanyDashboardServlet extends HttpServlet {
 
         request.getRequestDispatcher("/WEB-INF/views/company-dashboard.jsp").forward(request, response);
     }
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
+        HttpSession session = request.getSession(false);
+        User currentUser = (session != null) ? (User) session.getAttribute("currentUser") : null;
+
+        if (currentUser == null || currentUser.getRole() != Role.COLLECTOR_COMPANY) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
+
+        String action = request.getParameter("action");
+        if ("delete".equals(action)) {
+            try {
+                long pointId = Long.parseLong(request.getParameter("pointId"));
+                
+                // Use the DAO method to ensure a company can only delete its own points
+                boolean success = collectionPointDAO.delete(pointId, currentUser.getUserId());
+
+                if (!success) {
+                    session.setAttribute("errorMessage", "Không thể xóa điểm thu gom. Điểm không tồn tại hoặc bạn không có quyền.");
+                }
+
+            } catch (NumberFormatException e) {
+                session.setAttribute("errorMessage", "ID điểm thu gom không hợp lệ.");
+            } catch (SQLException e) {
+                e.printStackTrace();
+                session.setAttribute("errorMessage", "Lỗi cơ sở dữ liệu khi xóa điểm thu gom.");
+            }
+        }
+
+        response.sendRedirect(request.getContextPath() + "/dashboard/company");
+    }
 }
