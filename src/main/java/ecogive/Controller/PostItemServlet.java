@@ -5,15 +5,14 @@ import ecogive.Model.Item;
 import ecogive.Model.ItemStatus;
 import ecogive.Model.User;
 import ecogive.dao.ItemDAO;
+import ecogive.util.CloudinaryService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 
-import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 
@@ -26,31 +25,7 @@ import java.time.LocalDateTime;
 public class PostItemServlet extends HttpServlet {
 
     private final ItemDAO itemDAO = new ItemDAO();
-
-    private String getProjectUploadDirectory() {
-        String currentDir = System.getProperty("user.dir");
-        File currentDirFile = new File(currentDir);
-        String projectRoot = null;
-        if (new File(currentDirFile, "src").exists()) {
-            projectRoot = currentDirFile.getAbsolutePath();
-        } else {
-            File parent = currentDirFile;
-            int maxLevels = 10;
-            for (int i = 0; i < maxLevels; i++) {
-                parent = parent.getParentFile();
-                if (parent == null) break;
-                if (new File(parent, "src").exists()) {
-                    projectRoot = parent.getAbsolutePath();
-                    break;
-                }
-            }
-        }
-        if (projectRoot == null) {
-            projectRoot = currentDir;
-        }
-        return projectRoot + File.separator + "src" + File.separator +
-                "main" + File.separator + "webapp" + File.separator + "img_items";
-    }
+    private final CloudinaryService cloudinaryService = new CloudinaryService();
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
@@ -91,16 +66,20 @@ public class PostItemServlet extends HttpServlet {
             }
 
             Part filePart = req.getPart("itemPhoto");
-            String fileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
-            String uniqueFileName = System.currentTimeMillis() + "_" + fileName;
-            String uploadPath = getProjectUploadDirectory();
-            File uploadDir = new File(uploadPath);
-            if (!uploadDir.exists()) {
-                uploadDir.mkdirs();
+            String imageUrlForDB;
+
+            // Upload ảnh lên Cloudinary
+            if (filePart != null && filePart.getSize() > 0) {
+                try {
+                    imageUrlForDB = cloudinaryService.uploadImage(filePart);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    throw new IOException("Lỗi upload ảnh lên Cloudinary: " + e.getMessage());
+                }
+            } else {
+                // Nếu không có ảnh, dùng ảnh mặc định (hoặc xử lý lỗi tùy ý)
+                imageUrlForDB = "https://via.placeholder.com/300?text=No+Image";
             }
-            String filePath = uploadPath + File.separator + uniqueFileName;
-            filePart.write(filePath);
-            String imageUrlForDB = filePath.replace("\\", "/");
 
             Item item = new Item();
             item.setTitle(title);
@@ -122,6 +101,7 @@ public class PostItemServlet extends HttpServlet {
             }
 
             resp.setStatus(HttpServletResponse.SC_OK);
+            // Escape URL để an toàn trong JSON
             String escapedImageUrl = item.getImageUrl().replace("\"", "\\\"");
             String jsonResponse = String.format(
                     "{\"success\": true, \"itemId\": %d, \"imageUrl\": \"%s\", \"ecoPointsAwarded\": %s, \"message\": \"Đăng tin thành công! Vui lòng chờ Admin duyệt.\"}",

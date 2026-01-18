@@ -290,7 +290,17 @@
 
             items.forEach(item => {
                 if (item.location) {
-                    let imgUrl = item.imageUrl ? '${pageContext.request.contextPath}/images?path=' + encodeURIComponent(item.imageUrl) : 'https://placehold.co/200x150';
+                    // --- SỬA ĐỔI: Logic hiển thị ảnh ---
+                    let imgUrl;
+                    if (item.imageUrl && item.imageUrl.startsWith('http')) {
+                        imgUrl = item.imageUrl; // Dùng trực tiếp nếu là link Cloudinary/Internet
+                    } else if (item.imageUrl) {
+                        imgUrl = '${pageContext.request.contextPath}/images?path=' + encodeURIComponent(item.imageUrl); // Logic cũ
+                    } else {
+                        imgUrl = 'https://placehold.co/200x150'; // Ảnh mặc định
+                    }
+                    // -----------------------------------
+
                     let actionBtn = '';
 
                     if (currentUserId) {
