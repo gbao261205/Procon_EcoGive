@@ -139,16 +139,16 @@ INSERT INTO categories (name, fixed_points) VALUES
 
 -- 3.3 Items
 INSERT INTO items (giver_id, title, description, image_url, status, location, eco_points, category_id) VALUES
-(4, 'Bàn học sinh cũ', 'Bàn gỗ ép, còn dùng tốt, hơi trầy xước.', 'https://via.placeholder.com/300?text=Ban+Hoc', 'AVAILABLE', ST_GeomFromText('POINT(106.698 10.771)'), 15.00, 1),
-(4, 'Sách giáo khoa lớp 12', 'Trọn bộ sách giáo khoa, tặng cho em nào cần.', 'https://via.placeholder.com/300?text=Sach+GK', 'AVAILABLE', ST_GeomFromText('POINT(106.698 10.771)'), 5.00, 4),
-(5, 'Quần áo trẻ em 5 tuổi', 'Đồ bé trai, khoảng 5kg quần áo.', 'https://via.placeholder.com/300?text=Quan+Ao', 'AVAILABLE', ST_GeomFromText('POINT(106.690 10.780)'), 10.00, 2),
-(5, 'Xe đạp mini', 'Xe đạp cho bé tập đi, bị hỏng phanh.', 'https://via.placeholder.com/300?text=Xe+Dap', 'PENDING', ST_GeomFromText('POINT(106.690 10.780)'), 20.00, 1),
-(6, 'Laptop Dell cũ hỏng', 'Hỏng main, bán xác hoặc tặng thợ.', 'https://via.placeholder.com/300?text=Laptop', 'AVAILABLE', ST_GeomFromText('POINT(106.660 10.750)'), 50.00, 3),
-(7, 'Tủ lạnh mini Sanyo', 'Vẫn chạy tốt, phù hợp sinh viên.', 'https://via.placeholder.com/300?text=Tu+Lanh', 'COMPLETED', ST_GeomFromText('POINT(106.670 10.760)'), 100.00, 3),
-(8, 'Giày thể thao size 42', 'Ít đi, còn mới 90%.', 'https://via.placeholder.com/300?text=Giay', 'AVAILABLE', ST_GeomFromText('POINT(106.710 10.800)'), 8.00, 2),
-(9, 'Chai nhựa rỗng (10kg)', 'Đã phân loại sạch sẽ.', 'https://via.placeholder.com/300?text=Chai+Nhua', 'AVAILABLE', ST_GeomFromText('POINT(106.680 10.820)'), 12.00, 5),
-(10, 'Ghế sofa đơn', 'Màu xám, nệm êm.', 'https://via.placeholder.com/300?text=Sofa', 'CONFIRMED', ST_GeomFromText('POINT(106.750 10.850)'), 30.00, 1),
-(4, 'Màn hình máy tính 19 inch', 'Bị sọc màn hình nhẹ.', 'https://via.placeholder.com/300?text=Man+Hinh', 'AVAILABLE', ST_GeomFromText('POINT(106.698 10.771)'), 15.00, 3);
+(4, 'Bàn học sinh cũ', 'Bàn gỗ ép, còn dùng tốt, hơi trầy xước.', 'https://res.cloudinary.com/dwsspfalj/image/upload/v1768785003/banHocSinh_t9no1d.png', 'AVAILABLE', ST_GeomFromText('POINT(106.698 10.771)'), 15.00, 1),
+(4, 'Sách giáo khoa lớp 12', 'Trọn bộ sách giáo khoa, tặng cho em nào cần.', 'https://res.cloudinary.com/dwsspfalj/image/upload/v1768785038/s%C3%A1ch_gi%C3%A1o_khoa_l%E1%BB%9Bp_12_zxz5jw.jpg', 'AVAILABLE', ST_GeomFromText('POINT(106.698 10.771)'), 5.00, 4),
+(5, 'Quần áo trẻ em 5 tuổi', 'Đồ bé trai, khoảng 5kg quần áo.', 'https://res.cloudinary.com/dwsspfalj/image/upload/v1768785121/qu%E1%BA%A7n_%C3%A1o_tr%E1%BA%BB_em_ymibjz.jpg', 'AVAILABLE', ST_GeomFromText('POINT(106.690 10.780)'), 10.00, 2),
+(5, 'Xe đạp mini', 'Xe đạp cho bé tập đi, bị hỏng phanh.', 'https://res.cloudinary.com/dwsspfalj/image/upload/v1768785177/xe_%C4%91%E1%BA%A1p_mini_wnnwlk.webp', 'PENDING', ST_GeomFromText('POINT(106.690 10.780)'), 20.00, 1),
+(6, 'Laptop Dell cũ hỏng', 'Hỏng main, bán xác hoặc tặng thợ.', 'https://res.cloudinary.com/dwsspfalj/image/upload/v1768785244/laptop_dell_x887g7.png', 'AVAILABLE', ST_GeomFromText('POINT(106.660 10.750)'), 50.00, 3),
+(7, 'Tủ lạnh mini Sanyo', 'Vẫn chạy tốt, phù hợp sinh viên.', 'https://res.cloudinary.com/dwsspfalj/image/upload/v1768785244/laptop_dell_x887g7.png', 'COMPLETED', ST_GeomFromText('POINT(106.670 10.760)'), 100.00, 3),
+(8, 'Giày thể thao size 42', 'Ít đi, còn mới 90%.', 'https://res.cloudinary.com/dwsspfalj/image/upload/v1768785354/gi%C3%A0y_th%E1%BB%83_thao_jzgakn.webp', 'AVAILABLE', ST_GeomFromText('POINT(106.710 10.800)'), 8.00, 2),
+(9, 'Chai nhựa rỗng (10kg)', 'Đã phân loại sạch sẽ.', 'https://res.cloudinary.com/dwsspfalj/image/upload/v1768785418/chai_nh%E1%BB%B1a_r%E1%BB%97ng_bqy89w.png', 'AVAILABLE', ST_GeomFromText('POINT(106.680 10.820)'), 12.00, 5),
+(10, 'Ghế sofa đơn', 'Màu xám, nệm êm.', 'https://res.cloudinary.com/dwsspfalj/image/upload/v1768785457/gh%E1%BA%BF_sofa_%C4%91%C6%A1n_tm9iqy.png', 'CONFIRMED', ST_GeomFromText('POINT(106.750 10.850)'), 30.00, 1),
+(4, 'Màn hình máy tính 19 inch', 'Bị sọc màn hình nhẹ.', 'https://res.cloudinary.com/dwsspfalj/image/upload/v1768785497/M%C3%A0n_h%C3%ACnh_m%C3%A1y_t%C3%ADnh_19_inch_dg9c86.png', 'AVAILABLE', ST_GeomFromText('POINT(106.698 10.771)'), 15.00, 3);
 
 -- 3.4 Collection Points
 INSERT INTO collection_points (name, type, address, location, owner_id) VALUES
