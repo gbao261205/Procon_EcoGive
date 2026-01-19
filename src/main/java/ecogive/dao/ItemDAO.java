@@ -63,27 +63,63 @@ public class ItemDAO {
         }
         return list;
     }
+
+    // --- MỚI: Tìm kiếm theo vùng hiển thị (Viewport) ---
+    public List<Item> findAvailableInBounds(double minLat, double minLng, double maxLat, double maxLng) throws SQLException {
+        // Tạo Polygon hình chữ nhật bao quanh viewport
+        // Thứ tự vẽ: (minLng minLat) -> (maxLng minLat) -> (maxLng maxLat) -> (minLng maxLat) -> (minLng minLat)
+        String polygonWKT = String.format("POLYGON((%f %f, %f %f, %f %f, %f %f, %f %f))",
+                minLng, minLat,
+                maxLng, minLat,
+                maxLng, maxLat,
+                minLng, maxLat,
+                minLng, minLat);
+
+        String sql = "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude, u.username " +
+                "FROM items i " +
+                "JOIN users u ON i.giver_id = u.user_id " +
+                "WHERE i.status = 'AVAILABLE' " +
+                "AND MBRContains(ST_GeomFromText(?), i.location)";
+
+        List<Item> list = new ArrayList<>();
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, polygonWKT);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Item item = mapRow(rs);
+                    item.setGiverName(rs.getString("username"));
+                    list.add(item);
+                }
+            }
+        } catch (Exception e) {
+            throw new SQLException(e);
+        }
+        return list;
+    }
+    // --------------------------------------------------
     
     public List<Item> findAll() throws SQLException {
         return findAll(1000, 0, null); // Default fallback
     }
 
-    // --- MỚI: Hỗ trợ phân trang ---
     public List<Item> findAll(int limit, int offset, String statusFilter) throws SQLException {
         StringBuilder sql = new StringBuilder(
             "SELECT *, ST_X(location) AS longitude, ST_Y(location) AS latitude FROM items "
         );
-
+        
         if (statusFilter != null && !statusFilter.isEmpty()) {
             sql.append(" WHERE status = ? ");
         }
-
+        
         sql.append(" ORDER BY post_date DESC LIMIT ? OFFSET ?");
 
         List<Item> list = new ArrayList<>();
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
-
+            
             int paramIndex = 1;
             if (statusFilter != null && !statusFilter.isEmpty()) {
                 stmt.setString(paramIndex++, statusFilter);
@@ -110,7 +146,7 @@ public class ItemDAO {
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
-
+            
             if (statusFilter != null && !statusFilter.isEmpty()) {
                 stmt.setString(1, statusFilter);
             }
@@ -125,7 +161,6 @@ public class ItemDAO {
         }
         return 0;
     }
-    // ------------------------------
 
     public List<Item> findItemsByGiverId(long giverId) {
         List<Item> list = new ArrayList<>();
