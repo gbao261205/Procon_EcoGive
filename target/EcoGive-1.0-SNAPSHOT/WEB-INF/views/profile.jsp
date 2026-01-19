@@ -71,79 +71,135 @@
 
             <div class="p-6">
 
+                <!-- TAB: Đồ đã tặng (Dạng bảng) -->
                 <div id="content-given" class="block">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <c:forEach var="item" items="${givenItems}">
-                            <div class="border border-slate-100 rounded-lg p-3 hover:shadow-md transition">
-                                <div class="h-32 bg-slate-100 rounded-md mb-3 overflow-hidden border border-slate-50">
-                                    <c:url value="/images" var="imgSrc"><c:param name="path" value="${item.imageUrl}" /></c:url>
-                                    <img src="${imgSrc}" alt="${item.title}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/200x150?text=No+Image'">
-                                </div>
-                                <h3 class="font-bold text-slate-800 truncate">${item.title}</h3>
-                                <div class="flex justify-between items-center mt-2">
-<%--        <span class="text-xs text-slate-500">--%>
-<%--            <fmt:formatDate value="${item.postDate}" pattern="dd/MM/yyyy"/>--%>
-<%--        </span>--%>
-                                    <div>
-                                        <c:choose>
-                                            <c:when test="${item.status == 'PENDING'}">
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-100">
-                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                        Chờ duyệt
-                    </span>
-                                            </c:when>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-bold tracking-wider">
+                                <tr>
+                                    <th class="px-4 py-3 border-b border-slate-100">Vật phẩm</th>
+                                    <th class="px-4 py-3 border-b border-slate-100">Ngày đăng</th>
+                                    <th class="px-4 py-3 border-b border-slate-100">Trạng thái</th>
+                                    <th class="px-4 py-3 border-b border-slate-100 text-right">Hành động</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-sm divide-y divide-slate-100">
+                                <c:forEach var="item" items="${givenItems}">
+                                    <!-- Logic ảnh -->
+                                    <c:choose>
+                                        <c:when test="${fn:startsWith(item.imageUrl, 'http')}">
+                                            <c:set var="finalImgUrl" value="${item.imageUrl}" />
+                                        </c:when>
+                                        <c:otherwise>
+                                            <c:url value="/images" var="localImgUrl"><c:param name="path" value="${item.imageUrl}" /></c:url>
+                                            <c:set var="finalImgUrl" value="${localImgUrl}" />
+                                        </c:otherwise>
+                                    </c:choose>
 
-                                            <c:when test="${item.status == 'AVAILABLE'}">
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                        Đang hiển thị
-                    </span>
-                                            </c:when>
-
-                                            <c:when test="${item.status == 'CONFIRMED'}">
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
-                        <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                        Đã chốt tặng
-                    </span>
-                                            </c:when>
-
-                                            <c:when test="${item.status == 'COMPLETED'}">
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-100">
-                        <span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
-                        Hoàn thành
-                    </span>
-                                            </c:when>
-
-                                            <c:when test="${item.status == 'CANCELLED'}">
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-100">
-                        <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
-                        Đã hủy
-                    </span>
-                                            </c:when>
-
-                                            <c:otherwise>
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                        <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
-                        ${item.status}
-                    </span>
-                                            </c:otherwise>
-                                        </c:choose>
-                                    </div>
-                                </div>
-                            </div>
-                        </c:forEach>
-                        <c:if test="${empty givenItems}"><p class="text-slate-400 italic col-span-3 text-center py-10">Bạn chưa tặng món đồ nào.</p></c:if>
+                                    <tr class="hover:bg-slate-50 transition-colors">
+                                        <td class="px-4 py-3">
+                                            <div class="flex items-center gap-3">
+                                                <div class="h-12 w-12 rounded-lg bg-slate-200 overflow-hidden flex-shrink-0 border border-slate-200">
+                                                    <img src="${finalImgUrl}" alt="${item.title}" class="h-full w-full object-cover" onerror="this.src='https://placehold.co/100x100?text=No+Image'">
+                                                </div>
+                                                <div>
+                                                    <div class="font-bold text-slate-800">${item.title}</div>
+                                                    <div class="text-xs text-slate-500 truncate w-32">${item.description}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-3 text-slate-500 text-xs">
+                                            <!-- SỬA LỖI: Xử lý LocalDateTime thủ công vì fmt:formatDate không hỗ trợ -->
+                                            <c:set var="dateStr" value="${fn:substring(item.postDate, 0, 19)}" />
+                                            <c:set var="dateParts" value="${fn:split(dateStr, 'T')}" />
+                                            <c:set var="ymd" value="${fn:split(dateParts[0], '-')}" />
+                                            ${ymd[2]}/${ymd[1]}/${ymd[0]} ${fn:substring(dateParts[1], 0, 5)}
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <c:choose>
+                                                <c:when test="${item.status == 'PENDING'}">
+                                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-100">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Chờ duyệt
+                                                    </span>
+                                                </c:when>
+                                                <c:when test="${item.status == 'AVAILABLE'}">
+                                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Đang hiển thị
+                                                    </span>
+                                                </c:when>
+                                                <c:when test="${item.status == 'CONFIRMED'}">
+                                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Đã chốt tặng
+                                                    </span>
+                                                </c:when>
+                                                <c:when test="${item.status == 'COMPLETED'}">
+                                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-100">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span> Hoàn thành
+                                                    </span>
+                                                </c:when>
+                                                <c:when test="${item.status == 'CANCELLED'}">
+                                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-100">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Đã hủy
+                                                    </span>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                                                        ${item.status}
+                                                    </span>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </td>
+                                        <td class="px-4 py-3 text-right">
+                                            <c:if test="${item.status == 'PENDING'}">
+                                                <form action="${pageContext.request.contextPath}/profile" method="post" class="inline">
+                                                    <input type="hidden" name="action" value="cancel-item">
+                                                    <input type="hidden" name="itemId" value="${item.itemId}">
+                                                    <button type="submit" onclick="return confirm('Bạn muốn hủy đăng món đồ này?')"
+                                                            class="text-red-600 hover:text-red-800 font-bold text-xs border border-red-200 bg-red-50 hover:bg-red-100 rounded px-3 py-1 transition-colors">
+                                                        ✗ Hủy
+                                                    </button>
+                                                </form>
+                                            </c:if>
+                                            <c:if test="${item.status == 'AVAILABLE'}">
+                                                <form action="${pageContext.request.contextPath}/profile" method="post" class="inline">
+                                                    <input type="hidden" name="action" value="remove-item">
+                                                    <input type="hidden" name="itemId" value="${item.itemId}">
+                                                    <button type="submit" onclick="return confirm('Bạn muốn gỡ bài đăng này?')"
+                                                            class="text-orange-600 hover:text-orange-800 font-bold text-xs border border-orange-200 bg-orange-50 hover:bg-orange-100 rounded px-3 py-1 transition-colors">
+                                                        ✗ Gỡ bài
+                                                    </button>
+                                                </form>
+                                            </c:if>
+                                        </td>
+                                    </tr>
+                                </c:forEach>
+                                <c:if test="${empty givenItems}">
+                                    <tr><td colspan="4" class="text-center py-8 text-slate-400 italic">Bạn chưa đăng món đồ nào.</td></tr>
+                                </c:if>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
+                <!-- TAB: Đồ đã nhận (Giữ nguyên dạng lưới) -->
                 <div id="content-received" class="hidden">
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <c:forEach var="item" items="${receivedItems}">
+                            <!-- Logic ảnh -->
+                            <c:choose>
+                                <c:when test="${fn:startsWith(item.imageUrl, 'http')}">
+                                    <c:set var="finalImgUrl" value="${item.imageUrl}" />
+                                </c:when>
+                                <c:otherwise>
+                                    <c:url value="/images" var="localImgUrl"><c:param name="path" value="${item.imageUrl}" /></c:url>
+                                    <c:set var="finalImgUrl" value="${localImgUrl}" />
+                                </c:otherwise>
+                            </c:choose>
+
                             <div class="border border-slate-100 rounded-lg p-3 hover:shadow-md transition relative">
                                 <div class="absolute top-2 right-2 bg-emerald-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow">Đã nhận</div>
                                 <div class="h-32 bg-slate-100 rounded-md mb-3 overflow-hidden border border-slate-50">
-                                    <c:url value="/images" var="imgSrc"><c:param name="path" value="${item.imageUrl}" /></c:url>
-                                    <img src="${imgSrc}" alt="${item.title}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/200x150?text=No+Image'">
+                                    <img src="${finalImgUrl}" alt="${item.title}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/200x150?text=No+Image'">
                                 </div>
                                 <h3 class="font-bold text-slate-800 truncate">${item.title}</h3>
                                 <p class="text-xs text-slate-500 mt-1 truncate">${item.description}</p>
@@ -153,6 +209,7 @@
                     </div>
                 </div>
 
+                <!-- TAB: Đánh giá (Giữ nguyên) -->
                 <div id="content-reviews" class="hidden space-y-4">
                     <c:forEach var="rev" items="${reviews}">
                         <div class="flex gap-4 p-4 border border-slate-100 rounded-xl bg-slate-50">

@@ -149,20 +149,29 @@
                         </td>
 
                         <td class="px-6 py-4 text-right" onclick="event.stopPropagation()">
-                            <c:if test="${item.status == 'PENDING'}">
-                                <a href="${pageContext.request.contextPath}/admin?action=approve-item&id=${item.itemId}"
-                                   class="text-emerald-600 hover:text-emerald-800 font-medium text-xs border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 rounded px-3 py-1 mr-2 transition-colors">
-                                    ✓ Duyệt
-                                </a>
-                                <a href="${pageContext.request.contextPath}/admin?action=reject-item&id=${item.itemId}"
-                                   class="text-red-600 hover:text-red-800 font-medium text-xs border border-red-200 bg-red-50 hover:bg-red-100 rounded px-3 py-1 transition-colors"
-                                   onclick="return confirm('Từ chối vật phẩm này?');">
-                                    ✗ Hủy
-                                </a>
-                            </c:if>
-                            <c:if test="${item.status != 'PENDING'}">
-                                <span class="text-slate-400 text-xs italic">Đã xử lý</span>
-                            </c:if>
+                            <c:choose>
+                                <c:when test="${item.status == 'PENDING'}">
+                                    <a href="${pageContext.request.contextPath}/admin?action=approve-item&id=${item.itemId}"
+                                       class="text-emerald-600 hover:text-emerald-800 font-medium text-xs border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 rounded px-3 py-1 mr-2 transition-colors">
+                                        ✓ Duyệt
+                                    </a>
+                                    <a href="${pageContext.request.contextPath}/admin?action=reject-item&id=${item.itemId}"
+                                       class="text-red-600 hover:text-red-800 font-medium text-xs border border-red-200 bg-red-50 hover:bg-red-100 rounded px-3 py-1 transition-colors"
+                                       onclick="return confirm('Từ chối vật phẩm này?');">
+                                        ✗ Hủy
+                                    </a>
+                                </c:when>
+                                <c:when test="${item.status == 'AVAILABLE'}">
+                                    <a href="${pageContext.request.contextPath}/admin?action=reject-item&id=${item.itemId}"
+                                       class="text-orange-600 hover:text-orange-800 font-medium text-xs border border-orange-200 bg-orange-50 hover:bg-orange-100 rounded px-3 py-1 transition-colors"
+                                       onclick="return confirm('Bạn chắc chắn muốn gỡ bỏ vật phẩm đang hiển thị này?');">
+                                        ✗ Gỡ bỏ
+                                    </a>
+                                </c:when>
+                                <c:otherwise>
+                                    <span class="text-slate-400 text-xs italic">Đã xử lý</span>
+                                </c:otherwise>
+                            </c:choose>
                         </td>
                     </tr>
                 </c:forEach>
@@ -273,13 +282,12 @@
 
                 <!-- Footer -->
                 <div class="bg-slate-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 border-t border-slate-100 gap-2">
-                    <!-- Action Buttons for PENDING items -->
-                    <!-- Đã xóa class sm:flex để tránh xung đột với hidden -->
+                    <!-- Action Buttons -->
                     <div id="modalActions" class="hidden sm:flex-row-reverse gap-2 w-full sm:w-auto">
                         <a id="btnModalApprove" href="#" class="inline-flex w-full justify-center rounded-lg bg-emerald-600 px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-emerald-700 sm:w-auto">
                             ✓ Duyệt
                         </a>
-                        <a id="btnModalReject" href="#" onclick="return confirm('Từ chối vật phẩm này?');" class="inline-flex w-full justify-center rounded-lg bg-red-600 px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-red-700 sm:w-auto">
+                        <a id="btnModalReject" href="#" onclick="return confirm('Xác nhận hành động này?');" class="inline-flex w-full justify-center rounded-lg bg-red-600 px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-red-700 sm:w-auto">
                             ✗ Hủy
                         </a>
                     </div>
@@ -328,17 +336,35 @@
         const btnApprove = document.getElementById('btnModalApprove');
         const btnReject = document.getElementById('btnModalReject');
 
-        // Reset class list để tránh lỗi logic cũ
+        // Reset trạng thái mặc định
         actionDiv.classList.add('hidden');
         actionDiv.classList.remove('flex');
+        btnApprove.classList.remove('hidden'); // Hiện nút duyệt mặc định
+        btnReject.innerText = '✗ Hủy'; // Reset text nút hủy
+        btnReject.classList.remove('bg-orange-600', 'hover:bg-orange-700'); // Reset màu
+        btnReject.classList.add('bg-red-600', 'hover:bg-red-700');
 
         if (status === 'PENDING') {
             actionDiv.classList.remove('hidden');
-            actionDiv.classList.add('flex'); // Thêm flex khi hiển thị
+            actionDiv.classList.add('flex');
 
-            // Cập nhật href cho các nút
             btnApprove.href = '${pageContext.request.contextPath}/admin?action=approve-item&id=' + id;
             btnReject.href = '${pageContext.request.contextPath}/admin?action=reject-item&id=' + id;
+        }
+        else if (status === 'AVAILABLE') {
+            actionDiv.classList.remove('hidden');
+            actionDiv.classList.add('flex');
+
+            // Ẩn nút duyệt
+            btnApprove.classList.add('hidden');
+
+            // Cấu hình nút Hủy thành nút Gỡ bỏ
+            btnReject.innerText = '✗ Gỡ bỏ';
+            btnReject.href = '${pageContext.request.contextPath}/admin?action=reject-item&id=' + id;
+
+            // Đổi màu sang cam cho khác biệt
+            btnReject.classList.remove('bg-red-600', 'hover:bg-red-700');
+            btnReject.classList.add('bg-orange-600', 'hover:bg-orange-700');
         }
 
         // Hiển thị modal
