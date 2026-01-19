@@ -11,7 +11,8 @@
     <style>
         .leaflet-popup-content-wrapper { border-radius: 12px; overflow: hidden; padding: 0; }
         .leaflet-popup-content { margin: 0; width: 240px !important; }
-        .custom-popup-img { width: 100%; height: 130px; object-fit: cover; }
+        /* Đã chỉnh sửa theo yêu cầu: object-fit: contain và thêm background */
+        .custom-popup-img { width: 100%; height: 150px; object-fit: contain; background-color: #f1f5f9; }
         .custom-popup-body { padding: 12px; }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
