@@ -53,7 +53,7 @@ public class LoginServlet extends HttpServlet {
             User user = userDAO.findByUsername(username);
 
             if (user == null) {
-                handleError(request, response, "Tài khoản không tồn tại.", username);
+                handleError(request, response, "Tài khoản hoặc mật khẩu không chính xác.", username);
                 return;
             }
 
@@ -75,7 +75,7 @@ public class LoginServlet extends HttpServlet {
             }
 
             if (!match) {
-                handleError(request, response, "Mật khẩu không chính xác.", username);
+                handleError(request, response, "Tài khoản hoặc mật khẩu không chính xác.", username);
                 return;
             }
 
