@@ -65,22 +65,67 @@ public class ItemDAO {
     }
     
     public List<Item> findAll() throws SQLException {
-        String sql = "SELECT *, ST_X(location) AS longitude, ST_Y(location) AS latitude " +
-                     "FROM items ORDER BY post_date DESC";
+        return findAll(1000, 0, null); // Default fallback
+    }
+
+    // --- MỚI: Hỗ trợ phân trang ---
+    public List<Item> findAll(int limit, int offset, String statusFilter) throws SQLException {
+        StringBuilder sql = new StringBuilder(
+            "SELECT *, ST_X(location) AS longitude, ST_Y(location) AS latitude FROM items "
+        );
+
+        if (statusFilter != null && !statusFilter.isEmpty()) {
+            sql.append(" WHERE status = ? ");
+        }
+
+        sql.append(" ORDER BY post_date DESC LIMIT ? OFFSET ?");
 
         List<Item> list = new ArrayList<>();
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
+             PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
 
-            while (rs.next()) {
-                list.add(mapRow(rs));
+            int paramIndex = 1;
+            if (statusFilter != null && !statusFilter.isEmpty()) {
+                stmt.setString(paramIndex++, statusFilter);
+            }
+            stmt.setInt(paramIndex++, limit);
+            stmt.setInt(paramIndex++, offset);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
             }
         } catch (Exception e) {
             throw new SQLException(e);
         }
         return list;
     }
+
+    public int countAll(String statusFilter) throws SQLException {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM items");
+        if (statusFilter != null && !statusFilter.isEmpty()) {
+            sql.append(" WHERE status = ?");
+        }
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
+
+            if (statusFilter != null && !statusFilter.isEmpty()) {
+                stmt.setString(1, statusFilter);
+            }
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (Exception e) {
+            throw new SQLException(e);
+        }
+        return 0;
+    }
+    // ------------------------------
 
     public List<Item> findItemsByGiverId(long giverId) {
         List<Item> list = new ArrayList<>();

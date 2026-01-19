@@ -272,17 +272,36 @@ public class AdminServlet extends HttpServlet {
 
     private void listItems(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, SQLException {
         String statusStr = req.getParameter("status");
-        List<Item> items;
-
-        if (statusStr != null && !statusStr.isEmpty()) {
-            items = itemDAO.findAll().stream()
-                    .filter(i -> i.getStatus().name().equals(statusStr))
-                    .toList();
-        } else {
-            items = itemDAO.findAll();
+        String pageStr = req.getParameter("page");
+        
+        int page = 1;
+        int limit = 10; // 10 items per page
+        
+        if (pageStr != null && !pageStr.isEmpty()) {
+            try {
+                page = Integer.parseInt(pageStr);
+                if (page < 1) page = 1;
+            } catch (NumberFormatException e) {
+                page = 1;
+            }
+        }
+        
+        int offset = (page - 1) * limit;
+        
+        // Nếu status rỗng thì coi như null để DAO xử lý
+        if (statusStr != null && statusStr.trim().isEmpty()) {
+            statusStr = null;
         }
 
+        List<Item> items = itemDAO.findAll(limit, offset, statusStr);
+        int totalItems = itemDAO.countAll(statusStr);
+        int totalPages = (int) Math.ceil((double) totalItems / limit);
+
         req.setAttribute("items", items);
+        req.setAttribute("currentPage", page);
+        req.setAttribute("totalPages", totalPages);
+        req.setAttribute("currentStatus", statusStr); // Để giữ trạng thái filter khi chuyển trang
+
         req.getRequestDispatcher("/WEB-INF/views/admin/items.jsp").forward(req, resp);
     }
 

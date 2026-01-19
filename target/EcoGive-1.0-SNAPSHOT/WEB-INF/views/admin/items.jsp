@@ -1,6 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -8,7 +9,12 @@
     <title>Quản lý Vật phẩm - EcoGive Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style> body { font-family: 'Inter', sans-serif; } </style>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* Hiệu ứng fade cho modal */
+        .modal-enter { opacity: 0; transform: scale(0.95); }
+        .modal-enter-active { opacity: 1; transform: scale(1); transition: opacity 0.2s, transform 0.2s; }
+    </style>
 </head>
 <body class="bg-slate-100 min-h-screen font-sans text-slate-800">
 
@@ -17,37 +23,33 @@
 <main class="md:ml-64 p-8">
     <h1 class="text-2xl font-bold text-slate-800 mb-6">Quản lý Vật phẩm</h1>
 
+    <!-- Filter Buttons -->
     <div class="flex flex-wrap gap-2 mb-6">
         <a href="${pageContext.request.contextPath}/admin?action=items"
            class="px-4 py-2 rounded-lg text-sm font-medium border shadow-sm transition-all
            ${empty param.status ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}">
             Tất cả
         </a>
-
         <a href="${pageContext.request.contextPath}/admin?action=items&status=PENDING"
            class="px-4 py-2 rounded-lg text-sm font-medium border shadow-sm transition-all
            ${param.status == 'PENDING' ? 'bg-amber-100 text-amber-800 border-amber-200' : 'bg-white text-slate-600 border-slate-200 hover:text-amber-600 hover:bg-amber-50'}">
             Chờ duyệt
         </a>
-
         <a href="${pageContext.request.contextPath}/admin?action=items&status=AVAILABLE"
            class="px-4 py-2 rounded-lg text-sm font-medium border shadow-sm transition-all
            ${param.status == 'AVAILABLE' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-white text-slate-600 border-slate-200 hover:text-emerald-600 hover:bg-emerald-50'}">
             Đang hiển thị
         </a>
-
         <a href="${pageContext.request.contextPath}/admin?action=items&status=CONFIRMED"
            class="px-4 py-2 rounded-lg text-sm font-medium border shadow-sm transition-all
            ${param.status == 'CONFIRMED' ? 'bg-blue-100 text-blue-800 border-blue-200' : 'bg-white text-slate-600 border-slate-200 hover:text-blue-600 hover:bg-blue-50'}">
             Đã chốt tặng
         </a>
-
         <a href="${pageContext.request.contextPath}/admin?action=items&status=COMPLETED"
            class="px-4 py-2 rounded-lg text-sm font-medium border shadow-sm transition-all
            ${param.status == 'COMPLETED' ? 'bg-purple-100 text-purple-800 border-purple-200' : 'bg-white text-slate-600 border-slate-200 hover:text-purple-600 hover:bg-purple-50'}">
             Hoàn thành
         </a>
-
         <a href="${pageContext.request.contextPath}/admin?action=items&status=CANCELLED"
            class="px-4 py-2 rounded-lg text-sm font-medium border shadow-sm transition-all
            ${param.status == 'CANCELLED' ? 'bg-red-100 text-red-800 border-red-200' : 'bg-white text-slate-600 border-slate-200 hover:text-red-600 hover:bg-red-50'}">
@@ -55,7 +57,8 @@
         </a>
     </div>
 
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+    <!-- Table -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-6">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-bold tracking-wider">
@@ -69,18 +72,39 @@
                 </thead>
                 <tbody class="text-sm divide-y divide-slate-100">
                 <c:forEach var="item" items="${items}">
-                    <tr class="hover:bg-slate-50 transition-colors">
+                    <!-- Xử lý URL ảnh trước để dùng cho cả hiển thị và data attribute -->
+                    <c:choose>
+                        <c:when test="${fn:startsWith(item.imageUrl, 'http')}">
+                            <c:set var="finalImgUrl" value="${item.imageUrl}" />
+                        </c:when>
+                        <c:otherwise>
+                            <c:url value="/images" var="localImgUrl">
+                                <c:param name="path" value="${item.imageUrl}" />
+                            </c:url>
+                            <c:set var="finalImgUrl" value="${localImgUrl}" />
+                        </c:otherwise>
+                    </c:choose>
+
+                    <tr class="hover:bg-slate-50 transition-colors cursor-pointer group"
+                        onclick="openItemModal(this)"
+                        data-id="${item.itemId}"
+                        data-title="${item.title}"
+                        data-desc="${item.description}"
+                        data-image="${finalImgUrl}"
+                        data-giver="${item.giverId}"
+                        data-category="${item.categoryId}"
+                        data-status="${item.status}"
+                        data-points="${item.ecoPoints}"
+                        data-date="${item.postDate}">
+
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-3">
                                 <div class="h-12 w-12 rounded-lg bg-slate-200 overflow-hidden flex-shrink-0 border border-slate-200">
-                                    <c:url value="/images" var="imgSrc">
-                                        <c:param name="path" value="${item.imageUrl}" />
-                                    </c:url>
-                                    <img src="${imgSrc}" alt="${item.title}" class="h-full w-full object-cover"
+                                    <img src="${finalImgUrl}" alt="${item.title}" class="h-full w-full object-cover"
                                          onerror="this.src='https://placehold.co/100x100?text=No+Image'">
                                 </div>
                                 <div>
-                                    <div class="font-medium text-slate-800">${item.title}</div>
+                                    <div class="font-medium text-slate-800 group-hover:text-emerald-600 transition-colors">${item.title}</div>
                                     <div class="text-xs text-slate-500 truncate w-32" title="${item.description}">
                                             ${item.description}
                                     </div>
@@ -124,7 +148,7 @@
                             </c:choose>
                         </td>
 
-                        <td class="px-6 py-4 text-right">
+                        <td class="px-6 py-4 text-right" onclick="event.stopPropagation()">
                             <c:if test="${item.status == 'PENDING'}">
                                 <a href="${pageContext.request.contextPath}/admin?action=approve-item&id=${item.itemId}"
                                    class="text-emerald-600 hover:text-emerald-800 font-medium text-xs border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 rounded px-3 py-1 mr-2 transition-colors">
@@ -157,6 +181,181 @@
             </table>
         </div>
     </div>
+
+    <!-- Pagination -->
+    <c:if test="${totalPages > 1}">
+        <div class="flex justify-center items-center gap-2 mt-6">
+            <c:if test="${currentPage > 1}">
+                <a href="${pageContext.request.contextPath}/admin?action=items&page=${currentPage - 1}&status=${currentStatus}"
+                   class="px-3 py-1 rounded border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 text-sm">
+                    &laquo; Trước
+                </a>
+            </c:if>
+            <span class="text-sm text-slate-600 font-medium">
+                Trang ${currentPage} / ${totalPages}
+            </span>
+            <c:if test="${currentPage < totalPages}">
+                <a href="${pageContext.request.contextPath}/admin?action=items&page=${currentPage + 1}&status=${currentStatus}"
+                   class="px-3 py-1 rounded border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 text-sm">
+                    Sau &raquo;
+                </a>
+            </c:if>
+        </div>
+    </c:if>
 </main>
+
+<!-- ITEM DETAIL MODAL -->
+<div id="itemDetailModal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <!-- Backdrop -->
+    <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" onclick="closeItemModal()"></div>
+
+    <div class="fixed inset-0 z-10 overflow-y-auto">
+        <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+            <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl">
+
+                <!-- Header -->
+                <div class="bg-slate-50 px-4 py-3 sm:px-6 flex justify-between items-center border-b border-slate-100">
+                    <h3 class="text-lg font-bold leading-6 text-slate-800" id="modal-title">Chi tiết Vật phẩm</h3>
+                    <button type="button" class="text-slate-400 hover:text-slate-600" onclick="closeItemModal()">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Body -->
+                <div class="px-4 py-5 sm:p-6">
+                    <div class="flex flex-col md:flex-row gap-6">
+                        <!-- Image Section -->
+                        <div class="w-full md:w-1/2">
+                            <div class="aspect-w-4 aspect-h-3 rounded-xl overflow-hidden bg-slate-100 border border-slate-200">
+                                <img id="modalImg" src="" alt="Item Image" class="object-contain w-full h-64 bg-slate-50">
+                            </div>
+                            <div class="mt-4 flex justify-between items-center bg-emerald-50 p-3 rounded-lg border border-emerald-100">
+                                <span class="text-xs font-bold text-emerald-800 uppercase">Eco Points</span>
+                                <span id="modalPoints" class="text-lg font-bold text-emerald-600">0</span>
+                            </div>
+                        </div>
+
+                        <!-- Info Section -->
+                        <div class="w-full md:w-1/2 space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Tên vật phẩm</label>
+                                <h2 id="modalItemTitle" class="text-xl font-bold text-slate-800 leading-tight"></h2>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Mô tả chi tiết</label>
+                                <div id="modalDesc" class="text-sm text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-100 max-h-40 overflow-y-auto"></div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Người đăng (ID)</label>
+                                    <div id="modalGiver" class="text-sm font-medium text-slate-700"></div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Danh mục (ID)</label>
+                                    <div id="modalCategory" class="text-sm font-medium text-slate-700"></div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Ngày đăng</label>
+                                    <div id="modalDate" class="text-sm font-medium text-slate-700"></div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Trạng thái</label>
+                                    <div id="modalStatus" class="text-sm font-bold"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="bg-slate-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 border-t border-slate-100 gap-2">
+                    <!-- Action Buttons for PENDING items -->
+                    <!-- Đã xóa class sm:flex để tránh xung đột với hidden -->
+                    <div id="modalActions" class="hidden sm:flex-row-reverse gap-2 w-full sm:w-auto">
+                        <a id="btnModalApprove" href="#" class="inline-flex w-full justify-center rounded-lg bg-emerald-600 px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-emerald-700 sm:w-auto">
+                            ✓ Duyệt
+                        </a>
+                        <a id="btnModalReject" href="#" onclick="return confirm('Từ chối vật phẩm này?');" class="inline-flex w-full justify-center rounded-lg bg-red-600 px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-red-700 sm:w-auto">
+                            ✗ Hủy
+                        </a>
+                    </div>
+
+                    <button type="button" class="mt-3 inline-flex w-full justify-center rounded-lg bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 sm:mt-0 sm:w-auto" onclick="closeItemModal()">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openItemModal(row) {
+        // Lấy dữ liệu từ data attributes
+        const id = row.getAttribute('data-id');
+        const title = row.getAttribute('data-title');
+        const desc = row.getAttribute('data-desc');
+        const imgUrl = row.getAttribute('data-image');
+        const giver = row.getAttribute('data-giver');
+        const category = row.getAttribute('data-category');
+        const status = row.getAttribute('data-status');
+        const points = row.getAttribute('data-points');
+        const date = row.getAttribute('data-date');
+
+        // Điền dữ liệu vào modal
+        document.getElementById('modalItemTitle').innerText = title;
+        document.getElementById('modalDesc').innerText = desc;
+        document.getElementById('modalImg').src = imgUrl;
+        document.getElementById('modalGiver').innerText = giver;
+        document.getElementById('modalCategory').innerText = category;
+        document.getElementById('modalPoints').innerText = points;
+        document.getElementById('modalDate').innerText = date.replace('T', ' ');
+
+        // Style cho status
+        const statusEl = document.getElementById('modalStatus');
+        statusEl.innerText = status;
+        statusEl.className = 'text-sm font-bold'; // Reset class
+        if (status === 'PENDING') statusEl.classList.add('text-amber-600');
+        else if (status === 'AVAILABLE') statusEl.classList.add('text-emerald-600');
+        else if (status === 'CONFIRMED') statusEl.classList.add('text-blue-600');
+        else if (status === 'COMPLETED') statusEl.classList.add('text-purple-600');
+        else statusEl.classList.add('text-red-600');
+
+        // Xử lý nút Duyệt/Hủy
+        const actionDiv = document.getElementById('modalActions');
+        const btnApprove = document.getElementById('btnModalApprove');
+        const btnReject = document.getElementById('btnModalReject');
+
+        // Reset class list để tránh lỗi logic cũ
+        actionDiv.classList.add('hidden');
+        actionDiv.classList.remove('flex');
+
+        if (status === 'PENDING') {
+            actionDiv.classList.remove('hidden');
+            actionDiv.classList.add('flex'); // Thêm flex khi hiển thị
+
+            // Cập nhật href cho các nút
+            btnApprove.href = '${pageContext.request.contextPath}/admin?action=approve-item&id=' + id;
+            btnReject.href = '${pageContext.request.contextPath}/admin?action=reject-item&id=' + id;
+        }
+
+        // Hiển thị modal
+        document.getElementById('itemDetailModal').classList.remove('hidden');
+    }
+
+    function closeItemModal() {
+        document.getElementById('itemDetailModal').classList.add('hidden');
+    }
+
+    // Đóng modal khi nhấn ESC
+    document.addEventListener('keydown', function(event) {
+        if (event.key === "Escape") {
+            closeItemModal();
+        }
+    });
+</script>
+
 </body>
 </html>
