@@ -2,6 +2,7 @@ package ecogive.Controller;
 
 import ecogive.Model.*;
 import ecogive.dao.*;
+import ecogive.util.GeminiService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -23,6 +24,7 @@ public class AdminServlet extends HttpServlet {
     private final UserDAO userDAO = new UserDAO();
     private final ItemDAO itemDAO = new ItemDAO();
     private final CollectionPointDAO stationDAO = new CollectionPointDAO();
+    private final GeminiService geminiService = new GeminiService();
 
     private boolean checkAdmin(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         HttpSession session = req.getSession(false);
@@ -107,11 +109,49 @@ public class AdminServlet extends HttpServlet {
             else if ("update-station".equals(action)) {
                 updateStation(req, resp);
             }
+            else if ("auto-approve".equals(action)) {
+                autoApproveItems(req, resp);
+            }
         } catch (SQLException e) {
             throw new ServletException(e);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private void autoApproveItems(HttpServletRequest req, HttpServletResponse resp) throws SQLException, IOException {
+        // 1. Lấy danh sách item PENDING (giới hạn 20 item mỗi lần để tránh timeout)
+        List<Item> pendingItems = itemDAO.findAll(20, 0, "PENDING");
+        List<Category> categories = categoryDAO.findAll();
+        
+        int approvedCount = 0;
+        int processedCount = 0;
+
+        for (Item item : pendingItems) {
+            // Bỏ qua nếu ảnh local (không phải http) vì Gemini không đọc được file local
+            if (item.getImageUrl() == null || !item.getImageUrl().startsWith("http")) {
+                continue;
+            }
+
+            // Tìm tên category
+            String categoryName = categories.stream()
+                    .filter(c -> c.getCategoryId() == item.getCategoryId())
+                    .map(Category::getName)
+                    .findFirst()
+                    .orElse("Unknown");
+
+            // Gọi Gemini
+            boolean isApproved = geminiService.checkImageCategory(item.getImageUrl(), categoryName);
+            
+            if (isApproved) {
+                itemDAO.updateStatus(item.getItemId(), ItemStatus.AVAILABLE);
+                approvedCount++;
+            }
+            processedCount++;
+        }
+
+        // Redirect kèm thông báo
+        resp.sendRedirect(req.getContextPath() + "/admin?action=items&status=PENDING&msg=AutoApproved_" + approvedCount + "_of_" + processedCount);
     }
 
     private void addUser(HttpServletRequest req, HttpServletResponse resp) throws IOException, SQLException {

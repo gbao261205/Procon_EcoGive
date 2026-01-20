@@ -21,7 +21,18 @@
 <jsp:include page="sidebar.jsp" />
 
 <main class="md:ml-64 p-8">
-    <h1 class="text-2xl font-bold text-slate-800 mb-6">Quản lý Vật phẩm</h1>
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-slate-800">Quản lý Vật phẩm</h1>
+
+        <!-- Nút Duyệt Tự Động AI -->
+        <form action="${pageContext.request.contextPath}/admin" method="post" class="inline-block">
+            <input type="hidden" name="action" value="auto-approve">
+            <button type="submit" onclick="return confirm('Hệ thống sẽ tự động duyệt các vật phẩm PENDING bằng AI. Quá trình này có thể mất vài giây. Tiếp tục?')"
+                    class="px-4 py-2 rounded-lg text-sm font-bold text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 shadow-md transition-all flex items-center gap-2">
+                <span>✨</span> Duyệt tự động (AI)
+            </button>
+        </form>
+    </div>
 
     <!-- Filter Buttons -->
     <div class="flex flex-wrap gap-2 mb-6">
@@ -56,6 +67,14 @@
             Đã hủy
         </a>
     </div>
+
+    <!-- Thông báo kết quả AI -->
+    <c:if test="${not empty param.msg}">
+        <div class="mb-6 p-4 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg flex items-center gap-2">
+            <span>ℹ️</span>
+            <span>${fn:replace(param.msg, '_', ' ')}</span>
+        </div>
+    </c:if>
 
     <!-- Table -->
     <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-6">
