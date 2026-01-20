@@ -240,6 +240,23 @@ public class ItemDAO {
         }
     }
 
+    // --- MỚI: Cập nhật thông tin chi tiết ---
+    public boolean updateItemDetails(long itemId, int categoryId, BigDecimal ecoPoints) throws SQLException {
+        String sql = "UPDATE items SET category_id = ?, eco_points = ? WHERE item_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, categoryId);
+            stmt.setBigDecimal(2, ecoPoints);
+            stmt.setLong(3, itemId);
+
+            return stmt.executeUpdate() > 0;
+        } catch (Exception e) {
+            throw new SQLException(e);
+        }
+    }
+    // ----------------------------------------
+
     public boolean delete(long itemId) throws SQLException {
         String sql = "DELETE FROM items WHERE item_id = ?";
         try (Connection conn = DatabaseConnection.getConnection();

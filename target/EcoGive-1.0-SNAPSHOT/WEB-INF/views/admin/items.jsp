@@ -112,6 +112,7 @@
                         data-image="${finalImgUrl}"
                         data-giver="${item.giverId}"
                         data-category="${item.categoryId}"
+                        data-category-name="${categoryMap[item.categoryId]}"
                         data-status="${item.status}"
                         data-points="${item.ecoPoints}"
                         data-date="${item.postDate}">
@@ -132,7 +133,9 @@
                         </td>
 
                         <td class="px-6 py-4 text-slate-500 font-mono text-xs">ID: ${item.giverId}</td>
-                        <td class="px-6 py-4 text-slate-500 font-mono text-xs">Cat ID: ${item.categoryId}</td>
+                        <td class="px-6 py-4 text-slate-500 font-medium text-xs">
+                            ${categoryMap[item.categoryId]}
+                        </td>
 
                         <td class="px-6 py-4">
                             <c:choose>
@@ -241,78 +244,94 @@
         <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
             <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl">
 
-                <!-- Header -->
-                <div class="bg-slate-50 px-4 py-3 sm:px-6 flex justify-between items-center border-b border-slate-100">
-                    <h3 class="text-lg font-bold leading-6 text-slate-800" id="modal-title">Chi tiết Vật phẩm</h3>
-                    <button type="button" class="text-slate-400 hover:text-slate-600" onclick="closeItemModal()">
-                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
+                <form action="${pageContext.request.contextPath}/admin" method="post">
+                    <input type="hidden" name="action" value="update-item-details">
+                    <input type="hidden" id="modalItemId" name="id" value="">
 
-                <!-- Body -->
-                <div class="px-4 py-5 sm:p-6">
-                    <div class="flex flex-col md:flex-row gap-6">
-                        <!-- Image Section -->
-                        <div class="w-full md:w-1/2">
-                            <div class="aspect-w-4 aspect-h-3 rounded-xl overflow-hidden bg-slate-100 border border-slate-200">
-                                <img id="modalImg" src="" alt="Item Image" class="object-contain w-full h-64 bg-slate-50">
-                            </div>
-                            <div class="mt-4 flex justify-between items-center bg-emerald-50 p-3 rounded-lg border border-emerald-100">
-                                <span class="text-xs font-bold text-emerald-800 uppercase">Eco Points</span>
-                                <span id="modalPoints" class="text-lg font-bold text-emerald-600">0</span>
-                            </div>
-                        </div>
+                    <!-- Header -->
+                    <div class="bg-slate-50 px-4 py-3 sm:px-6 flex justify-between items-center border-b border-slate-100">
+                        <h3 class="text-lg font-bold leading-6 text-slate-800" id="modal-title">Chi tiết Vật phẩm</h3>
+                        <button type="button" class="text-slate-400 hover:text-slate-600" onclick="closeItemModal()">
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
 
-                        <!-- Info Section -->
-                        <div class="w-full md:w-1/2 space-y-4">
-                            <div>
-                                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Tên vật phẩm</label>
-                                <h2 id="modalItemTitle" class="text-xl font-bold text-slate-800 leading-tight"></h2>
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Mô tả chi tiết</label>
-                                <div id="modalDesc" class="text-sm text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-100 max-h-40 overflow-y-auto"></div>
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Người đăng (ID)</label>
-                                    <div id="modalGiver" class="text-sm font-medium text-slate-700"></div>
+                    <!-- Body -->
+                    <div class="px-4 py-5 sm:p-6">
+                        <div class="flex flex-col md:flex-row gap-6">
+                            <!-- Image Section -->
+                            <div class="w-full md:w-1/2">
+                                <div class="aspect-w-4 aspect-h-3 rounded-xl overflow-hidden bg-slate-100 border border-slate-200">
+                                    <img id="modalImg" src="" alt="Item Image" class="object-contain w-full h-64 bg-slate-50">
                                 </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Danh mục (ID)</label>
-                                    <div id="modalCategory" class="text-sm font-medium text-slate-700"></div>
+                                <div class="mt-4 flex justify-between items-center bg-emerald-50 p-3 rounded-lg border border-emerald-100">
+                                    <span class="text-xs font-bold text-emerald-800 uppercase">Eco Points</span>
+                                    <!-- Input Eco Points -->
+                                    <input type="number" id="modalPoints" name="eco_points" step="0.01" class="text-lg font-bold text-emerald-600 bg-transparent border-b border-emerald-300 focus:outline-none focus:border-emerald-600 w-24 text-right">
                                 </div>
+                            </div>
+
+                            <!-- Info Section -->
+                            <div class="w-full md:w-1/2 space-y-4">
                                 <div>
-                                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Ngày đăng</label>
-                                    <div id="modalDate" class="text-sm font-medium text-slate-700"></div>
+                                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Tên vật phẩm</label>
+                                    <h2 id="modalItemTitle" class="text-xl font-bold text-slate-800 leading-tight"></h2>
                                 </div>
+
                                 <div>
-                                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Trạng thái</label>
-                                    <div id="modalStatus" class="text-sm font-bold"></div>
+                                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Mô tả chi tiết</label>
+                                    <div id="modalDesc" class="text-sm text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-100 max-h-40 overflow-y-auto"></div>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Người đăng (ID)</label>
+                                        <div id="modalGiver" class="text-sm font-medium text-slate-700"></div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Danh mục</label>
+                                        <!-- Select Category -->
+                                        <select id="modalCategory" name="category_id" class="text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded px-2 py-1 w-full">
+                                            <c:forEach var="cat" items="${categories}">
+                                                <option value="${cat.categoryId}">${cat.name}</option>
+                                            </c:forEach>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Ngày đăng</label>
+                                        <div id="modalDate" class="text-sm font-medium text-slate-700"></div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Trạng thái</label>
+                                        <div id="modalStatus" class="text-sm font-bold"></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Footer -->
-                <div class="bg-slate-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 border-t border-slate-100 gap-2">
-                    <!-- Action Buttons -->
-                    <div id="modalActions" class="hidden sm:flex-row-reverse gap-2 w-full sm:w-auto">
-                        <a id="btnModalApprove" href="#" class="inline-flex w-full justify-center rounded-lg bg-emerald-600 px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-emerald-700 sm:w-auto">
-                            ✓ Duyệt
-                        </a>
-                        <a id="btnModalReject" href="#" onclick="return confirm('Xác nhận hành động này?');" class="inline-flex w-full justify-center rounded-lg bg-red-600 px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-red-700 sm:w-auto">
-                            ✗ Hủy
-                        </a>
+                    <!-- Footer -->
+                    <div class="bg-slate-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 border-t border-slate-100 gap-2">
+                        <!-- Nút Lưu Thay Đổi -->
+                        <button type="submit" id="btnSaveDetails" class="inline-flex w-full justify-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-blue-700 sm:w-auto">
+                            💾 Lưu thay đổi
+                        </button>
+
+                        <!-- Action Buttons -->
+                        <div id="modalActions" class="hidden sm:flex-row-reverse gap-2 w-full sm:w-auto">
+                            <a id="btnModalApprove" href="#" class="inline-flex w-full justify-center rounded-lg bg-emerald-600 px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-emerald-700 sm:w-auto">
+                                ✓ Duyệt
+                            </a>
+                            <a id="btnModalReject" href="#" onclick="return confirm('Xác nhận hành động này?');" class="inline-flex w-full justify-center rounded-lg bg-red-600 px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-red-700 sm:w-auto">
+                                ✗ Hủy
+                            </a>
+                        </div>
+
+                        <button type="button" class="mt-3 inline-flex w-full justify-center rounded-lg bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 sm:mt-0 sm:w-auto" onclick="closeItemModal()">Đóng</button>
                     </div>
-
-                    <button type="button" class="mt-3 inline-flex w-full justify-center rounded-lg bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 sm:mt-0 sm:w-auto" onclick="closeItemModal()">Đóng</button>
-                </div>
+                </form>
             </div>
         </div>
     </div>
@@ -326,19 +345,26 @@
         const desc = row.getAttribute('data-desc');
         const imgUrl = row.getAttribute('data-image');
         const giver = row.getAttribute('data-giver');
-        const category = row.getAttribute('data-category');
+        const categoryId = row.getAttribute('data-category'); // ID danh mục
         const status = row.getAttribute('data-status');
         const points = row.getAttribute('data-points');
         const date = row.getAttribute('data-date');
 
         // Điền dữ liệu vào modal
+        document.getElementById('modalItemId').value = id;
         document.getElementById('modalItemTitle').innerText = title;
         document.getElementById('modalDesc').innerText = desc;
         document.getElementById('modalImg').src = imgUrl;
         document.getElementById('modalGiver').innerText = giver;
-        document.getElementById('modalCategory').innerText = category;
-        document.getElementById('modalPoints').innerText = points;
         document.getElementById('modalDate').innerText = date.replace('T', ' ');
+
+        // Set giá trị cho Select Category
+        const catSelect = document.getElementById('modalCategory');
+        catSelect.value = categoryId;
+
+        // Set giá trị cho Input Eco Points
+        const pointsInput = document.getElementById('modalPoints');
+        pointsInput.value = points;
 
         // Style cho status
         const statusEl = document.getElementById('modalStatus');
@@ -350,38 +376,57 @@
         else if (status === 'COMPLETED') statusEl.classList.add('text-purple-600');
         else statusEl.classList.add('text-red-600');
 
-        // Xử lý nút Duyệt/Hủy
+        // --- LOGIC MỚI: Enable/Disable input dựa trên trạng thái ---
+        if (status === 'PENDING' || status === 'AVAILABLE') {
+            // Cho phép sửa cả 2
+            pointsInput.readOnly = false;
+            pointsInput.classList.remove('text-gray-500', 'cursor-not-allowed');
+            pointsInput.classList.add('text-emerald-600');
+
+            catSelect.disabled = false;
+            catSelect.classList.remove('bg-gray-100', 'cursor-not-allowed');
+            catSelect.classList.add('bg-white');
+
+            document.getElementById('btnSaveDetails').classList.remove('hidden');
+        } else {
+            // Chỉ cho phép sửa danh mục, không cho sửa điểm
+            pointsInput.readOnly = true;
+            pointsInput.classList.remove('text-emerald-600');
+            pointsInput.classList.add('text-gray-500', 'cursor-not-allowed');
+
+            // Vẫn cho phép sửa danh mục (theo yêu cầu)
+            catSelect.disabled = false;
+            catSelect.classList.remove('bg-gray-100', 'cursor-not-allowed');
+            catSelect.classList.add('bg-white');
+
+            document.getElementById('btnSaveDetails').classList.remove('hidden');
+        }
+        // -----------------------------------------------------------
+
+        // Xử lý nút Duyệt/Hủy (Logic cũ)
         const actionDiv = document.getElementById('modalActions');
         const btnApprove = document.getElementById('btnModalApprove');
         const btnReject = document.getElementById('btnModalReject');
 
-        // Reset trạng thái mặc định
         actionDiv.classList.add('hidden');
         actionDiv.classList.remove('flex');
-        btnApprove.classList.remove('hidden'); // Hiện nút duyệt mặc định
-        btnReject.innerText = '✗ Hủy'; // Reset text nút hủy
-        btnReject.classList.remove('bg-orange-600', 'hover:bg-orange-700'); // Reset màu
+        btnApprove.classList.remove('hidden');
+        btnReject.innerText = '✗ Hủy';
+        btnReject.classList.remove('bg-orange-600', 'hover:bg-orange-700');
         btnReject.classList.add('bg-red-600', 'hover:bg-red-700');
 
         if (status === 'PENDING') {
             actionDiv.classList.remove('hidden');
             actionDiv.classList.add('flex');
-
             btnApprove.href = '${pageContext.request.contextPath}/admin?action=approve-item&id=' + id;
             btnReject.href = '${pageContext.request.contextPath}/admin?action=reject-item&id=' + id;
         }
         else if (status === 'AVAILABLE') {
             actionDiv.classList.remove('hidden');
             actionDiv.classList.add('flex');
-
-            // Ẩn nút duyệt
             btnApprove.classList.add('hidden');
-
-            // Cấu hình nút Hủy thành nút Gỡ bỏ
             btnReject.innerText = '✗ Gỡ bỏ';
             btnReject.href = '${pageContext.request.contextPath}/admin?action=reject-item&id=' + id;
-
-            // Đổi màu sang cam cho khác biệt
             btnReject.classList.remove('bg-red-600', 'hover:bg-red-700');
             btnReject.classList.add('bg-orange-600', 'hover:bg-orange-700');
         }
@@ -394,7 +439,6 @@
         document.getElementById('itemDetailModal').classList.add('hidden');
     }
 
-    // Đóng modal khi nhấn ESC
     document.addEventListener('keydown', function(event) {
         if (event.key === "Escape") {
             closeItemModal();

@@ -220,10 +220,26 @@
     </div>
     <div id="aiChatBody" class="flex-1 p-4 overflow-y-auto bg-slate-50 space-y-3 text-sm">
         <div class="flex items-start gap-2">
-            <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs">🤖</div>
+            <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs shrink-0">🤖</div>
             <div class="bg-white border p-3 rounded-2xl rounded-tl-none shadow-sm max-w-[85%] text-slate-700">
                 Xin chào! Bạn đang có loại rác thải nào cần xử lý? (VD: Pin cũ, thuốc hết hạn, đồ điện tử...)
             </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="grid grid-cols-1 gap-2 mt-2 px-2">
+            <button onclick="quickAction('name')" class="text-left text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 px-3 rounded-lg border border-blue-100 transition">
+                🔍 Tìm sản phẩm theo tên...
+            </button>
+            <button onclick="quickAction('category')" class="text-left text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 px-3 rounded-lg border border-blue-100 transition">
+                📂 Tìm sản phẩm theo danh mục...
+            </button>
+            <button onclick="quickAction('point')" class="text-left text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 px-3 rounded-lg border border-blue-100 transition">
+                📍 Tìm điểm thu gom gần đây
+            </button>
+            <button onclick="quickAction('guide')" class="text-left text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 px-3 rounded-lg border border-blue-100 transition">
+                ❓ Cách tích điểm EcoPoints?
+            </button>
         </div>
     </div>
     <div class="p-3 border-t bg-white">
@@ -612,6 +628,26 @@
     // --- AI BOT LOGIC ---
     function toggleAiModal() { const modal = document.getElementById('aiModal'); modal.classList.toggle('hidden'); if(!modal.classList.contains('hidden')) { document.getElementById('aiInput').focus(); } }
     document.getElementById('aiInput').addEventListener('keypress', function(e) { if(e.key === 'Enter') sendAiQuestion(); });
+
+    // --- MỚI: Hàm xử lý Quick Action ---
+    function quickAction(type) {
+        const input = document.getElementById('aiInput');
+        if (type === 'name') {
+            input.value = "Tìm sản phẩm tên: ";
+            input.focus();
+        } else if (type === 'category') {
+            input.value = "Tìm sản phẩm thuộc danh mục: ";
+            input.focus();
+        } else if (type === 'point') {
+            input.value = "Tìm điểm thu gom gần đây";
+            sendAiQuestion();
+        } else if (type === 'guide') {
+            input.value = "Làm thế nào để tích điểm EcoPoints?";
+            sendAiQuestion();
+        }
+    }
+    // -----------------------------------
+
     async function sendAiQuestion() {
         const input = document.getElementById('aiInput');
         const question = input.value.trim();
@@ -686,40 +722,14 @@
     document.getElementById('btnPostItem').addEventListener('click', () => { document.getElementById('giveAwayModal').classList.remove('hidden'); document.getElementById('step1').classList.remove('hidden'); });
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
     function nextStep(n) { document.querySelectorAll('.modal-step').forEach(e=>e.classList.add('hidden')); document.getElementById('step'+n).classList.remove('hidden'); if(n===3) setTimeout(()=>{ if(!miniMap) {miniMap=L.map('miniMap').setView([currentLatLng.lat, currentLatLng.lng], 15); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'OSM'}).addTo(miniMap); locationMarker=L.marker([currentLatLng.lat,currentLatLng.lng],{draggable:true}).addTo(miniMap); locationMarker.on('dragend',e=>currentLatLng=e.target.getLatLng()); } else miniMap.invalidateSize(); },200); }
-
-    // --- SỬA ĐỔI: Load Categories và thêm data-points ---
-    async function loadCategories() {
-        try {
-            const r = await fetch('${pageContext.request.contextPath}/api/categories');
-            const categories = await r.json();
-            const select = document.getElementById('itemCategory');
-            categories.forEach(c => {
-                // Thêm data-points vào option
-                select.innerHTML += `<option value="\${c.categoryId}" data-points="\${c.fixedPoints}">\${c.name}</option>`;
-            });
-        } catch(e){}
-    }
+    async function loadCategories() { try { const r = await fetch('${pageContext.request.contextPath}/api/categories'); (await r.json()).forEach(c => document.getElementById('itemCategory').innerHTML += `<option value="\${c.categoryId}" data-points="\${c.fixedPoints}">\${c.name}</option>`); } catch(e){} }
     loadCategories();
-
-    // --- SỬA ĐỔI: Hàm cập nhật điểm khi chọn danh mục ---
-    function updateEcoPoints() {
-        const select = document.getElementById('itemCategory');
-        const selectedOption = select.options[select.selectedIndex];
-        const points = selectedOption.getAttribute('data-points');
-
-        if (points) {
-            document.getElementById('itemEcoPoints').value = points;
-        } else {
-            document.getElementById('itemEcoPoints').value = '';
-        }
-    }
-
     async function submitItem() {
         const fd = new FormData();
         fd.append("title", document.getElementById('itemName').value);
         fd.append("description", document.getElementById('itemDescription').value);
         fd.append("category", document.getElementById('itemCategory').value);
-        // Không cần gửi ecoPoints vì server sẽ tự lấy, nhưng gửi cũng không sao (server sẽ ignore)
+        fd.append("ecoPoints", document.getElementById('itemEcoPoints').value);
         fd.append("itemPhoto", document.getElementById('itemPhoto').files[0]);
         fd.append("latitude", currentLatLng.lat);
         fd.append("longitude", currentLatLng.lng);

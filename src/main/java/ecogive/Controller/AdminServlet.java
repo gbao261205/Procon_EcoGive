@@ -15,6 +15,8 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 @WebServlet("/admin")
 public class AdminServlet extends HttpServlet {
@@ -112,11 +114,36 @@ public class AdminServlet extends HttpServlet {
             else if ("auto-approve".equals(action)) {
                 autoApproveItems(req, resp);
             }
+            else if ("update-item-details".equals(action)) {
+                updateItemDetails(req, resp);
+            }
         } catch (SQLException e) {
             throw new ServletException(e);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private void updateItemDetails(HttpServletRequest req, HttpServletResponse resp) throws SQLException, IOException {
+        long itemId = Long.parseLong(req.getParameter("id"));
+        int categoryId = Integer.parseInt(req.getParameter("category_id"));
+        
+        // Xử lý ecoPoints: Nếu bị disable (null), giữ nguyên giá trị cũ hoặc lấy từ DB
+        // Tuy nhiên, để đơn giản, ta sẽ luôn gửi ecoPoints từ form (kể cả khi readonly)
+        // Hoặc nếu null thì lấy từ DB.
+        String ecoPointsStr = req.getParameter("eco_points");
+        BigDecimal ecoPoints;
+        
+        if (ecoPointsStr != null) {
+             ecoPoints = new BigDecimal(ecoPointsStr);
+        } else {
+             // Fallback: Lấy từ DB nếu không gửi lên
+             Item item = itemDAO.findById(itemId);
+             ecoPoints = item.getEcoPoints();
+        }
+
+        itemDAO.updateItemDetails(itemId, categoryId, ecoPoints);
+        resp.sendRedirect(req.getContextPath() + "/admin?action=items");
     }
 
     private void autoApproveItems(HttpServletRequest req, HttpServletResponse resp) throws SQLException, IOException {
@@ -336,6 +363,16 @@ public class AdminServlet extends HttpServlet {
         List<Item> items = itemDAO.findAll(limit, offset, statusStr);
         int totalItems = itemDAO.countAll(statusStr);
         int totalPages = (int) Math.ceil((double) totalItems / limit);
+
+        // --- MỚI: Lấy danh sách Category và tạo Map ---
+        List<Category> categories = categoryDAO.findAll();
+        Map<Integer, String> categoryMap = new HashMap<>();
+        for (Category c : categories) {
+            categoryMap.put(c.getCategoryId(), c.getName());
+        }
+        req.setAttribute("categoryMap", categoryMap);
+        req.setAttribute("categories", categories); // Truyền thêm list để dùng trong dropdown
+        // ----------------------------------------------
 
         req.setAttribute("items", items);
         req.setAttribute("currentPage", page);
