@@ -42,6 +42,7 @@ public class ItemApiServlet extends HttpServlet {
             String maxLatStr = req.getParameter("maxLat");
             String minLngStr = req.getParameter("minLng");
             String maxLngStr = req.getParameter("maxLng");
+            String categoryIdStr = req.getParameter("categoryId");
 
             if (minLatStr != null && maxLatStr != null && minLngStr != null && maxLngStr != null) {
                 double minLat = Double.parseDouble(minLatStr);
@@ -49,7 +50,16 @@ public class ItemApiServlet extends HttpServlet {
                 double minLng = Double.parseDouble(minLngStr);
                 double maxLng = Double.parseDouble(maxLngStr);
                 
-                items = itemDAO.findAvailableInBounds(minLat, minLng, maxLat, maxLng);
+                Integer categoryId = null;
+                if (categoryIdStr != null && !categoryIdStr.isEmpty()) {
+                    try {
+                        categoryId = Integer.parseInt(categoryIdStr);
+                    } catch (NumberFormatException e) {
+                        // Ignore invalid categoryId
+                    }
+                }
+
+                items = itemDAO.findAvailableInBounds(minLat, minLng, maxLat, maxLng, categoryId);
             } else {
                 // Fallback: Lấy tất cả (hoặc giới hạn số lượng nếu cần)
                 items = itemDAO.findAllAvailable();

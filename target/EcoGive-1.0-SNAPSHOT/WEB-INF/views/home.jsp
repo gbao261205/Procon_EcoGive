@@ -76,7 +76,28 @@
     </div>
 </header>
 
-<div id="map" class="flex-1 z-10 w-full h-full"></div>
+<!-- Filter Bar -->
+<div class="bg-white border-b border-slate-200 px-6 py-2 flex flex-wrap items-center gap-4 z-10 shadow-sm text-sm">
+    <div class="flex items-center gap-2">
+        <span class="font-bold text-slate-600">Lọc tin:</span>
+        <select id="filterCategory" class="border border-slate-300 rounded px-2 py-1 text-slate-700 focus:outline-none focus:border-emerald-500" onchange="reloadMapData()">
+            <option value="">-- Tất cả danh mục --</option>
+        </select>
+    </div>
+    <div class="h-4 w-px bg-slate-300 mx-2 hidden md:block"></div>
+    <div class="flex items-center gap-4">
+        <label class="flex items-center gap-2 cursor-pointer select-none">
+            <input type="checkbox" id="filterPublicPoint" class="accent-emerald-600 w-4 h-4" checked onchange="reloadMapData()">
+            <span class="text-slate-700">♻️ Điểm công cộng</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer select-none">
+            <input type="checkbox" id="filterCompanyPoint" class="accent-yellow-500 w-4 h-4" checked onchange="reloadMapData()">
+            <span class="text-slate-700">🏢 Điểm doanh nghiệp</span>
+        </label>
+    </div>
+</div>
+
+<div id="map" class="flex-1 z-0 w-full h-full"></div>
 
 <div id="congratsModal" class="fixed inset-0 hidden bg-black bg-opacity-70 flex items-center justify-center p-4 z-[60]">
     <div class="bg-white p-8 rounded-2xl w-full max-w-sm shadow-2xl text-center gift-popup relative">
@@ -268,6 +289,10 @@
     let currentLatLng = { lat: 10.7769, lng: 106.7009 };
     let loadedItemIds = new Set();
 
+    // Lưu trữ các layer để quản lý (xóa/thêm lại)
+    let itemLayers = [];
+    let pointLayers = [];
+
     // --- ICONS ---
     var greenIcon = new L.Icon({
         iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
@@ -292,6 +317,7 @@
             connectWebSocket();
             loadInboxList();
         }
+        loadCategoriesForFilter(); // Load danh mục vào dropdown filter
         loadItems();
         loadCollectionPoints();
 
@@ -303,15 +329,36 @@
     const map = L.map('map').setView([10.7769, 106.7009], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: 'OSM' }).addTo(map);
 
+    // Hàm reload khi thay đổi filter
+    function reloadMapData() {
+        // Xóa các layer cũ
+        itemLayers.forEach(layer => map.removeLayer(layer));
+        itemLayers = [];
+        loadedItemIds.clear();
+
+        pointLayers.forEach(layer => map.removeLayer(layer));
+        pointLayers = [];
+
+        // Load lại dữ liệu mới
+        loadItems();
+        loadCollectionPoints();
+    }
+
     async function loadItems() {
         try {
             const bounds = map.getBounds();
+            const categoryId = document.getElementById('filterCategory').value;
+
             const params = new URLSearchParams({
                 minLat: bounds.getSouth(),
                 maxLat: bounds.getNorth(),
                 minLng: bounds.getWest(),
                 maxLng: bounds.getEast()
             });
+
+            if (categoryId) {
+                params.append('categoryId', categoryId);
+            }
 
             const response = await fetch('${pageContext.request.contextPath}/api/items?' + params.toString());
             const items = await response.json();
@@ -344,7 +391,8 @@
                     }
 
                     const content = `<div><img src="\${imgUrl}" class="custom-popup-img"><div class="custom-popup-body"><h3 class="font-bold text-sm">\${item.title}</h3><p class="text-xs text-gray-500 mb-2">Người tặng: \${item.giverName}</p>\${actionBtn}</div></div>`;
-                    L.marker([item.location.latitude, item.location.longitude], {icon: blueIcon}).addTo(map).bindPopup(content);
+                    const marker = L.marker([item.location.latitude, item.location.longitude], {icon: blueIcon}).addTo(map).bindPopup(content);
+                    itemLayers.push(marker);
                 }
             });
         } catch (e) { console.error(e); }
@@ -352,31 +400,47 @@
 
     async function loadCollectionPoints() {
         try {
+            const showPublic = document.getElementById('filterPublicPoint').checked;
+            const showCompany = document.getElementById('filterCompanyPoint').checked;
+
+            if (!showPublic && !showCompany) return; // Không hiển thị gì cả
+
             const response = await fetch('${pageContext.request.contextPath}/api/collection-points');
             const points = await response.json();
 
-            map.eachLayer((layer) => { if (layer.options.icon === greenIcon || layer.options.icon === yellowIcon) map.removeLayer(layer); });
+            // Xóa các layer cũ (nếu chưa xóa ở reloadMapData)
+            // map.eachLayer((layer) => { if (layer.options.icon === greenIcon || layer.options.icon === yellowIcon) map.removeLayer(layer); });
 
             points.forEach(p => {
                 let icon;
                 let popupHeader;
+                let shouldShow = false;
 
                 if (p.ownerRole === 'COLLECTOR_COMPANY') {
-                    icon = yellowIcon;
-                    popupHeader = `<div class="bg-yellow-100 text-yellow-800 text-xs font-bold px-2 py-1 rounded mb-2 inline-block">🏢 Điểm thu gom Doanh nghiệp</div>`;
+                    if (showCompany) {
+                        icon = yellowIcon;
+                        popupHeader = `<div class="bg-yellow-100 text-yellow-800 text-xs font-bold px-2 py-1 rounded mb-2 inline-block">🏢 Điểm thu gom Doanh nghiệp</div>`;
+                        shouldShow = true;
+                    }
                 } else {
-                    icon = greenIcon;
-                    popupHeader = `<div class="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded mb-2 inline-block">♻️ Điểm tập kết công cộng</div>`;
+                    if (showPublic) {
+                        icon = greenIcon;
+                        popupHeader = `<div class="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded mb-2 inline-block">♻️ Điểm tập kết công cộng</div>`;
+                        shouldShow = true;
+                    }
                 }
 
-                const content = `
-                    <div class="text-center p-2">
-                        \${popupHeader}
-                        <h3 class="font-bold text-slate-800 text-sm mb-1">\${p.name}</h3>
-                        <p class="text-xs text-gray-500 mb-2">📍 \${p.address}</p>
-                        <a href="https://www.google.com/maps/search/?api=1&query=\${p.latitude},\${p.longitude}" target="_blank" class="block w-full bg-slate-100 text-slate-600 text-xs font-bold py-1.5 rounded hover:bg-slate-200 border border-slate-300">🗺️ Chỉ đường</a>
-                    </div>`;
-                L.marker([p.latitude, p.longitude], {icon: icon}).addTo(map).bindPopup(content);
+                if (shouldShow) {
+                    const content = `
+                        <div class="text-center p-2">
+                            \${popupHeader}
+                            <h3 class="font-bold text-slate-800 text-sm mb-1">\${p.name}</h3>
+                            <p class="text-xs text-gray-500 mb-2">📍 \${p.address}</p>
+                            <a href="https://www.google.com/maps/search/?api=1&query=\${p.latitude},\${p.longitude}" target="_blank" class="block w-full bg-slate-100 text-slate-600 text-xs font-bold py-1.5 rounded hover:bg-slate-200 border border-slate-300">🗺️ Chỉ đường</a>
+                        </div>`;
+                    const marker = L.marker([p.latitude, p.longitude], {icon: icon}).addTo(map).bindPopup(content);
+                    pointLayers.push(marker);
+                }
             });
         } catch (e) { console.error(e); }
     }
@@ -745,8 +809,32 @@
     document.getElementById('btnPostItem').addEventListener('click', () => { document.getElementById('giveAwayModal').classList.remove('hidden'); document.getElementById('step1').classList.remove('hidden'); });
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
     function nextStep(n) { document.querySelectorAll('.modal-step').forEach(e=>e.classList.add('hidden')); document.getElementById('step'+n).classList.remove('hidden'); if(n===3) setTimeout(()=>{ if(!miniMap) {miniMap=L.map('miniMap').setView([currentLatLng.lat, currentLatLng.lng], 15); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'OSM'}).addTo(miniMap); locationMarker=L.marker([currentLatLng.lat,currentLatLng.lng],{draggable:true}).addTo(miniMap); locationMarker.on('dragend',e=>currentLatLng=e.target.getLatLng()); } else miniMap.invalidateSize(); },200); }
+
+    // --- MỚI: Hàm cập nhật điểm EcoPoints khi chọn danh mục ---
+    function updateEcoPoints() {
+        const select = document.getElementById('itemCategory');
+        const selectedOption = select.options[select.selectedIndex];
+        const points = selectedOption.getAttribute('data-points');
+        document.getElementById('itemEcoPoints').value = points ? points : '';
+    }
+    // ---------------------------------------------------------
+
     async function loadCategories() { try { const r = await fetch('${pageContext.request.contextPath}/api/categories'); (await r.json()).forEach(c => document.getElementById('itemCategory').innerHTML += `<option value="\${c.categoryId}" data-points="\${c.fixedPoints}">\${c.name}</option>`); } catch(e){} }
     loadCategories();
+
+    // --- MỚI: Load danh mục cho bộ lọc ---
+    async function loadCategoriesForFilter() {
+        try {
+            const r = await fetch('${pageContext.request.contextPath}/api/categories');
+            const categories = await r.json();
+            const filterSelect = document.getElementById('filterCategory');
+            categories.forEach(c => {
+                filterSelect.innerHTML += `<option value="\${c.categoryId}">\${c.name}</option>`;
+            });
+        } catch(e){}
+    }
+    // -------------------------------------
+
     async function submitItem() {
         const fd = new FormData();
         fd.append("title", document.getElementById('itemName').value);

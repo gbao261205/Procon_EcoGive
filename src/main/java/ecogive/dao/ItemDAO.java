@@ -64,10 +64,8 @@ public class ItemDAO {
         return list;
     }
 
-    // --- MỚI: Tìm kiếm theo vùng hiển thị (Viewport) ---
-    public List<Item> findAvailableInBounds(double minLat, double minLng, double maxLat, double maxLng) throws SQLException {
-        // Tạo Polygon hình chữ nhật bao quanh viewport
-        // Thứ tự vẽ: (minLng minLat) -> (maxLng minLat) -> (maxLng maxLat) -> (minLng maxLat) -> (minLng minLat)
+    // --- MỚI: Tìm kiếm theo vùng hiển thị (Viewport) và Category ---
+    public List<Item> findAvailableInBounds(double minLat, double minLng, double maxLat, double maxLng, Integer categoryId) throws SQLException {
         String polygonWKT = String.format("POLYGON((%f %f, %f %f, %f %f, %f %f, %f %f))",
                 minLng, minLat,
                 maxLng, minLat,
@@ -75,18 +73,27 @@ public class ItemDAO {
                 minLng, maxLat,
                 minLng, minLat);
 
-        String sql = "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude, u.username " +
+        StringBuilder sql = new StringBuilder(
+                "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude, u.username " +
                 "FROM items i " +
                 "JOIN users u ON i.giver_id = u.user_id " +
                 "WHERE i.status = 'AVAILABLE' " +
-                "AND MBRContains(ST_GeomFromText(?), i.location)";
+                "AND MBRContains(ST_GeomFromText(?), i.location)"
+        );
+
+        if (categoryId != null) {
+            sql.append(" AND i.category_id = ?");
+        }
 
         List<Item> list = new ArrayList<>();
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
 
             stmt.setString(1, polygonWKT);
-            
+            if (categoryId != null) {
+                stmt.setInt(2, categoryId);
+            }
+
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     Item item = mapRow(rs);
@@ -98,6 +105,11 @@ public class ItemDAO {
             throw new SQLException(e);
         }
         return list;
+    }
+
+    // Giữ lại phương thức cũ để tương thích ngược (nếu cần)
+    public List<Item> findAvailableInBounds(double minLat, double minLng, double maxLat, double maxLng) throws SQLException {
+        return findAvailableInBounds(minLat, minLng, maxLat, maxLng, null);
     }
     // --------------------------------------------------
     
