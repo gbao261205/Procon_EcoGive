@@ -745,6 +745,16 @@
     document.getElementById('btnPostItem').addEventListener('click', () => { document.getElementById('giveAwayModal').classList.remove('hidden'); document.getElementById('step1').classList.remove('hidden'); });
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
     function nextStep(n) { document.querySelectorAll('.modal-step').forEach(e=>e.classList.add('hidden')); document.getElementById('step'+n).classList.remove('hidden'); if(n===3) setTimeout(()=>{ if(!miniMap) {miniMap=L.map('miniMap').setView([currentLatLng.lat, currentLatLng.lng], 15); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'OSM'}).addTo(miniMap); locationMarker=L.marker([currentLatLng.lat,currentLatLng.lng],{draggable:true}).addTo(miniMap); locationMarker.on('dragend',e=>currentLatLng=e.target.getLatLng()); } else miniMap.invalidateSize(); },200); }
+
+    // --- MỚI: Hàm cập nhật điểm EcoPoints khi chọn danh mục ---
+    function updateEcoPoints() {
+        const select = document.getElementById('itemCategory');
+        const selectedOption = select.options[select.selectedIndex];
+        const points = selectedOption.getAttribute('data-points');
+        document.getElementById('itemEcoPoints').value = points ? points : '';
+    }
+    // ---------------------------------------------------------
+
     async function loadCategories() { try { const r = await fetch('${pageContext.request.contextPath}/api/categories'); (await r.json()).forEach(c => document.getElementById('itemCategory').innerHTML += `<option value="\${c.categoryId}" data-points="\${c.fixedPoints}">\${c.name}</option>`); } catch(e){} }
     loadCategories();
     async function submitItem() {
