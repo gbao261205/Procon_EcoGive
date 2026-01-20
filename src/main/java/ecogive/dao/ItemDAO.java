@@ -66,8 +66,6 @@ public class ItemDAO {
 
     // --- MỚI: Tìm kiếm theo vùng hiển thị (Viewport) ---
     public List<Item> findAvailableInBounds(double minLat, double minLng, double maxLat, double maxLng) throws SQLException {
-        // Tạo Polygon hình chữ nhật bao quanh viewport
-        // Thứ tự vẽ: (minLng minLat) -> (maxLng minLat) -> (maxLng maxLat) -> (minLng maxLat) -> (minLng minLat)
         String polygonWKT = String.format("POLYGON((%f %f, %f %f, %f %f, %f %f, %f %f))",
                 minLng, minLat,
                 maxLng, minLat,
@@ -99,8 +97,7 @@ public class ItemDAO {
         }
         return list;
     }
-    // --------------------------------------------------
-    
+
     public List<Item> findAll() throws SQLException {
         return findAll(1000, 0, null); // Default fallback
     }
@@ -239,21 +236,93 @@ public class ItemDAO {
             throw new SQLException(e);
         }
     }
-
-    // --- MỚI: Cập nhật thông tin chi tiết ---
+    
     public boolean updateItemDetails(long itemId, int categoryId, BigDecimal ecoPoints) throws SQLException {
         String sql = "UPDATE items SET category_id = ?, eco_points = ? WHERE item_id = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-
+            
             stmt.setInt(1, categoryId);
             stmt.setBigDecimal(2, ecoPoints);
             stmt.setLong(3, itemId);
-
+            
             return stmt.executeUpdate() > 0;
         } catch (Exception e) {
             throw new SQLException(e);
         }
+    }
+
+    // --- MỚI: Tìm kiếm theo tên (Fuzzy Search - Tách từ) ---
+    public List<Item> searchByTitle(String keyword) throws SQLException {
+        // Tách từ khóa thành mảng các từ
+        String[] words = keyword.trim().split("\\s+");
+
+        StringBuilder sql = new StringBuilder(
+            "SELECT *, ST_X(location) AS longitude, ST_Y(location) AS latitude " +
+            "FROM items WHERE status = 'AVAILABLE'"
+        );
+
+        // Thêm điều kiện LIKE cho mỗi từ
+        for (int i = 0; i < words.length; i++) {
+            sql.append(" AND title LIKE ?");
+        }
+
+        sql.append(" ORDER BY post_date DESC LIMIT 5");
+
+        List<Item> list = new ArrayList<>();
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
+
+            // Gán tham số cho từng từ
+            for (int i = 0; i < words.length; i++) {
+                stmt.setString(i + 1, "%" + words[i] + "%");
+            }
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
+            }
+        } catch (Exception e) {
+            throw new SQLException(e);
+        }
+        return list;
+    }
+
+    // --- MỚI: Tìm kiếm theo tên danh mục (Fuzzy Search) ---
+    public List<Item> searchByCategoryName(String categoryName) throws SQLException {
+        String[] words = categoryName.trim().split("\\s+");
+
+        StringBuilder sql = new StringBuilder(
+            "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude " +
+            "FROM items i " +
+            "JOIN categories c ON i.category_id = c.category_id " +
+            "WHERE i.status = 'AVAILABLE'"
+        );
+
+        for (int i = 0; i < words.length; i++) {
+            sql.append(" AND c.name LIKE ?");
+        }
+
+        sql.append(" ORDER BY i.post_date DESC LIMIT 5");
+
+        List<Item> list = new ArrayList<>();
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
+
+            for (int i = 0; i < words.length; i++) {
+                stmt.setString(i + 1, "%" + words[i] + "%");
+            }
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
+            }
+        } catch (Exception e) {
+            throw new SQLException(e);
+        }
+        return list;
     }
     // ----------------------------------------
 

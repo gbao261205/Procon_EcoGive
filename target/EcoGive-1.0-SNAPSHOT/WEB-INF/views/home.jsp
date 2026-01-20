@@ -661,6 +661,29 @@
             const data = await res.json();
             document.getElementById(loadingId).remove();
             appendAiMessage(data.answer, 'bot');
+
+            // --- SỬA ĐỔI: Hiển thị lại Quick Replies ---
+            if (data.quickReplies && data.quickReplies.length > 0) {
+                let html = '<div class="grid grid-cols-1 gap-2 mt-2 px-2">';
+
+                // Map các text trả về thành action type tương ứng
+                data.quickReplies.forEach(text => {
+                    let actionType = '';
+                    if (text.includes("tên")) actionType = 'name';
+                    else if (text.includes("danh mục")) actionType = 'category';
+                    else if (text.includes("điểm thu gom")) actionType = 'point';
+                    else if (text.includes("tích điểm")) actionType = 'guide';
+
+                    if (actionType) {
+                        html += `<button onclick="quickAction('\${actionType}')" class="text-left text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 px-3 rounded-lg border border-blue-100 transition">\${text}</button>`;
+                    }
+                });
+
+                html += '</div>';
+                appendAiHtml(html);
+            }
+            // -------------------------------------------
+
             if (data.suggestions && data.suggestions.length > 0) {
                 let html = '<div class="flex flex-col gap-2 mt-2">';
                 data.suggestions.forEach(s => {
