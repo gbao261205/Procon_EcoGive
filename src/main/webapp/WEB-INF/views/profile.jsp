@@ -78,6 +78,7 @@
                             <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-bold tracking-wider">
                                 <tr>
                                     <th class="px-4 py-3 border-b border-slate-100">Vật phẩm</th>
+                                    <th class="px-4 py-3 border-b border-slate-100">Danh mục</th>
                                     <th class="px-4 py-3 border-b border-slate-100">Ngày đăng</th>
                                     <th class="px-4 py-3 border-b border-slate-100">Trạng thái</th>
                                     <th class="px-4 py-3 border-b border-slate-100 text-right">Hành động</th>
@@ -107,6 +108,9 @@
                                                     <div class="text-xs text-slate-500 truncate w-32">${item.description}</div>
                                                 </div>
                                             </div>
+                                        </td>
+                                        <td class="px-4 py-3 text-slate-700 text-sm font-medium">
+                                            ${item.categoryName}
                                         </td>
                                         <td class="px-4 py-3 text-slate-500 text-xs">
                                             <!-- SỬA LỖI: Xử lý LocalDateTime thủ công vì fmt:formatDate không hỗ trợ -->

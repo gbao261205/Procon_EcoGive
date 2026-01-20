@@ -15,6 +15,7 @@ public class Item {
     private GeoPoint location;
     private String giverName;
     private BigDecimal ecoPoints; // Số điểm thưởng cho vật phẩm
+    private String categoryName; // Tên danh mục
 
     public Item() {
     }
@@ -35,6 +36,14 @@ public class Item {
     }
 
     // Getters and Setters
+    public String getCategoryName() {
+        return categoryName;
+    }
+
+    public void setCategoryName(String categoryName) {
+        this.categoryName = categoryName;
+    }
+
     public String getGiverName() {
         return giverName;
     }

@@ -66,6 +66,8 @@ public class ItemDAO {
 
     // --- MỚI: Tìm kiếm theo vùng hiển thị (Viewport) ---
     public List<Item> findAvailableInBounds(double minLat, double minLng, double maxLat, double maxLng) throws SQLException {
+        // Tạo Polygon hình chữ nhật bao quanh viewport
+        // Thứ tự vẽ: (minLng minLat) -> (maxLng minLat) -> (maxLng maxLat) -> (minLng maxLat) -> (minLng minLat)
         String polygonWKT = String.format("POLYGON((%f %f, %f %f, %f %f, %f %f, %f %f))",
                 minLng, minLat,
                 maxLng, minLat,
@@ -97,7 +99,8 @@ public class ItemDAO {
         }
         return list;
     }
-
+    // --------------------------------------------------
+    
     public List<Item> findAll() throws SQLException {
         return findAll(1000, 0, null); // Default fallback
     }
@@ -159,21 +162,27 @@ public class ItemDAO {
         return 0;
     }
 
+    // --- SỬA ĐỔI: Lấy thêm tên danh mục ---
     public List<Item> findItemsByGiverId(long giverId) {
         List<Item> list = new ArrayList<>();
-        String sql = "SELECT *, ST_X(location) AS longitude, ST_Y(location) AS latitude " +
-                     "FROM items WHERE giver_id = ? ORDER BY post_date DESC";
+        String sql = "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude, c.name AS category_name " +
+                     "FROM items i " +
+                     "LEFT JOIN categories c ON i.category_id = c.category_id " +
+                     "WHERE i.giver_id = ? ORDER BY i.post_date DESC";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, giverId);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                list.add(mapRow(rs));
+                Item item = mapRow(rs);
+                item.setCategoryName(rs.getString("category_name"));
+                list.add(item);
             }
         } catch (Exception e) { e.printStackTrace(); }
         return list;
     }
+    // --------------------------------------
 
     public List<Item> findItemsByReceiverId(long receiverId) {
         List<Item> list = new ArrayList<>();
@@ -251,33 +260,33 @@ public class ItemDAO {
             throw new SQLException(e);
         }
     }
-
+    
     // --- MỚI: Tìm kiếm theo tên (Fuzzy Search - Tách từ) ---
     public List<Item> searchByTitle(String keyword) throws SQLException {
         // Tách từ khóa thành mảng các từ
         String[] words = keyword.trim().split("\\s+");
-
+        
         StringBuilder sql = new StringBuilder(
             "SELECT *, ST_X(location) AS longitude, ST_Y(location) AS latitude " +
             "FROM items WHERE status = 'AVAILABLE'"
         );
-
+        
         // Thêm điều kiện LIKE cho mỗi từ
         for (int i = 0; i < words.length; i++) {
             sql.append(" AND title LIKE ?");
         }
-
+        
         sql.append(" ORDER BY post_date DESC LIMIT 5");
 
         List<Item> list = new ArrayList<>();
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
-
+            
             // Gán tham số cho từng từ
             for (int i = 0; i < words.length; i++) {
                 stmt.setString(i + 1, "%" + words[i] + "%");
             }
-
+            
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     list.add(mapRow(rs));
@@ -292,24 +301,24 @@ public class ItemDAO {
     // --- MỚI: Tìm kiếm theo tên danh mục (Fuzzy Search) ---
     public List<Item> searchByCategoryName(String categoryName) throws SQLException {
         String[] words = categoryName.trim().split("\\s+");
-
+        
         StringBuilder sql = new StringBuilder(
             "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude " +
             "FROM items i " +
             "JOIN categories c ON i.category_id = c.category_id " +
             "WHERE i.status = 'AVAILABLE'"
         );
-
+        
         for (int i = 0; i < words.length; i++) {
             sql.append(" AND c.name LIKE ?");
         }
-
+        
         sql.append(" ORDER BY i.post_date DESC LIMIT 5");
 
         List<Item> list = new ArrayList<>();
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
-
+            
             for (int i = 0; i < words.length; i++) {
                 stmt.setString(i + 1, "%" + words[i] + "%");
             }
