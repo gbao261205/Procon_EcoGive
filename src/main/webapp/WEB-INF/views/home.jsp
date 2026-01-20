@@ -116,8 +116,13 @@
         <h2 class="text-2xl font-bold mb-6 text-emerald-700 text-center">Đăng tin Tặng đồ</h2>
         <div id="step1" class="modal-step">
             <input type="text" id="itemName" placeholder="Tên vật phẩm" class="w-full p-3 mb-3 border rounded-lg" required />
-            <select id="itemCategory" class="w-full p-3 mb-3 border rounded-lg bg-white" required><option value="" disabled selected>-- Chọn danh mục --</option></select>
-            <input type="number" id="itemEcoPoints" placeholder="Điểm EcoPoints thưởng (ví dụ: 5)" class="w-full p-3 mb-3 border rounded-lg" required />
+            <select id="itemCategory" class="w-full p-3 mb-3 border rounded-lg bg-white" required onchange="updateEcoPoints()">
+                <option value="" disabled selected>-- Chọn danh mục --</option>
+            </select>
+            <div class="relative">
+                <input type="number" id="itemEcoPoints" placeholder="Điểm EcoPoints thưởng" class="w-full p-3 mb-3 border rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed" readonly />
+                <span class="absolute right-4 top-3 text-gray-400 text-sm font-bold">🌱</span>
+            </div>
             <textarea id="itemDescription" placeholder="Mô tả..." rows="3" class="w-full p-3 mb-4 border rounded-lg" required></textarea>
             <button onclick="nextStep(2)" class="w-full bg-emerald-600 text-white p-3 rounded-lg font-bold">Tiếp tục</button>
         </div>
@@ -245,6 +250,7 @@
     let pointMap, pointMarker;
     let pointLatLng = { lat: 10.7769, lng: 106.7009 };
     let currentLatLng = { lat: 10.7769, lng: 106.7009 };
+    let loadedItemIds = new Set();
 
     // --- ICONS ---
     var greenIcon = new L.Icon({
@@ -272,6 +278,9 @@
         }
         loadItems();
         loadCollectionPoints();
+
+        // Tải thêm dữ liệu khi di chuyển bản đồ
+        map.on('moveend', loadItems);
     });
 
     // --- 1. MAP & LOAD DATA ---
@@ -280,17 +289,21 @@
 
     async function loadItems() {
         try {
-            const response = await fetch('${pageContext.request.contextPath}/api/items');
-            const items = await response.json();
-
-            map.eachLayer((layer) => {
-                if (layer instanceof L.Marker && layer.options.icon === blueIcon) {
-                    map.removeLayer(layer);
-                }
+            const bounds = map.getBounds();
+            const params = new URLSearchParams({
+                minLat: bounds.getSouth(),
+                maxLat: bounds.getNorth(),
+                minLng: bounds.getWest(),
+                maxLng: bounds.getEast()
             });
 
+            const response = await fetch('${pageContext.request.contextPath}/api/items?' + params.toString());
+            const items = await response.json();
+
             items.forEach(item => {
-                if (item.location) {
+                if (item.location && !loadedItemIds.has(item.itemId)) {
+                    loadedItemIds.add(item.itemId);
+
                     // --- SỬA ĐỔI: Logic hiển thị ảnh ---
                     let imgUrl;
                     if (item.imageUrl && item.imageUrl.startsWith('http')) {
@@ -673,14 +686,40 @@
     document.getElementById('btnPostItem').addEventListener('click', () => { document.getElementById('giveAwayModal').classList.remove('hidden'); document.getElementById('step1').classList.remove('hidden'); });
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
     function nextStep(n) { document.querySelectorAll('.modal-step').forEach(e=>e.classList.add('hidden')); document.getElementById('step'+n).classList.remove('hidden'); if(n===3) setTimeout(()=>{ if(!miniMap) {miniMap=L.map('miniMap').setView([currentLatLng.lat, currentLatLng.lng], 15); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'OSM'}).addTo(miniMap); locationMarker=L.marker([currentLatLng.lat,currentLatLng.lng],{draggable:true}).addTo(miniMap); locationMarker.on('dragend',e=>currentLatLng=e.target.getLatLng()); } else miniMap.invalidateSize(); },200); }
-    async function loadCategories() { try { const r = await fetch('${pageContext.request.contextPath}/api/categories'); (await r.json()).forEach(c => document.getElementById('itemCategory').innerHTML += `<option value="\${c.categoryId}">\${c.name}</option>`); } catch(e){} }
+
+    // --- SỬA ĐỔI: Load Categories và thêm data-points ---
+    async function loadCategories() {
+        try {
+            const r = await fetch('${pageContext.request.contextPath}/api/categories');
+            const categories = await r.json();
+            const select = document.getElementById('itemCategory');
+            categories.forEach(c => {
+                // Thêm data-points vào option
+                select.innerHTML += `<option value="\${c.categoryId}" data-points="\${c.fixedPoints}">\${c.name}</option>`;
+            });
+        } catch(e){}
+    }
     loadCategories();
+
+    // --- SỬA ĐỔI: Hàm cập nhật điểm khi chọn danh mục ---
+    function updateEcoPoints() {
+        const select = document.getElementById('itemCategory');
+        const selectedOption = select.options[select.selectedIndex];
+        const points = selectedOption.getAttribute('data-points');
+
+        if (points) {
+            document.getElementById('itemEcoPoints').value = points;
+        } else {
+            document.getElementById('itemEcoPoints').value = '';
+        }
+    }
+
     async function submitItem() {
         const fd = new FormData();
         fd.append("title", document.getElementById('itemName').value);
         fd.append("description", document.getElementById('itemDescription').value);
         fd.append("category", document.getElementById('itemCategory').value);
-        fd.append("ecoPoints", document.getElementById('itemEcoPoints').value);
+        // Không cần gửi ecoPoints vì server sẽ tự lấy, nhưng gửi cũng không sao (server sẽ ignore)
         fd.append("itemPhoto", document.getElementById('itemPhoto').files[0]);
         fd.append("latitude", currentLatLng.lat);
         fd.append("longitude", currentLatLng.lng);

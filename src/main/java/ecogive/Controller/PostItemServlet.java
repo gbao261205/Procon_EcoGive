@@ -1,9 +1,11 @@
 package ecogive.Controller;
 
+import ecogive.Model.Category;
 import ecogive.Model.GeoPoint;
 import ecogive.Model.Item;
 import ecogive.Model.ItemStatus;
 import ecogive.Model.User;
+import ecogive.dao.CategoryDAO;
 import ecogive.dao.ItemDAO;
 import ecogive.util.CloudinaryService;
 import jakarta.servlet.ServletException;
@@ -25,6 +27,7 @@ import java.time.LocalDateTime;
 public class PostItemServlet extends HttpServlet {
 
     private final ItemDAO itemDAO = new ItemDAO();
+    private final CategoryDAO categoryDAO = new CategoryDAO();
     private final CloudinaryService cloudinaryService = new CloudinaryService();
 
     @Override
@@ -52,18 +55,13 @@ public class PostItemServlet extends HttpServlet {
             double longitude = Double.parseDouble(req.getParameter("longitude"));
             int categoryId = Integer.parseInt(req.getParameter("category"));
             
-            // Xử lý ecoPoints an toàn
-            String ecoPointsStr = req.getParameter("ecoPoints");
-            BigDecimal ecoPoints;
-            if (ecoPointsStr != null && !ecoPointsStr.trim().isEmpty()) {
-                try {
-                    ecoPoints = new BigDecimal(ecoPointsStr);
-                } catch (NumberFormatException e) {
-                    ecoPoints = BigDecimal.ZERO; 
-                }
-            } else {
-                ecoPoints = BigDecimal.ZERO; 
+            // --- SỬA ĐỔI: Lấy điểm từ DB ---
+            BigDecimal ecoPoints = BigDecimal.ZERO;
+            Category category = categoryDAO.findById(categoryId);
+            if (category != null) {
+                ecoPoints = category.getFixedPoints();
             }
+            // -------------------------------
 
             Part filePart = req.getPart("itemPhoto");
             String imageUrlForDB;
