@@ -38,6 +38,22 @@ public class TransactionDAO {
             throw new SQLException(e);
         }
     }
+    
+    // --- MỚI: Kiểm tra xem đã có giao dịch nào cho item và receiver này chưa ---
+    public boolean checkExists(long itemId, long receiverId) throws SQLException {
+        String sql = "SELECT 1 FROM transactions WHERE item_id = ? AND receiver_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setLong(1, itemId);
+            stmt.setLong(2, receiverId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                return rs.next();
+            }
+        } catch (Exception e) {
+            throw new SQLException(e);
+        }
+    }
+    // --------------------------------------------------------------------------
 
     private Transaction mapRow(ResultSet rs) throws SQLException {
         Transaction t = new Transaction();

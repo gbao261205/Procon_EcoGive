@@ -390,7 +390,11 @@
                         actionBtn = `<a href="${pageContext.request.contextPath}/login" class="block w-full text-center bg-gray-100 text-gray-700 text-xs font-bold py-1.5 rounded hover:bg-gray-200">Đăng nhập để nhận</a>`;
                     }
 
-                    const content = `<div><img src="\${imgUrl}" class="custom-popup-img"><div class="custom-popup-body"><h3 class="font-bold text-sm">\${item.title}</h3><p class="text-xs text-gray-500 mb-2">Người tặng: \${item.giverName}</p>\${actionBtn}</div></div>`;
+                    // --- MỚI: Thêm nút chỉ đường ---
+                    const directionsBtn = `<a href="https://www.google.com/maps/search/?api=1&query=\${item.location.latitude},\${item.location.longitude}" target="_blank" class="block w-full bg-slate-100 text-slate-600 text-xs font-bold py-1.5 rounded hover:bg-slate-200 border border-slate-300 mt-2 text-center">🗺️ Chỉ đường</a>`;
+                    // -------------------------------
+
+                    const content = `<div><img src="\${imgUrl}" class="custom-popup-img"><div class="custom-popup-body"><h3 class="font-bold text-sm">\${item.title}</h3><p class="text-xs text-gray-500 mb-2">Người tặng: \${item.giverName}</p>\${actionBtn}\${directionsBtn}</div></div>`;
                     const marker = L.marker([item.location.latitude, item.location.longitude], {icon: blueIcon}).addTo(map).bindPopup(content);
                     itemLayers.push(marker);
                 }

@@ -7,7 +7,7 @@ import ecogive.Model.TransactionStatus;
 import ecogive.Model.User;
 import ecogive.dao.ItemDAO;
 import ecogive.dao.TransactionDAO;
-import com.google.gson.Gson; // Đảm bảo bạn đã có Gson
+import com.google.gson.Gson;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -61,21 +61,24 @@ public class RequestItemServlet extends HttpServlet {
                 result.put("status", "error");
                 result.put("message", "Vật phẩm này đã có người nhận hoặc đang chờ xử lý.");
             } else {
-                // 4. Hợp lệ -> Tạo Transaction
-                Transaction trans = new Transaction();
-                trans.setItemId(itemId);
-                trans.setReceiverId(currentUser.getUserId());
-                trans.setExchangeDate(LocalDateTime.now()); // Thời gian tạo yêu cầu
-                trans.setStatus(TransactionStatus.CONFIRMED); // CONFIRMED: Đã xác nhận yêu cầu
+                // 4. Hợp lệ -> Tạo Transaction PENDING
+                // Kiểm tra xem đã có giao dịch nào chưa để tránh tạo trùng lặp
+                boolean exists = transactionDAO.checkExists(itemId, currentUser.getUserId());
+                boolean transSuccess = true;
 
-                boolean transSuccess = transactionDAO.insert(trans);
+                if (!exists) {
+                    Transaction trans = new Transaction();
+                    trans.setItemId(itemId);
+                    trans.setReceiverId(currentUser.getUserId());
+                    trans.setExchangeDate(LocalDateTime.now());
+                    trans.setStatus(TransactionStatus.PENDING); // Trạng thái chờ, chưa chốt
+                    transSuccess = transactionDAO.insert(trans);
+                }
 
                 if (transSuccess) {
-                    // 5. Cập nhật trạng thái vật phẩm -> PENDING (Để ẩn khỏi bản đồ/không cho ai khác nhận)
-                    itemDAO.updateStatus(itemId, ItemStatus.PENDING);
-
+                    // KHÔNG cập nhật trạng thái vật phẩm. Vật phẩm vẫn AVAILABLE.
                     result.put("status", "success");
-                    result.put("message", "Yêu cầu nhận đồ thành công! Hãy liên hệ người tặng.");
+                    result.put("message", "Đã gửi yêu cầu! Hãy chat với người tặng.");
                 } else {
                     result.put("status", "error");
                     result.put("message", "Lỗi khi tạo giao dịch.");
