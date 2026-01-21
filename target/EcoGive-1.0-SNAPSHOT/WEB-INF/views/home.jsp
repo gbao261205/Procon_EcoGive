@@ -58,8 +58,9 @@
 
         <c:if test="${sessionScope.currentUser != null}">
             <a href="${pageContext.request.contextPath}/profile"
-               class="text-right hidden md:block group hover:bg-slate-50 px-3 py-1 rounded-lg transition cursor-pointer"
+               class="text-right hidden md:block group bg-slate-50 border border-slate-200 hover:bg-slate-100 hover:border-slate-300 shadow-sm px-3 py-1 rounded-lg transition-all cursor-pointer"
                title="Xem hồ sơ cá nhân">
+
                 <div class="text-sm font-bold text-slate-700 group-hover:text-blue-600 transition">
                         ${sessionScope.currentUser.username}
                 </div>
@@ -67,6 +68,7 @@
                         ${sessionScope.currentUser.ecoPoints} EcoPoints
                 </div>
             </a>
+
             <a href="${pageContext.request.contextPath}/logout" class="text-sm font-medium text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-2 rounded-lg transition">Thoát</a>
         </c:if>
 
@@ -225,10 +227,12 @@
     </div>
 </div>
 
-<button onclick="toggleAiModal()" class="fixed bottom-24 right-6 bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-2xl z-50 transition transform hover:scale-110 flex items-center justify-center border-4 border-white" > <span class="text-2xl">🤖</span>
+<!-- SỬA ĐỔI: Giảm z-index xuống z-40 -->
+<button onclick="toggleAiModal()" class="fixed bottom-24 right-6 bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-2xl z-40 transition transform hover:scale-110 flex items-center justify-center border-4 border-white" > <span class="text-2xl">🤖</span>
 </button>
 
-<div id="aiModal" class="fixed bottom-40 right-6 w-80 h-[450px] bg-white rounded-2xl shadow-2xl border border-slate-200 hidden z-50 flex flex-col overflow-hidden font-sans" >
+<!-- SỬA ĐỔI: Giảm z-index xuống z-40 -->
+<div id="aiModal" class="fixed bottom-40 right-6 w-80 h-[450px] bg-white rounded-2xl shadow-2xl border border-slate-200 hidden z-40 flex flex-col overflow-hidden font-sans" >
     <div class="bg-gradient-to-r from-blue-600 to-blue-500 p-4 flex justify-between items-center text-white">
         <div class="flex items-center gap-2">
             <span class="text-2xl">🤖</span>
