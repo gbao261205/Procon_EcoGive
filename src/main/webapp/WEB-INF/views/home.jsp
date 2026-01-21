@@ -58,9 +58,8 @@
 
         <c:if test="${sessionScope.currentUser != null}">
             <a href="${pageContext.request.contextPath}/profile"
-               class="text-right hidden md:block group bg-slate-50 border border-slate-200 hover:bg-slate-100 hover:border-slate-300 shadow-sm px-3 py-1 rounded-lg transition-all cursor-pointer"
+               class="text-right hidden md:block group hover:bg-slate-50 px-3 py-1 rounded-lg transition cursor-pointer"
                title="Xem hồ sơ cá nhân">
-
                 <div class="text-sm font-bold text-slate-700 group-hover:text-blue-600 transition">
                         ${sessionScope.currentUser.username}
                 </div>
@@ -68,7 +67,6 @@
                         ${sessionScope.currentUser.ecoPoints} EcoPoints
                 </div>
             </a>
-
             <a href="${pageContext.request.contextPath}/logout" class="text-sm font-medium text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-2 rounded-lg transition">Thoát</a>
         </c:if>
 
@@ -208,18 +206,42 @@
                 </div>
             </div>
             <div class="flex items-center gap-2">
-                <button id="btnConfirmGive" onclick="confirmGiveItem()" class="hidden bg-emerald-600 text-white text-xs font-bold px-3 py-1.5 rounded hover:bg-emerald-700 shadow-md animate-pulse">
-                    🎁 Tặng ngay
+                <!-- Nút cho người cho -->
+                <button id="btnGiverConfirm" onclick="confirmTransaction('giver_confirm')" class="hidden bg-emerald-600 text-white text-xs font-bold px-3 py-1.5 rounded hover:bg-emerald-700 shadow-md animate-pulse">
+                    🎁 Xác nhận đã cho
                 </button>
-                <button id="btnFinishTrans" onclick="openRatingModal()" class="hidden bg-blue-600 text-white text-xs font-bold px-3 py-1.5 rounded hover:bg-blue-700 shadow-md animate-bounce">
-                    ✅ Đã lấy hàng
+                <!-- Nút cho người nhận -->
+                <button id="btnReceiverConfirm" onclick="confirmTransaction('receiver_confirm')" class="hidden bg-blue-600 text-white text-xs font-bold px-3 py-1.5 rounded hover:bg-blue-700 shadow-md animate-bounce">
+                    ✅ Xác nhận đã nhận
                 </button>
+
                 <button onclick="toggleChatModal(true)" class="hidden md:block text-slate-400 hover:text-slate-600">✕</button>
             </div>
         </div>
         <div id="chatMessages" class="flex-1 p-4 overflow-y-auto bg-slate-50 text-sm space-y-3">
             <div class="text-center text-xs text-gray-400 mt-20">Chọn hội thoại hoặc bấm Nhận trên bản đồ</div>
         </div>
+
+        <!-- MỚI: Khu vực tin nhắn nhanh -->
+        <div id="quickReplies" class="px-3 py-2 bg-gray-50 flex gap-2 overflow-x-auto border-t border-gray-100 hidden">
+            <!-- Nút cho Giver -->
+            <button id="qrGiver" onclick="confirmTransaction('giver_confirm')"
+                    class="hidden whitespace-nowrap bg-white border border-emerald-200 text-emerald-700 text-xs px-3 py-1.5 rounded-full hover:bg-emerald-50 transition shadow-sm">
+                🎁 Đã giao đồ
+            </button>
+
+            <!-- Nút cho Receiver -->
+            <button id="qrReceiver1" onclick="confirmTransaction('receiver_confirm')"
+                    class="hidden whitespace-nowrap bg-white border border-blue-200 text-blue-700 text-xs px-3 py-1.5 rounded-full hover:bg-blue-50 transition shadow-sm">
+                ✅ Đã nhận đồ
+            </button>
+            <button id="qrReceiver2" onclick="sendQuickReply('Bạn ơi, khi nào mình có thể qua lấy đồ được ạ?')"
+                    class="hidden whitespace-nowrap bg-white border border-gray-200 text-gray-600 text-xs px-3 py-1.5 rounded-full hover:bg-gray-100 transition shadow-sm">
+                🕒 Hẹn giờ lấy
+            </button>
+        </div>
+        <!-- --------------------------- -->
+
         <div class="p-3 border-t bg-white flex gap-2">
             <input type="text" id="chatInput" disabled class="flex-1 border rounded-full px-4 py-2 text-sm bg-gray-50" placeholder="Nhập tin nhắn...">
             <button onclick="sendMessage()" id="btnSend" disabled class="bg-emerald-600 text-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-emerald-700">➤</button>
@@ -464,8 +486,7 @@
         } catch(e){}
         openChatWindow();
         await loadInboxList();
-        selectUserChat(giverId, giverName);
-        updateHeaderInfo(itemTitle);
+        selectUserChat(giverId, giverName, itemId, itemTitle, giverId); // Truyền thêm tham số
         setTimeout(() => sendMessageAuto("Chào bạn, mình muốn xin món '" + itemTitle + "'. Nó còn không ạ?"), 500);
     }
 
@@ -479,8 +500,8 @@
         document.getElementById('chatMessages').innerHTML = '<div class="text-center text-xs text-gray-400 mt-20">⬅️ Chọn một người trong danh sách bên trái<br>để tặng món <b>' + itemTitle + '</b></div>';
         document.getElementById('chatInput').disabled = true;
         document.getElementById('btnSend').disabled = true;
-        document.getElementById('btnConfirmGive').classList.add('hidden');
-        document.getElementById('btnFinishTrans').classList.add('hidden');
+        document.getElementById('btnGiverConfirm').classList.add('hidden');
+        document.getElementById('btnReceiverConfirm').classList.add('hidden');
         loadInboxList();
     }
 
@@ -512,8 +533,14 @@
             if (users.length === 0) { listEl.innerHTML = '<div class="text-center text-xs text-gray-400 mt-4">Chưa có tin nhắn</div>'; return; }
             users.forEach(u => {
                 const activeClass = (u.userId == currentReceiverId) ? 'bg-emerald-50 border-emerald-500' : 'border-transparent hover:bg-gray-50';
+
+                // SỬA ĐỔI: Lưu thông tin item vào data attributes
+                const itemId = u.itemId || '';
+                const itemName = u.itemName || '';
+                const giverId = u.giverId || '';
+
                 listEl.innerHTML += `
-                    <div onclick="selectUserChat(\${u.userId}, '\${u.username}')"
+                    <div onclick="selectUserChat(\${u.userId}, '\${u.username}', '\${itemId}', '\${itemName}', '\${giverId}')"
                          class="cursor-pointer p-3 border-l-4 \${activeClass} transition flex items-center gap-3 border-b border-gray-100">
                         <div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-600">\${u.username.charAt(0).toUpperCase()}</div>
                         <div class="flex-1 min-w-0">
@@ -525,7 +552,8 @@
         } catch (e) {}
     }
 
-    async function selectUserChat(userId, username) {
+    // SỬA ĐỔI: Nhận thêm tham số itemId, itemName, giverId
+    async function selectUserChat(userId, username, itemId, itemName, giverId) {
         currentReceiverId = userId;
         document.getElementById('chatTitle').innerText = username;
         document.getElementById('chatHeaderAvatar').innerText = username.charAt(0).toUpperCase();
@@ -536,16 +564,45 @@
         const detailPanel = document.getElementById('chatDetailPanel');
         detailPanel.classList.remove('hidden');
         detailPanel.classList.add('flex');
-        const btnConfirm = document.getElementById('btnConfirmGive');
-        const btnFinish = document.getElementById('btnFinishTrans');
-        btnConfirm.classList.add('hidden');
-        btnFinish.classList.add('hidden');
-        if (currentDiscussingItemId) {
-            if (isOwnerOfCurrentItem && userId !== currentUserId) {
-                btnConfirm.classList.remove('hidden');
-                btnConfirm.innerText = "🎁 Tặng cho " + username;
+
+        // Ẩn các nút xác nhận trước khi load logic
+        const btnGiver = document.getElementById('btnGiverConfirm');
+        const btnReceiver = document.getElementById('btnReceiverConfirm');
+        btnGiver.classList.add('hidden');
+        btnReceiver.classList.add('hidden');
+
+        // MỚI: Hiển thị Quick Replies
+        document.getElementById('quickReplies').classList.remove('hidden');
+        document.getElementById('qrGiver').classList.add('hidden');
+        document.getElementById('qrReceiver1').classList.add('hidden');
+        document.getElementById('qrReceiver2').classList.add('hidden');
+
+        // Cập nhật thông tin item nếu có
+        if (itemId && itemId !== 'undefined') {
+            currentDiscussingItemId = itemId;
+            updateHeaderInfo(itemName);
+
+            // Xác định vai trò
+            if (giverId && giverId != 'undefined') {
+                isOwnerOfCurrentItem = (Number(giverId) === currentUserId);
+            } else {
+                // Fallback nếu không có giverId (ít xảy ra nếu API đúng)
+                isOwnerOfCurrentItem = false;
             }
+
+            // Hiển thị Quick Replies dựa trên vai trò
+            if (isOwnerOfCurrentItem) {
+                document.getElementById('qrGiver').classList.remove('hidden');
+            } else {
+                document.getElementById('qrReceiver1').classList.remove('hidden');
+                document.getElementById('qrReceiver2').classList.remove('hidden');
+            }
+        } else {
+            // Nếu không có item info (chat thông thường), ẩn header item
+            document.getElementById('chatItemInfo').classList.add('hidden');
+            currentDiscussingItemId = null;
         }
+
         loadHistory(userId);
         loadInboxList();
     }
@@ -575,7 +632,7 @@
             if (data.status === 'success') {
                 alert("🎉 Cảm ơn bạn! Giao dịch hoàn tất.");
                 document.getElementById('ratingModal').classList.add('hidden');
-                document.getElementById('btnFinishTrans').classList.add('hidden');
+                document.getElementById('btnReceiverConfirm').classList.add('hidden');
                 sendMessageAuto("✅ Mình đã nhận được đồ và đánh giá " + rating + " sao. Cảm ơn bạn!");
                 currentDiscussingItemId = null;
                 loadItems();
@@ -592,48 +649,98 @@
             const res = await fetch('${pageContext.request.contextPath}/api/chat?action=history&partnerId=' + userId);
             const msgs = await res.json();
             chatBox.innerHTML = '';
+
+            // Logic check status từ tin nhắn hệ thống (tạm thời) hoặc cần API riêng lấy status transaction
+            // Để đơn giản, ta sẽ dựa vào tin nhắn hệ thống mới nhất
+            let lastSystemMsg = "";
+
             msgs.forEach(m => {
                 if (m.content.startsWith("SYSTEM_GIFT:")) {
+                    lastSystemMsg = m.content;
                     let cleanText = m.content.replace("SYSTEM_GIFT:", "");
-                    if (m.senderId === currentUserId) {
-                        cleanText = cleanText.replace("Bạn được tặng món", "Bạn đã tặng món");
-                        cleanText = cleanText.replace("từ " + currentUserName, "cho người này");
-                    } else {
-                        if (cleanText.includes("CONFIRMED") && isOwnerOfCurrentItem === false) {
-                            document.getElementById('btnFinishTrans').classList.remove('hidden');
-                        }
-                    }
                     appendSystemMessage(cleanText);
                 } else {
                     appendMessage(m.content, m.senderId === currentUserId ? 'outgoing' : 'incoming');
                 }
             });
+
+            // Cập nhật nút dựa trên tin nhắn hệ thống cuối cùng
+            const btnGiver = document.getElementById('btnGiverConfirm');
+            const btnReceiver = document.getElementById('btnReceiverConfirm');
+
+            if (currentDiscussingItemId) {
+                if (isOwnerOfCurrentItem) {
+                    // Nếu là chủ: Hiện nút "Xác nhận đã cho" nếu chưa confirm
+                    // SỬA ĐỔI: Kiểm tra CONFIRMED thay vì GIVER_CONFIRMED
+                    if (!lastSystemMsg.includes("CONFIRMED") && !lastSystemMsg.includes("COMPLETED")) {
+                        btnGiver.classList.remove('hidden');
+                    } else {
+                        btnGiver.classList.add('hidden');
+                    }
+                } else {
+                    // Nếu là người nhận: Hiện nút "Xác nhận đã nhận" nếu chủ đã confirm
+                    // SỬA ĐỔI: Kiểm tra CONFIRMED thay vì GIVER_CONFIRMED
+                    if (lastSystemMsg.includes("CONFIRMED") && !lastSystemMsg.includes("COMPLETED")) {
+                        btnReceiver.classList.remove('hidden');
+                    } else {
+                        btnReceiver.classList.add('hidden');
+                    }
+                }
+            }
+
             chatBox.scrollTop = chatBox.scrollHeight;
         } catch(e) { chatBox.innerHTML = 'Lỗi tải tin nhắn'; }
     }
 
-    // --- 5. CONFIRM GIVE ---
-    async function confirmGiveItem() {
+    // --- 5. CONFIRM TRANSACTION (2-WAY) ---
+    async function confirmTransaction(action) {
         const receiverName = document.getElementById('chatTitle').innerText;
-        if (!confirm("Bạn chắc chắn muốn chốt tặng món đồ này cho " + receiverName + "?\n\n(Trạng thái sẽ chuyển thành CONFIRMED)")) return;
+        let confirmMsg = "";
+        if (action === 'giver_confirm') confirmMsg = "Bạn xác nhận đã giao món đồ này cho " + receiverName + "?\n(Người nhận sẽ có 3 ngày để xác nhận)";
+        else confirmMsg = "Bạn xác nhận đã nhận được món đồ này?";
+
+        if (!confirm(confirmMsg)) return;
+
         try {
             const fd = new URLSearchParams();
             fd.append('itemId', currentDiscussingItemId);
-            fd.append('receiverId', currentReceiverId);
+
+            // SỬA ĐỔI: Logic chọn receiverId
+            // Nếu tôi là Giver, receiverId là currentReceiverId (đối tác)
+            // Nếu tôi là Receiver, receiverId là currentUserId (chính tôi)
+            let targetReceiverId;
+            if (isOwnerOfCurrentItem) {
+                targetReceiverId = currentReceiverId;
+            } else {
+                targetReceiverId = currentUserId;
+            }
+            fd.append('receiverId', targetReceiverId);
+
+            fd.append('action', action); // giver_confirm hoặc receiver_confirm
+
             const res = await fetch('${pageContext.request.contextPath}/api/confirm-transaction', { method: 'POST', body: fd });
             const data = await res.json();
+
             if (data.status === 'success') {
-                alert("✅ Thành công! Đã chốt tặng món " + data.itemName + ".");
-                const msgForReceiver = "SYSTEM_GIFT:Bạn được tặng món " + data.itemName + " từ " + currentUserName + ". (Trạng thái: CONFIRMED)";
-                if (chatSocket && currentReceiverId) {
-                    chatSocket.send(JSON.stringify({ receiverId: currentReceiverId, content: msgForReceiver }));
+                alert("✅ " + data.message);
+
+                // Gửi tin nhắn hệ thống
+                let sysMsg = "";
+                if (action === 'giver_confirm') {
+                    // SỬA ĐỔI: Trạng thái CONFIRMED
+                    sysMsg = "SYSTEM_GIFT:Người tặng đã xác nhận giao đồ. Trạng thái: CONFIRMED. Bạn hãy xác nhận khi đã nhận được nhé!";
+                    document.getElementById('btnGiverConfirm').classList.add('hidden');
+                } else {
+                    sysMsg = "SYSTEM_GIFT:Người nhận đã xác nhận nhận đồ. Trạng thái: COMPLETED. Giao dịch hoàn tất!";
+                    document.getElementById('btnReceiverConfirm').classList.add('hidden');
+                    openRatingModal(); // Mở đánh giá ngay sau khi nhận
                 }
-                const msgForSender = "🎁 Bạn đã tặng món " + data.itemName + " cho " + receiverName + ".";
-                appendSystemMessage(msgForSender);
-                currentDiscussingItemId = null;
-                isOwnerOfCurrentItem = false;
-                document.getElementById('btnConfirmGive').classList.add('hidden');
-                document.getElementById('chatItemInfo').classList.add('hidden');
+
+                if (chatSocket && currentReceiverId) {
+                    chatSocket.send(JSON.stringify({ receiverId: currentReceiverId, content: sysMsg }));
+                }
+                appendSystemMessage(sysMsg.replace("SYSTEM_GIFT:", ""));
+
                 loadItems();
                 setTimeout(loadInboxList, 500);
             } else {
@@ -641,6 +748,12 @@
             }
         } catch (e) { alert("❌ Lỗi kết nối"); }
     }
+
+    // --- MỚI: Hàm gửi tin nhắn nhanh ---
+    function sendQuickReply(text) {
+        sendMessageAuto(text);
+    }
+    // ----------------------------------
 
     // --- UTILS & WS ---
     function updateHeaderInfo(title) {
@@ -656,14 +769,14 @@
             const data = JSON.parse(e.data);
             if (data.content.startsWith("SYSTEM_GIFT:")) {
                 const msgText = data.content.replace("SYSTEM_GIFT:", "");
-                if (data.senderId !== currentUserId) {
-                    document.getElementById('congratsText').innerText = msgText;
-                    document.getElementById('congratsModal').classList.remove('hidden');
-                    if (currentReceiverId == data.senderId) {
-                        appendSystemMessage(msgText);
-                        document.getElementById('btnFinishTrans').classList.remove('hidden');
-                    }
+                appendSystemMessage(msgText);
+
+                // Cập nhật nút khi nhận tin nhắn hệ thống
+                // SỬA ĐỔI: Kiểm tra CONFIRMED
+                if (data.content.includes("CONFIRMED") && !isOwnerOfCurrentItem) {
+                    document.getElementById('btnReceiverConfirm').classList.remove('hidden');
                 }
+
                 loadInboxList();
                 loadItems();
                 return;

@@ -68,7 +68,8 @@ CREATE TABLE transactions (
     item_id BIGINT NOT NULL,
     receiver_id BIGINT NOT NULL,
     exchange_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    status ENUM('CONFIRMED', 'COMPLETED', 'CANCELED') DEFAULT 'CONFIRMED',
+    status ENUM('PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELED') DEFAULT 'PENDING',
+    giver_confirmed_date TIMESTAMP NULL DEFAULT NULL,
     FOREIGN KEY (item_id) REFERENCES items(item_id) ON DELETE CASCADE,
     FOREIGN KEY (receiver_id) REFERENCES users(user_id) ON DELETE CASCADE
 );

@@ -8,6 +8,7 @@ public class Transaction {
     private long receiverId;
     private LocalDateTime exchangeDate;
     private TransactionStatus status;
+    private LocalDateTime giverConfirmedDate; // Thời điểm người cho xác nhận
 
     public Transaction() {
     }
@@ -59,5 +60,13 @@ public class Transaction {
 
     public void setStatus(TransactionStatus status) {
         this.status = status;
+    }
+
+    public LocalDateTime getGiverConfirmedDate() {
+        return giverConfirmedDate;
+    }
+
+    public void setGiverConfirmedDate(LocalDateTime giverConfirmedDate) {
+        this.giverConfirmedDate = giverConfirmedDate;
     }
 }

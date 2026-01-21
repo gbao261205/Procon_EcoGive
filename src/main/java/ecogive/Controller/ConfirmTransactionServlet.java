@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import ecogive.Model.Item;
 import ecogive.Model.ItemStatus;
+import ecogive.Model.Transaction;
+import ecogive.Model.TransactionStatus;
 import ecogive.Model.User;
 import ecogive.dao.ItemDAO;
 import ecogive.dao.TransactionDAO;
@@ -23,7 +25,7 @@ public class ConfirmTransactionServlet extends HttpServlet {
 
     private final ItemDAO itemDAO = new ItemDAO();
     private final TransactionDAO transactionDAO = new TransactionDAO();
-    private final UserDAO userDAO = new UserDAO(); // Để lấy tên người nhận
+    private final UserDAO userDAO = new UserDAO();
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -46,68 +48,89 @@ public class ConfirmTransactionServlet extends HttpServlet {
 
             long itemId = Long.parseLong(req.getParameter("itemId"));
             long receiverId = Long.parseLong(req.getParameter("receiverId"));
-            long currentGiverId = currentUser.getUserId();
+            String action = req.getParameter("action");
+            
+            System.out.println("ConfirmTransaction: itemId=" + itemId + ", receiverId=" + receiverId + ", action=" + action + ", user=" + currentUser.getUserId());
 
             Item item = itemDAO.findById(itemId);
+            if (item == null) throw new Exception("Không tìm thấy vật phẩm ID=" + itemId);
 
-            if (item == null) {
-                resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                response.addProperty("status", "error");
-                response.addProperty("message", "Không tìm thấy vật phẩm.");
-                resp.getWriter().write(gson.toJson(response));
-                return;
-            }
-
-            // 1. CHECK QUYỀN: Người thực hiện phải là chủ món đồ
-            if (item.getGiverId() != currentGiverId) {
-                resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                response.addProperty("status", "error");
-                response.addProperty("message", "Bạn không phải chủ món đồ này!");
-                resp.getWriter().write(gson.toJson(response));
-                return;
-            }
-
-            // 2. CHECK TRẠNG THÁI: Món đồ phải đang sẵn sàng
-            if (item.getStatus() != ItemStatus.AVAILABLE && item.getStatus() != ItemStatus.PENDING) {
-                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                response.addProperty("status", "error");
-                response.addProperty("message", "Món đồ này đã không còn sẵn sàng (Status: " + item.getStatus() + ")");
-                resp.getWriter().write(gson.toJson(response));
-                return;
+            Transaction trans = transactionDAO.findActiveTransaction(itemId, receiverId);
+            if (trans == null) {
+                System.out.println("Transaction not found for itemId=" + itemId + ", receiverId=" + receiverId);
+                throw new Exception("Không tìm thấy giao dịch cho item " + itemId);
             }
             
-            // Lấy tên người nhận để trả về
-            User receiver = userDAO.findById(receiverId);
-            if (receiver == null) {
-                throw new SQLException("Không tìm thấy người nhận.");
-            }
+            System.out.println("Found Transaction: ID=" + trans.getTransactionId() + ", Status=" + trans.getStatus() + ", ItemID=" + trans.getItemId());
 
-            // 3. THỰC HIỆN GIAO DỊCH (sử dụng DAO)
-            boolean success = transactionDAO.createInitialTransaction(itemId, receiverId);
+            if ("giver_confirm".equals(action)) {
+                // 1. NGƯỜI CHO XÁC NHẬN
+                if (item.getGiverId() != currentUser.getUserId()) {
+                    throw new Exception("Bạn không phải chủ món đồ.");
+                }
+                
+                if (trans.getStatus() == TransactionStatus.CONFIRMED) {
+                    response.addProperty("status", "success");
+                    response.addProperty("message", "Bạn đã xác nhận giao dịch này rồi.");
+                    response.addProperty("newStatus", "CONFIRMED");
+                } else if (trans.getStatus() == TransactionStatus.PENDING) {
+                    boolean success = transactionDAO.confirmByGiver(trans.getTransactionId());
+                    if (success) {
+                        itemDAO.updateStatus(itemId, ItemStatus.PENDING);
+                        response.addProperty("status", "success");
+                        response.addProperty("message", "Đã xác nhận cho! Chờ người nhận xác nhận.");
+                        response.addProperty("newStatus", "CONFIRMED");
+                    } else {
+                        throw new Exception("Lỗi cập nhật giao dịch.");
+                    }
+                } else {
+                    throw new Exception("Trạng thái giao dịch không hợp lệ (" + trans.getStatus() + "). ItemID=" + itemId);
+                }
 
-            if (success) {
-                response.addProperty("status", "success");
-                response.addProperty("message", "Xác nhận tặng thành công! Vật phẩm đang chờ được giao.");
-                response.addProperty("itemName", item.getTitle());
-                response.addProperty("receiverName", receiver.getUsername());
+            } else if ("receiver_confirm".equals(action)) {
+                // 2. NGƯỜI NHẬN XÁC NHẬN
+                if (trans.getReceiverId() != currentUser.getUserId()) {
+                    throw new Exception("Bạn không phải người nhận trong giao dịch này.");
+                }
+
+                if (trans.getStatus() == TransactionStatus.COMPLETED) {
+                     response.addProperty("status", "success");
+                     response.addProperty("message", "Giao dịch đã hoàn tất trước đó.");
+                     response.addProperty("newStatus", "COMPLETED");
+                } else if (trans.getStatus() == TransactionStatus.CONFIRMED) {
+                    boolean success = transactionDAO.confirmByReceiver(trans.getTransactionId());
+                    if (success) {
+                        itemDAO.updateStatus(itemId, ItemStatus.COMPLETED);
+                        response.addProperty("status", "success");
+                        response.addProperty("message", "Giao dịch hoàn tất! Cảm ơn bạn.");
+                        response.addProperty("newStatus", "COMPLETED");
+                    } else {
+                        throw new Exception("Lỗi cập nhật giao dịch.");
+                    }
+                } else {
+                    throw new Exception("Người cho chưa xác nhận hoặc trạng thái không hợp lệ (" + trans.getStatus() + ").");
+                }
             } else {
-                throw new SQLException("Không thể khởi tạo giao dịch. Có thể vật phẩm đã được tặng cho người khác.");
+                // Fallback
+                if (item.getGiverId() == currentUser.getUserId()) {
+                     boolean success = transactionDAO.confirmByGiver(trans.getTransactionId());
+                     if(success) {
+                         itemDAO.updateStatus(itemId, ItemStatus.PENDING);
+                         response.addProperty("status", "success");
+                         response.addProperty("message", "Đã xác nhận cho.");
+                     }
+                } else {
+                    throw new Exception("Hành động không hợp lệ.");
+                }
             }
+            
+            response.addProperty("itemName", item.getTitle());
 
-        } catch (NumberFormatException e) {
-            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            response.addProperty("status", "error");
-            response.addProperty("message", "ID không hợp lệ.");
-        } catch (SQLException e) {
-            e.printStackTrace();
-            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            response.addProperty("status", "error");
-            response.addProperty("message", "Lỗi cơ sở dữ liệu: " + e.getMessage());
         } catch (Exception e) {
             e.printStackTrace();
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             response.addProperty("status", "error");
-            response.addProperty("message", "Lỗi server: " + e.getMessage());
+            response.addProperty("message", e.getMessage());
         }
         resp.getWriter().write(gson.toJson(response));
     }

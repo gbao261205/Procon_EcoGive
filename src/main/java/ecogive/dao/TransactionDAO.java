@@ -6,8 +6,6 @@ import ecogive.util.DatabaseConnection;
 
 import java.sql.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 public class TransactionDAO {
 
@@ -26,22 +24,84 @@ public class TransactionDAO {
         }
         return null;
     }
+    
+    // Tìm transaction đang active (chưa hoàn thành/hủy) giữa item và receiver
+    public Transaction findActiveTransaction(long itemId, long receiverId) throws SQLException {
+        // Ưu tiên tìm cái đang PENDING hoặc CONFIRMED
+        String sql = "SELECT * FROM transactions WHERE item_id = ? AND receiver_id = ? " +
+                     "AND status IN ('PENDING', 'CONFIRMED') " +
+                     "ORDER BY transaction_id DESC LIMIT 1";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setLong(1, itemId);
+            stmt.setLong(2, receiverId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapRow(rs);
+                }
+            }
+        } catch (Exception e) {
+            throw new SQLException(e);
+        }
+        
+        // Fallback
+        String sqlFallback = "SELECT * FROM transactions WHERE item_id = ? AND receiver_id = ? ORDER BY transaction_id DESC LIMIT 1";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sqlFallback)) {
+            stmt.setLong(1, itemId);
+            stmt.setLong(2, receiverId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapRow(rs);
+                }
+            }
+        } catch (Exception e) {
+            throw new SQLException(e);
+        }
+        
+        return null;
+    }
 
-    public boolean updateStatus(int transactionId, TransactionStatus status) throws SQLException {
+    public boolean updateStatus(long transactionId, TransactionStatus status) throws SQLException {
         String sql = "UPDATE transactions SET status = ? WHERE transaction_id = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, status.name());
-            stmt.setInt(2, transactionId);
+            stmt.setLong(2, transactionId);
             return stmt.executeUpdate() > 0;
         } catch (Exception e) {
             throw new SQLException(e);
         }
     }
     
-    // --- MỚI: Kiểm tra xem đã có giao dịch nào cho item và receiver này chưa ---
+    // Người cho xác nhận -> CONFIRMED
+    public boolean confirmByGiver(long transactionId) throws SQLException {
+        String sql = "UPDATE transactions SET status = 'CONFIRMED', giver_confirmed_date = NOW() WHERE transaction_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setLong(1, transactionId);
+            return stmt.executeUpdate() > 0;
+        } catch (Exception e) {
+            throw new SQLException(e);
+        }
+    }
+    
+    // Người nhận xác nhận -> COMPLETED
+    public boolean confirmByReceiver(long transactionId) throws SQLException {
+        String sql = "UPDATE transactions SET status = 'COMPLETED' WHERE transaction_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setLong(1, transactionId);
+            return stmt.executeUpdate() > 0;
+        } catch (Exception e) {
+            throw new SQLException(e);
+        }
+    }
+
+    // Kiểm tra tồn tại
     public boolean checkExists(long itemId, long receiverId) throws SQLException {
-        String sql = "SELECT 1 FROM transactions WHERE item_id = ? AND receiver_id = ?";
+        String sql = "SELECT 1 FROM transactions WHERE item_id = ? AND receiver_id = ? AND status IN ('PENDING', 'CONFIRMED')";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setLong(1, itemId);
@@ -53,7 +113,6 @@ public class TransactionDAO {
             throw new SQLException(e);
         }
     }
-    // --------------------------------------------------------------------------
 
     private Transaction mapRow(ResultSet rs) throws SQLException {
         Transaction t = new Transaction();
@@ -62,6 +121,15 @@ public class TransactionDAO {
         t.setReceiverId(rs.getLong("receiver_id"));
         t.setExchangeDate(rs.getTimestamp("exchange_date").toLocalDateTime());
         t.setStatus(TransactionStatus.valueOf(rs.getString("status")));
+        
+        try {
+            Timestamp ts = rs.getTimestamp("giver_confirmed_date");
+            if (ts != null) {
+                t.setGiverConfirmedDate(ts.toLocalDateTime());
+            }
+        } catch (SQLException e) {
+            // Ignore
+        }
         return t;
     }
 
@@ -72,7 +140,11 @@ public class TransactionDAO {
             
             stmt.setLong(1, transaction.getItemId());
             stmt.setLong(2, transaction.getReceiverId());
-            stmt.setString(3, transaction.getStatus().name());
+            
+            String statusName = transaction.getStatus().name();
+            System.out.println("Inserting Transaction: Item=" + transaction.getItemId() + ", Receiver=" + transaction.getReceiverId() + ", Status=" + statusName);
+            
+            stmt.setString(3, statusName);
             stmt.setTimestamp(4, Timestamp.valueOf(transaction.getExchangeDate()));
 
             int affectedRows = stmt.executeUpdate();
@@ -86,62 +158,15 @@ public class TransactionDAO {
             }
             return false;
         } catch (Exception e) {
-            throw new SQLException("Lỗi khi chèn giao dịch mới", e);
+            throw new SQLException("Lỗi khi chèn giao dịch mới: " + e.getMessage(), e);
         }
     }
 
     public boolean createInitialTransaction(long itemId, long receiverId) throws SQLException {
-        // SỬA LỖI: Cho phép tặng cả vật phẩm đang PENDING
-        String updateItemSql = "UPDATE items SET status = 'CONFIRMED' WHERE item_id = ? AND (status = 'AVAILABLE' OR status = 'PENDING')";
-        
-        Connection conn = null;
-        try {
-            conn = DatabaseConnection.getConnection();
-            conn.setAutoCommit(false); // Bắt đầu transaction
-
-            // 1. Cập nhật trạng thái vật phẩm
-            try (PreparedStatement psUpdate = conn.prepareStatement(updateItemSql)) {
-                psUpdate.setLong(1, itemId);
-                int affectedRows = psUpdate.executeUpdate();
-                if (affectedRows == 0) {
-                    conn.rollback();
-                    return false;
-                }
-            }
-
-            // 2. Tạo và chèn giao dịch mới
-            Transaction newTransaction = new Transaction();
-            newTransaction.setItemId(itemId);
-            newTransaction.setReceiverId(receiverId);
-            newTransaction.setStatus(TransactionStatus.CONFIRMED);
-            newTransaction.setExchangeDate(LocalDateTime.now());
-            
-            String insertTransactionSql = "INSERT INTO transactions (item_id, receiver_id, status, exchange_date) VALUES (?, ?, ?, ?)";
-            try (PreparedStatement psInsert = conn.prepareStatement(insertTransactionSql)) {
-                psInsert.setLong(1, newTransaction.getItemId());
-                psInsert.setLong(2, newTransaction.getReceiverId());
-                psInsert.setString(3, newTransaction.getStatus().name());
-                psInsert.setTimestamp(4, Timestamp.valueOf(newTransaction.getExchangeDate()));
-                psInsert.executeUpdate();
-            }
-
-            conn.commit(); // Hoàn tất transaction
-            return true;
-
-        } catch (Exception e) {
-            if (conn != null) {
-                conn.rollback(); // Hoàn tác nếu có lỗi
-            }
-            throw new SQLException("Lỗi khi tạo giao dịch ban đầu", e);
-        } finally {
-            if (conn != null) {
-                try {
-                    conn.setAutoCommit(true);
-                    conn.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
+        Transaction trans = findActiveTransaction(itemId, receiverId);
+        if (trans != null) {
+            return confirmByGiver(trans.getTransactionId());
         }
+        return false;
     }
 }

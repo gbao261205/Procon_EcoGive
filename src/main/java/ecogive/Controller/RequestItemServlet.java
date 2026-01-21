@@ -49,6 +49,8 @@ public class RequestItemServlet extends HttpServlet {
             // 2. Lấy Item ID từ request
             long itemId = Long.parseLong(req.getParameter("itemId"));
             Item item = itemDAO.findById(itemId);
+            
+            System.out.println("RequestItem: User=" + currentUser.getUserId() + ", Item=" + itemId);
 
             // 3. Kiểm tra tính hợp lệ
             if (item == null) {
@@ -58,12 +60,19 @@ public class RequestItemServlet extends HttpServlet {
                 result.put("status", "error");
                 result.put("message", "Bạn không thể nhận đồ của chính mình.");
             } else if (item.getStatus() != ItemStatus.AVAILABLE) {
+                // Nếu item đã COMPLETED (do giao dịch trước), ta có cho phép xin lại không?
+                // Nếu muốn cho phép xin lại (ví dụ người cho có nhiều cái), ta phải bỏ check này hoặc sửa logic.
+                // Nhưng hiện tại ItemStatus.COMPLETED nghĩa là đã xong.
+                // Nếu bạn muốn test lại trên item cũ, bạn phải set status item về AVAILABLE trong DB trước.
+                
+                System.out.println("Item status invalid: " + item.getStatus());
                 result.put("status", "error");
-                result.put("message", "Vật phẩm này đã có người nhận hoặc đang chờ xử lý.");
+                result.put("message", "Vật phẩm này đã có người nhận hoặc đang chờ xử lý (Status: " + item.getStatus() + ")");
             } else {
                 // 4. Hợp lệ -> Tạo Transaction PENDING
-                // Kiểm tra xem đã có giao dịch nào chưa để tránh tạo trùng lặp
                 boolean exists = transactionDAO.checkExists(itemId, currentUser.getUserId());
+                System.out.println("Transaction exists? " + exists);
+                
                 boolean transSuccess = true;
 
                 if (!exists) {
@@ -71,12 +80,14 @@ public class RequestItemServlet extends HttpServlet {
                     trans.setItemId(itemId);
                     trans.setReceiverId(currentUser.getUserId());
                     trans.setExchangeDate(LocalDateTime.now());
-                    trans.setStatus(TransactionStatus.PENDING); // Trạng thái chờ, chưa chốt
+                    trans.setStatus(TransactionStatus.PENDING); 
                     transSuccess = transactionDAO.insert(trans);
+                    System.out.println("Created new transaction: " + transSuccess);
+                } else {
+                    System.out.println("Transaction already exists (PENDING/CONFIRMED), skipping insert.");
                 }
 
                 if (transSuccess) {
-                    // KHÔNG cập nhật trạng thái vật phẩm. Vật phẩm vẫn AVAILABLE.
                     result.put("status", "success");
                     result.put("message", "Đã gửi yêu cầu! Hãy chat với người tặng.");
                 } else {

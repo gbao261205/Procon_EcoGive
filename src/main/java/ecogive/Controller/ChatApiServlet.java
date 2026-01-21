@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import ecogive.Model.User;
-import ecogive.util.DatabaseConnection; // Sử dụng DatabaseConnection thay vì hardcode
+import ecogive.util.DatabaseConnection;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -36,10 +36,18 @@ public class ChatApiServlet extends HttpServlet {
 
             // 1. INBOX LIST
             if ("inbox".equals(action)) {
-                // SỬA ĐỔI: Lấy danh sách user từ cả bảng messages VÀ transactions
+                // SỬA ĐỔI: Dùng separator "|||" để tránh lỗi khi tên item chứa ":"
                 String sql = "SELECT u.user_id, u.username, " +
                         "(SELECT content FROM messages m WHERE (m.sender_id = u.user_id AND m.receiver_id = ?) " +
-                        "OR (m.sender_id = ? AND m.receiver_id = u.user_id) ORDER BY m.created_at DESC LIMIT 1) as last_msg " +
+                        "OR (m.sender_id = ? AND m.receiver_id = u.user_id) ORDER BY m.created_at DESC LIMIT 1) as last_msg, " +
+
+                        // Subquery lấy item info
+                        "(SELECT CONCAT(t.item_id, '|||', i.title, '|||', i.giver_id) " +
+                        " FROM transactions t JOIN items i ON t.item_id = i.item_id " +
+                        " WHERE (t.receiver_id = ? AND i.giver_id = u.user_id) " +
+                        "    OR (t.receiver_id = u.user_id AND i.giver_id = ?) " +
+                        " ORDER BY t.transaction_id DESC LIMIT 1) as item_info " +
+
                         "FROM users u " +
                         "WHERE u.user_id IN (" +
                         "   SELECT sender_id FROM messages WHERE receiver_id = ? " +
@@ -54,13 +62,14 @@ public class ChatApiServlet extends HttpServlet {
                 PreparedStatement ps = conn.prepareStatement(sql);
                 long uid = currentUser.getUserId();
                 
-                // Set params: 2 cho subquery last_msg, 4 cho UNION
                 ps.setLong(1, uid);
                 ps.setLong(2, uid);
                 ps.setLong(3, uid);
                 ps.setLong(4, uid);
                 ps.setLong(5, uid);
                 ps.setLong(6, uid);
+                ps.setLong(7, uid);
+                ps.setLong(8, uid);
 
                 ResultSet rs = ps.executeQuery();
                 JsonArray inboxList = new JsonArray();
@@ -70,11 +79,25 @@ public class ChatApiServlet extends HttpServlet {
                     obj.addProperty("username", rs.getString("username"));
                     
                     String lastMsg = rs.getString("last_msg");
-                    if (lastMsg == null) {
-                        lastMsg = "Bắt đầu cuộc trò chuyện..."; // Tin nhắn mặc định nếu chưa có message nào
-                    }
+                    if (lastMsg == null) lastMsg = "Bắt đầu cuộc trò chuyện...";
                     obj.addProperty("lastMsg", lastMsg);
-                    
+
+                    // Parse item info với separator mới
+                    String itemInfo = rs.getString("item_info");
+                    if (itemInfo != null) {
+                        // Escape pipe | vì split dùng regex
+                        String[] parts = itemInfo.split("\\|\\|\\|");
+                        if (parts.length >= 3) {
+                            try {
+                                obj.addProperty("itemId", Long.parseLong(parts[0]));
+                                obj.addProperty("itemName", parts[1]);
+                                obj.addProperty("giverId", Long.parseLong(parts[2]));
+                            } catch (NumberFormatException e) {
+                                // Ignore parse error
+                            }
+                        }
+                    }
+
                     inboxList.add(obj);
                 }
                 resp.getWriter().write(new Gson().toJson(inboxList));
