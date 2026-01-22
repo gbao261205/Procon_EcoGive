@@ -16,12 +16,13 @@ public class Item {
     private String giverName;
     private BigDecimal ecoPoints; // Số điểm thưởng cho vật phẩm
     private String categoryName; // Tên danh mục
+    private String address; // Địa chỉ chi tiết
 
     public Item() {
     }
 
     // Constructor đầy đủ
-    public Item(long itemId, long giverId, String title, String description, int categoryId, String imageUrl, ItemStatus status, LocalDateTime postDate, GeoPoint location, String giverName, BigDecimal ecoPoints) {
+    public Item(long itemId, long giverId, String title, String description, int categoryId, String imageUrl, ItemStatus status, LocalDateTime postDate, GeoPoint location, String giverName, BigDecimal ecoPoints, String address) {
         this.itemId = itemId;
         this.giverId = giverId;
         this.title = title;
@@ -33,9 +34,18 @@ public class Item {
         this.location = location;
         this.giverName = giverName;
         this.ecoPoints = ecoPoints;
+        this.address = address;
     }
 
     // Getters and Setters
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
     public String getCategoryName() {
         return categoryName;
     }

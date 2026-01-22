@@ -115,7 +115,8 @@
                         data-category-name="${categoryMap[item.categoryId]}"
                         data-status="${item.status}"
                         data-points="${item.ecoPoints}"
-                        data-date="${item.postDate}">
+                        data-date="${item.postDate}"
+                        data-address="${item.address}">
 
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-3">
@@ -285,6 +286,11 @@
                                     <div id="modalDesc" class="text-sm text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-100 max-h-40 overflow-y-auto"></div>
                                 </div>
 
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Địa chỉ</label>
+                                    <div id="modalAddress" class="text-sm text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-100"></div>
+                                </div>
+
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
                                         <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Người đăng (ID)</label>
@@ -349,6 +355,7 @@
         const status = row.getAttribute('data-status');
         const points = row.getAttribute('data-points');
         const date = row.getAttribute('data-date');
+        const address = row.getAttribute('data-address');
 
         // Điền dữ liệu vào modal
         document.getElementById('modalItemId').value = id;
@@ -357,6 +364,7 @@
         document.getElementById('modalImg').src = imgUrl;
         document.getElementById('modalGiver').innerText = giver;
         document.getElementById('modalDate').innerText = date.replace('T', ' ');
+        document.getElementById('modalAddress').innerText = address ? address : 'Không có địa chỉ';
 
         // Set giá trị cho Select Category
         const catSelect = document.getElementById('modalCategory');

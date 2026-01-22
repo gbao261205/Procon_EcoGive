@@ -215,8 +215,8 @@ public class ItemDAO {
     }
 
     public boolean insert(Item item) throws SQLException {
-        String sql = "INSERT INTO items (giver_id, title, description, category_id, image_url, status, post_date, location, eco_points) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?, ST_GeomFromText(?), ?)";
+        String sql = "INSERT INTO items (giver_id, title, description, category_id, image_url, status, post_date, location, eco_points, address) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ST_GeomFromText(?), ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
@@ -230,6 +230,7 @@ public class ItemDAO {
             stmt.setTimestamp(7, Timestamp.valueOf(postDate));
             stmt.setString(8, toWKT(item.getLocation()));
             stmt.setBigDecimal(9, item.getEcoPoints());
+            stmt.setString(10, item.getAddress());
 
             int affected = stmt.executeUpdate();
             if (affected > 0) {
@@ -367,6 +368,7 @@ public class ItemDAO {
         item.setCategoryId(rs.getInt("category_id"));
         item.setImageUrl(rs.getString("image_url"));
         item.setEcoPoints(rs.getBigDecimal("eco_points"));
+        item.setAddress(rs.getString("address"));
 
         String statusStr = rs.getString("status");
         if (statusStr != null) {

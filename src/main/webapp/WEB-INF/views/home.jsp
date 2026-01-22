@@ -152,6 +152,14 @@
             <button onclick="nextStep(3)" class="w-full bg-emerald-600 text-white p-3 rounded-lg font-bold">Tiếp tục</button>
         </div>
         <div id="step3" class="modal-step hidden">
+            <div class="flex gap-2 mb-3 relative">
+                <div class="flex-1 relative">
+                    <input type="text" id="itemAddress" placeholder="Nhập địa chỉ (VD: 123 Lê Lợi...)" class="w-full p-2 border rounded-lg" autocomplete="off" />
+                    <!-- Autocomplete Dropdown: Tăng z-index lên 9999 -->
+                    <ul id="suggestionList" class="absolute left-0 right-0 top-full bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] max-h-60 overflow-y-auto hidden mt-1"></ul>
+                </div>
+                <button onclick="searchAddress()" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-blue-700 h-full">Tìm</button>
+            </div>
             <div id="miniMap" class="h-64 w-full rounded-lg mb-4 border"></div>
             <button onclick="submitItem()" class="w-full bg-emerald-600 text-white p-3 rounded-lg font-bold">Đăng tin</button>
         </div>
@@ -304,6 +312,7 @@
     const currentUserName = "${sessionScope.currentUser != null ? sessionScope.currentUser.username : ''}";
     const currentUserRole = "${sessionScope.currentUser != null ? sessionScope.currentUser.role : ''}";
     const currentUserId = currentUserIdStr ? Number(currentUserIdStr) : null;
+    const MAPTILER_API_KEY = 'N9qb9p6GF8fszXu3BPWt'; // Thay thế bằng API Key của bạn
 
     let chatSocket = null;
     let currentReceiverId = null;
@@ -349,6 +358,16 @@
 
         // Tải thêm dữ liệu khi di chuyển bản đồ
         map.on('moveend', loadItems);
+
+        // --- MỚI: Lắng nghe sự kiện click để ẩn gợi ý ---
+        document.addEventListener('click', function(e) {
+            const suggestionList = document.getElementById('suggestionList');
+            const itemAddress = document.getElementById('itemAddress');
+            if (suggestionList && !suggestionList.contains(e.target) && e.target !== itemAddress) {
+                suggestionList.classList.add('hidden');
+            }
+        });
+        // ------------------------------------------------
     });
 
     // --- 1. MAP & LOAD DATA ---
@@ -420,7 +439,14 @@
                     const directionsBtn = `<a href="https://www.google.com/maps/search/?api=1&query=\${item.location.latitude},\${item.location.longitude}" target="_blank" class="block w-full bg-slate-100 text-slate-600 text-xs font-bold py-1.5 rounded hover:bg-slate-200 border border-slate-300 mt-2 text-center">🗺️ Chỉ đường</a>`;
                     // -------------------------------
 
-                    const content = `<div><img src="\${imgUrl}" class="custom-popup-img"><div class="custom-popup-body"><h3 class="font-bold text-sm">\${item.title}</h3><p class="text-xs text-gray-500 mb-2">Người tặng: \${item.giverName}</p>\${actionBtn}\${directionsBtn}</div></div>`;
+                    // --- MỚI: Hiển thị địa chỉ nếu có ---
+                    let addressHtml = '';
+                    if (item.address) {
+                        addressHtml = `<p class="text-xs text-gray-500 mb-1">📍 \${item.address}</p>`;
+                    }
+                    // ------------------------------------
+
+                    const content = `<div><img src="\${imgUrl}" class="custom-popup-img"><div class="custom-popup-body"><h3 class="font-bold text-sm">\${item.title}</h3><p class="text-xs text-gray-500 mb-2">Người tặng: \${item.giverName}</p>\${addressHtml}\${actionBtn}\${directionsBtn}</div></div>`;
                     const marker = L.marker([item.location.latitude, item.location.longitude], {icon: blueIcon}).addTo(map).bindPopup(content);
                     itemLayers.push(marker);
                 }
@@ -966,6 +992,84 @@
     }
     // -------------------------------------
 
+    // --- MỚI: Tìm kiếm địa chỉ bằng MapTiler API ---
+    async function searchAddress() {
+        const address = document.getElementById('itemAddress').value;
+        if (!address) return;
+
+        try {
+            const response = await fetch(`https://api.maptiler.com/geocoding/\${encodeURIComponent(address)}.json?key=\${MAPTILER_API_KEY}`);
+            const data = await response.json();
+
+            if (data.features && data.features.length > 0) {
+                const [lng, lat] = data.features[0].center;
+                currentLatLng = { lat, lng };
+
+                // Cập nhật bản đồ mini
+                miniMap.setView([lat, lng], 15);
+                locationMarker.setLatLng([lat, lng]);
+            } else {
+                alert("Không tìm thấy địa chỉ này!");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Lỗi khi tìm kiếm địa chỉ.");
+        }
+    }
+    // -----------------------------------------------
+
+    // --- MỚI: Autocomplete Logic ---
+    let debounceTimer;
+    const addressInput = document.getElementById('itemAddress');
+    const suggestionList = document.getElementById('suggestionList');
+
+    addressInput.addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        const query = this.value.trim();
+
+        if (query.length < 3) {
+            suggestionList.classList.add('hidden');
+            return;
+        }
+
+        debounceTimer = setTimeout(async () => {
+            try {
+                // SỬA ĐỔI: Dùng cộng chuỗi thay vì template literal để tránh lỗi JSP
+                const url = 'https://api.maptiler.com/geocoding/' + encodeURIComponent(query) + '.json?key=' + MAPTILER_API_KEY + '&autocomplete=true&limit=5';
+                const response = await fetch(url);
+                const data = await response.json();
+
+                suggestionList.innerHTML = '';
+                if (data.features && data.features.length > 0) {
+                    data.features.forEach(feature => {
+                        const li = document.createElement('li');
+                        li.className = 'px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm text-gray-700 border-b last:border-0';
+                        li.innerText = feature.place_name;
+                        li.onclick = () => {
+                            // Tự động điền và sửa lỗi địa chỉ
+                            addressInput.value = feature.place_name;
+
+                            // Cập nhật tọa độ
+                            const [lng, lat] = feature.center;
+                            currentLatLng = { lat, lng };
+                            miniMap.setView([lat, lng], 15);
+                            locationMarker.setLatLng([lat, lng]);
+
+                            suggestionList.classList.add('hidden');
+                        };
+                        suggestionList.appendChild(li);
+                    });
+                    suggestionList.classList.remove('hidden');
+                } else {
+                    suggestionList.classList.add('hidden');
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }, 300); // Debounce 300ms
+    });
+    // -------------------------------
+
     async function submitItem() {
         const fd = new FormData();
         fd.append("title", document.getElementById('itemName').value);
@@ -975,6 +1079,8 @@
         fd.append("itemPhoto", document.getElementById('itemPhoto').files[0]);
         fd.append("latitude", currentLatLng.lat);
         fd.append("longitude", currentLatLng.lng);
+        fd.append("address", document.getElementById('itemAddress').value); // Gửi thêm địa chỉ
+
         try {
             const res = await fetch('${pageContext.request.contextPath}/post-item', {method:'POST', body:fd});
             const data = await res.json();

@@ -54,6 +54,7 @@ public class PostItemServlet extends HttpServlet {
             double latitude = Double.parseDouble(req.getParameter("latitude"));
             double longitude = Double.parseDouble(req.getParameter("longitude"));
             int categoryId = Integer.parseInt(req.getParameter("category"));
+            String address = req.getParameter("address");
             
             // --- SỬA ĐỔI: Lấy điểm từ DB ---
             BigDecimal ecoPoints = BigDecimal.ZERO;
@@ -92,6 +93,7 @@ public class PostItemServlet extends HttpServlet {
             item.setPostDate(LocalDateTime.now());
             item.setLocation(new GeoPoint(longitude, latitude));
             item.setEcoPoints(ecoPoints);
+            item.setAddress(address);
 
             boolean success = itemDAO.insert(item);
             if (!success) {
