@@ -6,6 +6,7 @@ import ecogive.Model.User;
 import ecogive.Model.Review;
 import ecogive.dao.ItemDAO;
 import ecogive.dao.ReviewDAO;
+import ecogive.dao.UserDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -22,6 +23,7 @@ public class ProfileServlet extends HttpServlet {
 
     private final ItemDAO itemDAO = new ItemDAO();
     private final ReviewDAO reviewDAO = new ReviewDAO();
+    private final UserDAO userDAO = new UserDAO();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -32,6 +34,18 @@ public class ProfileServlet extends HttpServlet {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
+
+        // --- MỚI: Refresh User Session ---
+        try {
+            User updatedUser = userDAO.findById(currentUser.getUserId());
+            if (updatedUser != null) {
+                session.setAttribute("currentUser", updatedUser);
+                currentUser = updatedUser; // Cập nhật biến local để dùng bên dưới
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        // ---------------------------------
 
         long userId = currentUser.getUserId();
 

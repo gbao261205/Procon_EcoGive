@@ -18,6 +18,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.sql.SQLException;
 
 @WebServlet("/api/confirm-transaction")
@@ -101,6 +102,19 @@ public class ConfirmTransactionServlet extends HttpServlet {
                     boolean success = transactionDAO.confirmByReceiver(trans.getTransactionId());
                     if (success) {
                         itemDAO.updateStatus(itemId, ItemStatus.COMPLETED);
+
+                        // --- MỚI: CỘNG ĐIỂM CHO NGƯỜI TẶNG ---
+                        BigDecimal points = item.getEcoPoints();
+                        if (points != null && points.compareTo(BigDecimal.ZERO) > 0) {
+                            boolean added = userDAO.addEcoPoints(item.getGiverId(), points);
+                            if (added) {
+                                System.out.println("Added " + points + " EcoPoints to user " + item.getGiverId());
+                            } else {
+                                System.err.println("Failed to add EcoPoints to user " + item.getGiverId());
+                            }
+                        }
+                        // --------------------------------------
+
                         response.addProperty("status", "success");
                         response.addProperty("message", "Giao dịch hoàn tất! Cảm ơn bạn.");
                         response.addProperty("newStatus", "COMPLETED");
