@@ -39,6 +39,7 @@ CREATE TABLE items (
     giver_id BIGINT NOT NULL,
     title VARCHAR(255) NOT NULL,
     description TEXT,
+    address VARCHAR(255),
     category_id INT, -- Khóa ngoại trỏ đến categories
     image_url VARCHAR(255) NOT NULL,
     status ENUM('AVAILABLE', 'PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED') DEFAULT 'AVAILABLE',
