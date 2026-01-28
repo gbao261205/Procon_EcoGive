@@ -216,7 +216,7 @@
             <div class="flex items-center gap-2">
                 <!-- Nút cho người cho -->
                 <button id="btnGiverConfirm" onclick="confirmTransaction('giver_confirm')" class="hidden bg-emerald-600 text-white text-xs font-bold px-3 py-1.5 rounded hover:bg-emerald-700 shadow-md animate-pulse">
-                    🎁 Xác nhận đã cho
+                    🎁 Xác nhận đã tặng
                 </button>
                 <!-- Nút cho người nhận -->
                 <button id="btnReceiverConfirm" onclick="confirmTransaction('receiver_confirm')" class="hidden bg-blue-600 text-white text-xs font-bold px-3 py-1.5 rounded hover:bg-blue-700 shadow-md animate-bounce">
@@ -235,17 +235,17 @@
             <!-- Nút cho Giver -->
             <button id="qrGiver" onclick="confirmTransaction('giver_confirm')"
                     class="hidden whitespace-nowrap bg-white border border-emerald-200 text-emerald-700 text-xs px-3 py-1.5 rounded-full hover:bg-emerald-50 transition shadow-sm">
-                🎁 Đã giao đồ
+                🎁 Xác nhận đã tặng
             </button>
 
             <!-- Nút cho Receiver -->
             <button id="qrReceiver1" onclick="confirmTransaction('receiver_confirm')"
                     class="hidden whitespace-nowrap bg-white border border-blue-200 text-blue-700 text-xs px-3 py-1.5 rounded-full hover:bg-blue-50 transition shadow-sm">
-                ✅ Đã nhận đồ
+                ✅ Xác nhận đã nhận
             </button>
             <button id="qrReceiver2" onclick="sendQuickReply('Bạn ơi, khi nào mình có thể qua lấy đồ được ạ?')"
                     class="hidden whitespace-nowrap bg-white border border-gray-200 text-gray-600 text-xs px-3 py-1.5 rounded-full hover:bg-gray-100 transition shadow-sm">
-                🕒 Hẹn giờ lấy
+                🕒 Hẹn lịch nhận
             </button>
         </div>
         <!-- --------------------------- -->
@@ -599,6 +599,8 @@
 
         // MỚI: Hiển thị Quick Replies
         document.getElementById('quickReplies').classList.remove('hidden');
+
+        // Reset trạng thái Quick Replies về ẩn hết trước khi loadHistory quyết định
         document.getElementById('qrGiver').classList.add('hidden');
         document.getElementById('qrReceiver1').classList.add('hidden');
         document.getElementById('qrReceiver2').classList.add('hidden');
@@ -616,13 +618,13 @@
                 isOwnerOfCurrentItem = false;
             }
 
-            // Hiển thị Quick Replies dựa trên vai trò
+            // Mặc định hiển thị trạng thái PENDING (sẽ bị override bởi loadHistory nếu có lịch sử)
             if (isOwnerOfCurrentItem) {
                 document.getElementById('qrGiver').classList.remove('hidden');
             } else {
-                document.getElementById('qrReceiver1').classList.remove('hidden');
                 document.getElementById('qrReceiver2').classList.remove('hidden');
             }
+
         } else {
             // Nếu không có item info (chat thông thường), ẩn header item
             document.getElementById('chatItemInfo').classList.add('hidden');
@@ -682,7 +684,10 @@
 
             msgs.forEach(m => {
                 if (m.content.startsWith("SYSTEM_GIFT:")) {
-                    lastSystemMsg = m.content;
+                    // SỬA ĐỔI QUAN TRỌNG: Chỉ cập nhật trạng thái nếu tin nhắn thuộc về item đang thảo luận
+                    if (currentDiscussingItemId && m.itemId == currentDiscussingItemId) {
+                        lastSystemMsg = m.content;
+                    }
                     let cleanText = m.content.replace("SYSTEM_GIFT:", "");
                     appendSystemMessage(cleanText);
                 } else {
@@ -694,22 +699,40 @@
             const btnGiver = document.getElementById('btnGiverConfirm');
             const btnReceiver = document.getElementById('btnReceiverConfirm');
 
+            // Quick Replies Elements
+            const qrGiver = document.getElementById('qrGiver');
+            const qrReceiver1 = document.getElementById('qrReceiver1');
+            const qrReceiver2 = document.getElementById('qrReceiver2');
+
             if (currentDiscussingItemId) {
                 if (isOwnerOfCurrentItem) {
-                    // Nếu là chủ: Hiện nút "Xác nhận đã cho" nếu chưa confirm
-                    // SỬA ĐỔI: Kiểm tra CONFIRMED thay vì GIVER_CONFIRMED
+                    // --- GIVER LOGIC ---
                     if (!lastSystemMsg.includes("CONFIRMED") && !lastSystemMsg.includes("COMPLETED")) {
+                        // PENDING: Hiện nút xác nhận cho
                         btnGiver.classList.remove('hidden');
+                        qrGiver.classList.remove('hidden');
                     } else {
+                        // CONFIRMED/COMPLETED: Ẩn nút xác nhận cho
                         btnGiver.classList.add('hidden');
+                        qrGiver.classList.add('hidden');
                     }
                 } else {
-                    // Nếu là người nhận: Hiện nút "Xác nhận đã nhận" nếu chủ đã confirm
-                    // SỬA ĐỔI: Kiểm tra CONFIRMED thay vì GIVER_CONFIRMED
+                    // --- RECEIVER LOGIC ---
                     if (lastSystemMsg.includes("CONFIRMED") && !lastSystemMsg.includes("COMPLETED")) {
+                        // CONFIRMED: Hiện nút nhận, Ẩn nút hẹn
                         btnReceiver.classList.remove('hidden');
-                    } else {
+                        qrReceiver1.classList.remove('hidden');
+                        qrReceiver2.classList.add('hidden');
+                    } else if (!lastSystemMsg.includes("CONFIRMED") && !lastSystemMsg.includes("COMPLETED")) {
+                        // PENDING: Ẩn nút nhận, Hiện nút hẹn
                         btnReceiver.classList.add('hidden');
+                        qrReceiver1.classList.add('hidden');
+                        qrReceiver2.classList.remove('hidden');
+                    } else {
+                        // COMPLETED: Ẩn hết
+                        btnReceiver.classList.add('hidden');
+                        qrReceiver1.classList.add('hidden');
+                        qrReceiver2.classList.add('hidden');
                     }
                 }
             }
@@ -756,9 +779,11 @@
                     // SỬA ĐỔI: Trạng thái CONFIRMED
                     sysMsg = "SYSTEM_GIFT:Người tặng đã xác nhận giao đồ. Trạng thái: CONFIRMED. Bạn hãy xác nhận khi đã nhận được nhé!";
                     document.getElementById('btnGiverConfirm').classList.add('hidden');
+                    document.getElementById('qrGiver').classList.add('hidden');
                 } else {
                     sysMsg = "SYSTEM_GIFT:Người nhận đã xác nhận nhận đồ. Trạng thái: COMPLETED. Giao dịch hoàn tất!";
                     document.getElementById('btnReceiverConfirm').classList.add('hidden');
+                    document.getElementById('qrReceiver1').classList.add('hidden');
                     openRatingModal(); // Mở đánh giá ngay sau khi nhận
                 }
 
@@ -801,6 +826,8 @@
                 // SỬA ĐỔI: Kiểm tra CONFIRMED
                 if (data.content.includes("CONFIRMED") && !isOwnerOfCurrentItem) {
                     document.getElementById('btnReceiverConfirm').classList.remove('hidden');
+                    document.getElementById('qrReceiver1').classList.remove('hidden');
+                    document.getElementById('qrReceiver2').classList.add('hidden');
                 }
 
                 loadInboxList();
