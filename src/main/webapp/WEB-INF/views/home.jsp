@@ -187,6 +187,69 @@
     </div>
 </div>
 
+<!-- MỚI: Modal Chi tiết sản phẩm -->
+<div id="itemDetailModal" class="fixed inset-0 hidden bg-black bg-opacity-70 flex items-center justify-center p-4 z-[80]">
+    <div class="bg-white rounded-2xl w-full max-w-2xl shadow-2xl relative flex flex-col max-h-[90vh] overflow-hidden">
+        <button onclick="document.getElementById('itemDetailModal').classList.add('hidden')" class="absolute top-4 right-4 z-10 bg-white/80 rounded-full p-1 text-gray-500 hover:text-gray-800 hover:bg-white transition">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+
+        <div class="overflow-y-auto flex-1">
+            <!-- Ảnh sản phẩm -->
+            <div class="w-full h-64 bg-gray-100 relative">
+                <img id="detailImg" src="" class="w-full h-full object-contain" alt="Item Image">
+            </div>
+
+            <div class="p-6">
+                <!-- Header: Tên & Ngày -->
+                <div class="flex justify-between items-start mb-2">
+                    <h2 id="detailTitle" class="text-2xl font-bold text-slate-800">Tên sản phẩm</h2>
+                    <span id="detailDate" class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">...</span>
+                </div>
+
+                <!-- Người đăng & EcoPoints -->
+                <div class="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100">
+                    <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-lg">
+                        <span id="detailAvatar">?</span>
+                    </div>
+                    <div>
+                        <div class="font-bold text-slate-700 text-sm" id="detailGiver">Người đăng</div>
+                        <div class="text-xs text-emerald-600 font-medium">🌱 <span id="detailGiverPoints">0</span> EcoPoints</div>
+                    </div>
+                </div>
+
+                <!-- Thông tin chi tiết -->
+                <div class="space-y-3 mb-6">
+                    <div>
+                        <h4 class="text-xs font-bold text-gray-400 uppercase mb-1">Mô tả</h4>
+                        <p id="detailDesc" class="text-sm text-gray-700 leading-relaxed">...</p>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-bold text-gray-400 uppercase mb-1">Địa chỉ nhận</h4>
+                        <p id="detailAddress" class="text-sm text-gray-700 font-medium">...</p>
+                    </div>
+                </div>
+
+                <!-- Gợi ý sản phẩm -->
+                <div id="relatedSection" class="hidden">
+                    <h3 class="font-bold text-slate-700 mb-3 text-sm">✨ Có thể bạn cũng thích (Cùng danh mục)</h3>
+                    <div id="relatedItems" class="grid grid-cols-3 gap-3">
+                        <!-- Items will be injected here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="p-4 border-t bg-gray-50 flex justify-end gap-3">
+            <button onclick="document.getElementById('itemDetailModal').classList.add('hidden')" class="px-4 py-2 text-sm font-bold text-gray-600 hover:bg-gray-200 rounded-lg transition">Đóng</button>
+            <div id="detailActionContainer" class="flex-1 md:flex-none">
+                <!-- Action button will be injected here -->
+            </div>
+        </div>
+    </div>
+</div>
+
 <button id="btnOpenInbox" onclick="toggleChatModal(false)" class="fixed bottom-6 right-6 bg-emerald-600 hover:bg-emerald-700 text-white p-4 rounded-full shadow-2xl z-50 transition hover:scale-105 flex items-center justify-center gap-2">
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
     <span class="font-bold">Tin nhắn</span>
@@ -216,7 +279,7 @@
             <div class="flex items-center gap-2">
                 <!-- Nút cho người cho -->
                 <button id="btnGiverConfirm" onclick="confirmTransaction('giver_confirm')" class="hidden bg-emerald-600 text-white text-xs font-bold px-3 py-1.5 rounded hover:bg-emerald-700 shadow-md animate-pulse">
-                    🎁 Xác nhận đã tặng
+                    🎁 Xác nhận đã cho
                 </button>
                 <!-- Nút cho người nhận -->
                 <button id="btnReceiverConfirm" onclick="confirmTransaction('receiver_confirm')" class="hidden bg-blue-600 text-white text-xs font-bold px-3 py-1.5 rounded hover:bg-blue-700 shadow-md animate-bounce">
@@ -235,7 +298,7 @@
             <!-- Nút cho Giver -->
             <button id="qrGiver" onclick="confirmTransaction('giver_confirm')"
                     class="hidden whitespace-nowrap bg-white border border-emerald-200 text-emerald-700 text-xs px-3 py-1.5 rounded-full hover:bg-emerald-50 transition shadow-sm">
-                🎁 Xác nhận đã tặng
+                🎁 Xác nhận đã cho
             </button>
 
             <!-- Nút cho Receiver -->
@@ -327,6 +390,7 @@
     // Lưu trữ các layer để quản lý (xóa/thêm lại)
     let itemLayers = [];
     let pointLayers = [];
+    let itemDataCache = {}; // MỚI: Cache dữ liệu item để dùng cho popup chi tiết
 
     // --- ICONS ---
     var greenIcon = new L.Icon({
@@ -380,6 +444,7 @@
         itemLayers.forEach(layer => map.removeLayer(layer));
         itemLayers = [];
         loadedItemIds.clear();
+        itemDataCache = {}; // Clear cache
 
         pointLayers.forEach(layer => map.removeLayer(layer));
         pointLayers = [];
@@ -411,6 +476,7 @@
             items.forEach(item => {
                 if (item.location && !loadedItemIds.has(item.itemId)) {
                     loadedItemIds.add(item.itemId);
+                    itemDataCache[item.itemId] = item; // Lưu vào cache
 
                     // --- SỬA ĐỔI: Logic hiển thị ảnh ---
                     let imgUrl;
@@ -446,13 +512,87 @@
                     }
                     // ------------------------------------
 
-                    const content = `<div><img src="\${imgUrl}" class="custom-popup-img"><div class="custom-popup-body"><h3 class="font-bold text-sm">\${item.title}</h3><p class="text-xs text-gray-500 mb-2">Người tặng: \${item.giverName}</p>\${addressHtml}\${actionBtn}\${directionsBtn}</div></div>`;
+                    // --- MỚI: Thêm nút Xem chi tiết ---
+                    const detailBtn = `<button onclick="openItemDetail(\${item.itemId})" class="block w-full bg-white text-emerald-600 text-xs font-bold py-1.5 rounded border border-emerald-600 mb-2 hover:bg-emerald-50">🔍 Xem chi tiết</button>`;
+
+                    const content = `<div><img src="\${imgUrl}" class="custom-popup-img"><div class="custom-popup-body"><h3 class="font-bold text-sm">\${item.title}</h3><p class="text-xs text-gray-500 mb-2">Người tặng: \${item.giverName}</p>\${addressHtml}\${detailBtn}\${actionBtn}\${directionsBtn}</div></div>`;
                     const marker = L.marker([item.location.latitude, item.location.longitude], {icon: blueIcon}).addTo(map).bindPopup(content);
                     itemLayers.push(marker);
                 }
             });
         } catch (e) { console.error(e); }
     }
+
+    // --- MỚI: Hàm mở Modal Chi tiết ---
+    function openItemDetail(itemId) {
+        const item = itemDataCache[itemId];
+        if (!item) return;
+
+        // Populate Data
+        let imgUrl = item.imageUrl && item.imageUrl.startsWith('http') ? item.imageUrl : (item.imageUrl ? '${pageContext.request.contextPath}/images?path=' + encodeURIComponent(item.imageUrl) : 'https://placehold.co/400x300');
+        document.getElementById('detailImg').src = imgUrl;
+        document.getElementById('detailTitle').innerText = item.title;
+        document.getElementById('detailDesc').innerText = item.description || "Không có mô tả";
+        document.getElementById('detailAddress').innerText = item.address || "Chưa cập nhật địa chỉ";
+        document.getElementById('detailGiver').innerText = item.giverName || "Ẩn danh";
+        document.getElementById('detailAvatar').innerText = (item.giverName || "?").charAt(0).toUpperCase();
+        document.getElementById('detailGiverPoints').innerText = item.giverEcoPoints || "0"; // Giả sử API trả về giverEcoPoints
+
+        // Format Date (dd/mm/yyyy)
+        let dateStr = "Vừa xong";
+        if (item.postDate) { // SỬA ĐỔI: Dùng postDate thay vì postedDate
+            const d = new Date(item.postDate);
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear();
+            dateStr = day + '/' + month + '/' + year;
+        }
+        document.getElementById('detailDate').innerText = "Ngày đăng: " + dateStr;
+
+        // Action Button Logic
+        const actionContainer = document.getElementById('detailActionContainer');
+        if (currentUserId) {
+            if (item.giverId === currentUserId) {
+                actionContainer.innerHTML = `<button onclick="openManageChat(\${item.itemId}, '\${item.title}'); document.getElementById('itemDetailModal').classList.add('hidden');" class="w-full bg-slate-100 text-slate-700 font-bold py-2 px-4 rounded-lg hover:bg-slate-200 border border-slate-300">Quản lý tin đăng</button>`;
+            } else {
+                actionContainer.innerHTML = `<button onclick="requestItem(\${item.itemId}, \${item.giverId}, '\${item.giverName}', '\${item.title}'); document.getElementById('itemDetailModal').classList.add('hidden');" class="w-full bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-emerald-700 shadow-lg">Xin món này 🎁</button>`;
+            }
+        } else {
+            actionContainer.innerHTML = `<a href="${pageContext.request.contextPath}/login" class="block w-full text-center bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-emerald-700">Đăng nhập để xin</a>`;
+        }
+
+        // Related Items Logic (Client-side filtering)
+        const relatedContainer = document.getElementById('relatedItems');
+        const relatedSection = document.getElementById('relatedSection');
+        relatedContainer.innerHTML = '';
+
+        // Lọc các item cùng category, khác ID hiện tại
+        const related = Object.values(itemDataCache).filter(i => i.categoryId == item.categoryId && i.itemId !== item.itemId);
+
+        if (related.length > 0) {
+            // Shuffle và lấy tối đa 3 item
+            const shuffled = related.sort(() => 0.5 - Math.random()).slice(0, 3);
+
+            shuffled.forEach(r => {
+                let rImg = r.imageUrl && r.imageUrl.startsWith('http') ? r.imageUrl : (r.imageUrl ? '${pageContext.request.contextPath}/images?path=' + encodeURIComponent(r.imageUrl) : 'https://placehold.co/100x100');
+                relatedContainer.innerHTML += `
+                    <div class="cursor-pointer group" onclick="openItemDetail(\${r.itemId})">
+                        <div class="h-20 bg-gray-100 rounded-lg overflow-hidden mb-1 border border-gray-200">
+                            <img src="\${rImg}" class="w-full h-full object-cover group-hover:scale-110 transition duration-300">
+                        </div>
+                        <div class="text-[10px] font-bold text-slate-700 truncate">\${r.title}</div>
+                        <div class="text-[9px] text-emerald-600">\${r.ecoPoints || 0} Points</div>
+                    </div>
+                `;
+            });
+            relatedSection.classList.remove('hidden');
+        } else {
+            relatedSection.classList.add('hidden');
+        }
+
+        document.getElementById('itemDetailModal').classList.remove('hidden');
+    }
+    // -------------------------------------
 
     async function loadCollectionPoints() {
         try {
