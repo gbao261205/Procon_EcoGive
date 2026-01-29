@@ -325,7 +325,8 @@
 </button>
 
 <!-- SỬA ĐỔI: Giảm z-index xuống z-40 -->
-<div id="aiModal" class="fixed bottom-40 right-6 w-80 h-[450px] bg-white rounded-2xl shadow-2xl border border-slate-200 hidden z-40 flex flex-col overflow-hidden font-sans" >
+<!-- SỬA ĐỔI: Tăng chiều rộng modal lên w-96 (384px) -->
+<div id="aiModal" class="fixed bottom-40 right-6 w-96 h-[500px] bg-white rounded-2xl shadow-2xl border border-slate-200 hidden z-40 flex flex-col overflow-hidden font-sans" >
     <div class="bg-gradient-to-r from-blue-600 to-blue-500 p-4 flex justify-between items-center text-white">
         <div class="flex items-center gap-2">
             <span class="text-2xl">🤖</span>
@@ -357,6 +358,10 @@
             </button>
             <button onclick="quickAction('guide')" class="text-left text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 px-3 rounded-lg border border-blue-100 transition">
                 ❓ Cách tích điểm EcoPoints?
+            </button>
+            <!-- MỚI: Nút hướng dẫn tái chế -->
+            <button onclick="quickAction('recycle')" class="text-left text-xs bg-green-50 hover:bg-green-100 text-green-700 py-2 px-3 rounded-lg border border-green-100 transition">
+                ♻️ Hướng dẫn cách tái chế: ...
             </button>
         </div>
     </div>
@@ -1022,6 +1027,9 @@
         } else if (type === 'guide') {
             input.value = "Làm thế nào để tích điểm EcoPoints?";
             sendAiQuestion();
+        } else if (type === 'recycle') { // MỚI
+            input.value = "Hướng dẫn cách tái chế: ";
+            input.focus();
         }
     }
     // -----------------------------------
@@ -1051,6 +1059,7 @@
                     else if (text.includes("danh mục")) actionType = 'category';
                     else if (text.includes("điểm thu gom")) actionType = 'point';
                     else if (text.includes("tích điểm")) actionType = 'guide';
+                    else if (text.includes("tái chế")) actionType = 'recycle'; // MỚI
 
                     if (actionType) {
                         html += `<button onclick="quickAction('\${actionType}')" class="text-left text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 px-3 rounded-lg border border-blue-100 transition">\${text}</button>`;

@@ -8,20 +8,36 @@ import ecogive.Model.CollectionPointType;
 import ecogive.Model.Item;
 import ecogive.dao.CollectionPointDAO;
 import ecogive.dao.ItemDAO;
+import io.github.cdimascio.dotenv.Dotenv;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import okhttp3.*;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @WebServlet("/api/ai-assistant")
 public class AiAssistantServlet extends HttpServlet {
 
     private final CollectionPointDAO pointDAO = new CollectionPointDAO();
     private final ItemDAO itemDAO = new ItemDAO();
+    private String groqApiKey;
+    private static final String GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
+
+    @Override
+    public void init() throws ServletException {
+        super.init();
+        // Load API key từ file .env khi servlet được khởi tạo
+        Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
+        this.groqApiKey = dotenv.get("GROQ_API_KEY");
+        if (this.groqApiKey == null || this.groqApiKey.isEmpty()) {
+            System.err.println("FATAL ERROR: GROQ_API_KEY not found in .env file!");
+        }
+    }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -31,13 +47,14 @@ public class AiAssistantServlet extends HttpServlet {
         String question = req.getParameter("question");
         JsonObject response = new JsonObject();
         JsonArray suggestions = new JsonArray();
-        JsonArray quickReplies = new JsonArray(); // Mảng chứa các câu hỏi nhanh
+        JsonArray quickReplies = new JsonArray();
 
         // Luôn thêm các câu hỏi nhanh vào response
         quickReplies.add("🔍 Tìm sản phẩm theo tên...");
         quickReplies.add("📂 Tìm sản phẩm theo danh mục...");
         quickReplies.add("📍 Tìm điểm thu gom gần đây");
         quickReplies.add("❓ Cách tích điểm EcoPoints?");
+        quickReplies.add("♻️ Hướng dẫn cách tái chế: ..."); // Thêm nút mới
 
         if (question == null || question.trim().isEmpty()) {
             response.addProperty("answer", "Bạn cần giúp gì về việc phân loại rác hoặc tìm điểm thu gom?");
@@ -102,7 +119,16 @@ public class AiAssistantServlet extends HttpServlet {
                          "3. Tham gia các sự kiện xanh của EcoGive.\n" +
                          "Điểm này có thể dùng để đổi quà hoặc vinh danh trên bảng xếp hạng!";
             }
-            // --- 4. TÌM ĐIỂM THU GOM (LOGIC CŨ) ---
+            // --- 4. HƯỚNG DẪN TÁI CHẾ (GỌI GROQ API) ---
+            else if (lowerQuestion.startsWith("hướng dẫn cách tái chế:")) {
+                String itemToRecycle = question.substring("hướng dẫn cách tái chế:".length()).trim();
+                if (itemToRecycle.isEmpty()) {
+                    answer = "Vui lòng nhập tên vật phẩm bạn muốn tái chế.";
+                } else {
+                    answer = callGroqApi(itemToRecycle);
+                }
+            }
+            // --- 5. TÌM ĐIỂM THU GOM (LOGIC CŨ) ---
             else {
                 if (lowerQuestion.contains("pin") || lowerQuestion.contains("ắc quy")) {
                     answer = "Pin cũ chứa kim loại nặng độc hại, tuyệt đối không bỏ thùng rác thường. Bạn có thể mang đến các điểm thu gom Pin dưới đây:";
@@ -133,7 +159,7 @@ public class AiAssistantServlet extends HttpServlet {
                      typeToSearch = CollectionPointType.BATTERY; 
                 }
                 else {
-                    answer = "Xin lỗi, tôi chưa hiểu rõ yêu cầu. Bạn có thể hỏi về: 'tìm sản phẩm', 'điểm thu gom pin', 'cách tích điểm'...";
+                    answer = "Xin lỗi, tôi chưa hiểu rõ yêu cầu. Bạn có thể hỏi về: 'tìm sản phẩm', 'điểm thu gom pin', 'cách tích điểm', hoặc 'hướng dẫn cách tái chế: [tên vật phẩm]'...";
                 }
 
                 if (typeToSearch != null) {
@@ -162,5 +188,57 @@ public class AiAssistantServlet extends HttpServlet {
         response.add("quickReplies", quickReplies);
 
         resp.getWriter().write(new Gson().toJson(response));
+    }
+
+    private String callGroqApi(String item) {
+        if (groqApiKey == null || groqApiKey.isEmpty()) {
+            return "Lỗi cấu hình: Không tìm thấy Groq API Key.";
+        }
+
+        OkHttpClient client = new OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .build();
+
+        JsonObject jsonBody = new JsonObject();
+        jsonBody.addProperty("model", "llama-3.3-70b-versatile");
+        
+        JsonArray messages = new JsonArray();
+        JsonObject systemMsg = new JsonObject();
+        systemMsg.addProperty("role", "system");
+        systemMsg.addProperty("content", "Bạn là một trợ lý AI chuyên về tái chế và bảo vệ môi trường. Hãy hướng dẫn người dùng cách tái chế hoặc xử lý loại rác thải họ hỏi một cách ngắn gọn, súc tích và an toàn. Nếu vật phẩm không thể tái chế, hãy hướng dẫn cách vứt bỏ đúng quy định. Chỉ trả lời bằng tiếng Việt.");
+        messages.add(systemMsg);
+
+        JsonObject userMsg = new JsonObject();
+        userMsg.addProperty("role", "user");
+        userMsg.addProperty("content", "Hướng dẫn tôi cách tái chế hoặc xử lý: " + item);
+        messages.add(userMsg);
+
+        jsonBody.add("messages", messages);
+
+        RequestBody body = RequestBody.create(jsonBody.toString(), MediaType.parse("application/json; charset=utf-8"));
+        Request request = new Request.Builder()
+                .url(GROQ_API_URL)
+                .addHeader("Authorization", "Bearer " + groqApiKey)
+                .addHeader("Content-Type", "application/json")
+                .post(body)
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                return "Xin lỗi, hiện tại tôi không thể kết nối với máy chủ AI. Vui lòng thử lại sau.";
+            }
+            
+            String responseBody = response.body().string();
+            JsonObject jsonResponse = new Gson().fromJson(responseBody, JsonObject.class);
+            return jsonResponse.getAsJsonArray("choices")
+                    .get(0).getAsJsonObject()
+                    .getAsJsonObject("message")
+                    .get("content").getAsString();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return "Đã xảy ra lỗi khi gọi AI: " + e.getMessage();
+        }
     }
 }
