@@ -17,6 +17,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.StringJoiner;
 
 @WebServlet("/admin")
 public class AdminServlet extends HttpServlet {
@@ -280,6 +281,27 @@ public class AdminServlet extends HttpServlet {
         req.setAttribute("pendingItems", dashboardDAO.countPendingItems());
         req.setAttribute("totalEcoPoints", dashboardDAO.sumTotalEcoPoints());
         req.setAttribute("totalStations", dashboardDAO.countCollectionPoints());
+
+        // Prepare category chart data as JSON arrays for the JSP
+        try {
+            java.util.LinkedHashMap<String, Integer> counts = dashboardDAO.getCategoryCounts();
+            StringJoiner labels = new StringJoiner(",", "[", "]");
+            StringJoiner data = new StringJoiner(",", "[", "]");
+            for (java.util.Map.Entry<String, Integer> e : counts.entrySet()) {
+                String name = e.getKey() == null ? "Unknown" : e.getKey();
+                // escape quotes and backslashes for safe embedding
+                String safe = name.replace("\\", "\\\\").replace("\"", "\\\"");
+                labels.add("\"" + safe + "\"");
+                data.add(String.valueOf(e.getValue()));
+            }
+            req.setAttribute("categoryLabelsJson", labels.toString());
+            req.setAttribute("categoryDataJson", data.toString());
+        } catch (Exception ex) {
+            // If anything fails, set empty arrays to avoid JS errors
+            req.setAttribute("categoryLabelsJson", "[]");
+            req.setAttribute("categoryDataJson", "[]");
+        }
+
         req.getRequestDispatcher("/WEB-INF/views/admin/dashboard.jsp").forward(req, resp);
     }
 
