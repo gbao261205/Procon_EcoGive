@@ -1,15 +1,15 @@
 -- 3.1 Users
-INSERT INTO users (username, email, password_hash, role, phone_number, address, eco_points, reputation_score) VALUES
-('admin', 'admin@ecogive.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 'ADMIN', '0900000001', 'HQ EcoGive, TP.HCM', 1000.00, 5.00),
-('greencorp', 'contact@greencorp.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 'COLLECTOR_COMPANY', '0900000002', 'KCN Tân Bình, TP.HCM', 500.00, 4.80),
-('recycle_vn', 'info@recyclevn.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 'COLLECTOR_COMPANY', '0900000003', 'Quận 7, TP.HCM', 300.00, 4.50),
-('nguyenvana', 'vana@gmail.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 'USER', '0912345678', 'Quận 1, TP.HCM', 50.00, 4.20),
-('tranthib', 'thib@gmail.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 'USER', '0912345679', 'Quận 3, TP.HCM', 120.00, 4.90),
-('lethic', 'thic@gmail.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 'USER', '0912345680', 'Quận 5, TP.HCM', 10.00, 3.50),
-('phamvand', 'vand@gmail.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 'USER', '0912345681', 'Quận 10, TP.HCM', 200.00, 5.00),
-('hoangthie', 'thie@gmail.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 'USER', '0912345682', 'Bình Thạnh, TP.HCM', 80.00, 4.00),
-('vothif', 'thif@gmail.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 'USER', '0912345683', 'Gò Vấp, TP.HCM', 0.00, 1.00),
-('dangvang', 'vang@gmail.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 'USER', '0912345684', 'Thủ Đức, TP.HCM', 30.00, 3.80);
+INSERT INTO users (username, email, password_hash, role, phone_number, address, eco_points, reputation_score, is_verified) VALUES
+('admin', 'admin@ecogive.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 'ADMIN', '0900000001', 'HQ EcoGive, TP.HCM', 1000.00, 5.00, 1),
+('greencorp', 'contact@greencorp.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 'COLLECTOR_COMPANY', '0900000002', 'KCN Tân Bình, TP.HCM', 500.00, 4.80, 1),
+('recycle_vn', 'info@recyclevn.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 'COLLECTOR_COMPANY', '0900000003', 'Quận 7, TP.HCM', 300.00, 4.50, 1),
+('nguyenvana', 'vana@gmail.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 'USER', '0912345678', 'Quận 1, TP.HCM', 50.00, 4.20, 1),
+('tranthib', 'thib@gmail.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 'USER', '0912345679', 'Quận 3, TP.HCM', 120.00, 4.90, 1),
+('lethic', 'thic@gmail.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 'USER', '0912345680', 'Quận 5, TP.HCM', 10.00, 3.50, 1),
+('phamvand', 'vand@gmail.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 'USER', '0912345681', 'Quận 10, TP.HCM', 200.00, 5.00, 1),
+('hoangthie', 'thie@gmail.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 'USER', '0912345682', 'Bình Thạnh, TP.HCM', 80.00, 4.00, 1),
+('vothif', 'thif@gmail.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 'USER', '0912345683', 'Gò Vấp, TP.HCM', 0.00, 1.00, 1),
+('dangvang', 'vang@gmail.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 'USER', '0912345684', 'Thủ Đức, TP.HCM', 30.00, 3.80, 1);
 
 -- 3.2 Categories - ĐÃ KHÔI PHỤC
 INSERT INTO categories (name, fixed_points) VALUES
