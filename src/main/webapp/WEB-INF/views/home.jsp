@@ -95,7 +95,7 @@
 <header class="bg-white shadow-sm z-30 px-4 md:px-6 h-16 flex justify-between items-center flex-shrink-0 border-b border-slate-100 relative">
     <!-- Logo Section -->
     <div class="flex items-center gap-2">
-        <span class="material-symbols-outlined text-primary" style="font-size: 28px md:32px;">spa</span>
+        <span class="material-symbols-outlined text-primary" style="font-size: 28px; md:32px;">spa</span>
         <h1 class="text-lg md:text-xl font-bold tracking-tight text-slate-800">EcoGive <span class="text-slate-400 font-normal text-sm ml-1 hidden md:inline">Map</span></h1>
     </div>
 
