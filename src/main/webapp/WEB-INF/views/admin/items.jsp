@@ -11,331 +11,364 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
-        /* Hiệu ứng fade cho modal */
-        .modal-enter { opacity: 0; transform: scale(0.95); }
-        .modal-enter-active { opacity: 1; transform: scale(1); transition: opacity 0.2s, transform 0.2s; }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     </style>
 </head>
-<body class="bg-slate-100 min-h-screen font-sans text-slate-800">
+<body class="bg-slate-50 text-slate-800 antialiased">
 
 <jsp:include page="sidebar.jsp" />
 
-<main class="md:ml-64 p-8">
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold text-slate-800">Quản lý Vật phẩm</h1>
-
-        <!-- Nút Duyệt Tự Động AI -->
-        <form action="${pageContext.request.contextPath}/admin" method="post" class="inline-block">
+<main class="md:ml-64 min-h-screen transition-all duration-300 flex flex-col">
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-10 px-8 py-4 flex justify-between items-center shadow-sm">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Vật phẩm</h1>
+            <p class="text-sm text-slate-500 mt-1">Duyệt và quản lý các bài đăng quyên góp.</p>
+        </div>
+        <form action="${pageContext.request.contextPath}/admin" method="post">
             <input type="hidden" name="action" value="auto-approve">
-            <button type="submit" onclick="return confirm('Hệ thống sẽ tự động duyệt các vật phẩm PENDING bằng AI. Quá trình này có thể mất vài giây. Tiếp tục?')"
-                    class="px-4 py-2 rounded-lg text-sm font-bold text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 shadow-md transition-all flex items-center gap-2">
-                <span>✨</span> Duyệt tự động (AI)
+            <button type="submit" onclick="return confirm('Hệ thống sẽ tự động duyệt các vật phẩm PENDING bằng AI. Tiếp tục?')"
+                    class="group relative inline-flex items-center justify-center px-5 py-2.5 text-sm font-bold text-white transition-all duration-200 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-xl hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 shadow-lg shadow-purple-200">
+                <span class="mr-2">✨</span> Duyệt AI Tự động
             </button>
         </form>
-    </div>
+    </header>
 
-    <!-- Filter Buttons -->
-    <div class="flex flex-wrap gap-2 mb-6">
-        <a href="${pageContext.request.contextPath}/admin?action=items"
-           class="px-4 py-2 rounded-lg text-sm font-medium border shadow-sm transition-all
-           ${empty param.status ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}">
-            Tất cả
-        </a>
-        <a href="${pageContext.request.contextPath}/admin?action=items&status=PENDING"
-           class="px-4 py-2 rounded-lg text-sm font-medium border shadow-sm transition-all
-           ${param.status == 'PENDING' ? 'bg-amber-100 text-amber-800 border-amber-200' : 'bg-white text-slate-600 border-slate-200 hover:text-amber-600 hover:bg-amber-50'}">
-            Chờ duyệt
-        </a>
-        <a href="${pageContext.request.contextPath}/admin?action=items&status=AVAILABLE"
-           class="px-4 py-2 rounded-lg text-sm font-medium border shadow-sm transition-all
-           ${param.status == 'AVAILABLE' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-white text-slate-600 border-slate-200 hover:text-emerald-600 hover:bg-emerald-50'}">
-            Đang hiển thị
-        </a>
-        <a href="${pageContext.request.contextPath}/admin?action=items&status=CONFIRMED"
-           class="px-4 py-2 rounded-lg text-sm font-medium border shadow-sm transition-all
-           ${param.status == 'CONFIRMED' ? 'bg-blue-100 text-blue-800 border-blue-200' : 'bg-white text-slate-600 border-slate-200 hover:text-blue-600 hover:bg-blue-50'}">
-            Đã chốt tặng
-        </a>
-        <a href="${pageContext.request.contextPath}/admin?action=items&status=COMPLETED"
-           class="px-4 py-2 rounded-lg text-sm font-medium border shadow-sm transition-all
-           ${param.status == 'COMPLETED' ? 'bg-purple-100 text-purple-800 border-purple-200' : 'bg-white text-slate-600 border-slate-200 hover:text-purple-600 hover:bg-purple-50'}">
-            Hoàn thành
-        </a>
-        <a href="${pageContext.request.contextPath}/admin?action=items&status=CANCELLED"
-           class="px-4 py-2 rounded-lg text-sm font-medium border shadow-sm transition-all
-           ${param.status == 'CANCELLED' ? 'bg-red-100 text-red-800 border-red-200' : 'bg-white text-slate-600 border-slate-200 hover:text-red-600 hover:bg-red-50'}">
-            Đã hủy
-        </a>
-    </div>
+    <div class="p-8 max-w-7xl mx-auto w-full">
 
-    <!-- Thông báo kết quả AI -->
-    <c:if test="${not empty param.msg}">
-        <div class="mb-6 p-4 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg flex items-center gap-2">
-            <span>ℹ️</span>
-            <span>${fn:replace(param.msg, '_', ' ')}</span>
+        <!-- Status Tabs -->
+        <div class="flex flex-wrap gap-2 mb-8 p-1 bg-slate-200/50 rounded-xl w-fit">
+            <a href="${pageContext.request.contextPath}/admin?action=items"
+               class="px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200
+               ${empty param.status ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'}">
+                Tất cả
+            </a>
+            <a href="${pageContext.request.contextPath}/admin?action=items&status=PENDING"
+               class="px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center gap-2
+               ${param.status == 'PENDING' ? 'bg-white text-amber-600 shadow-sm' : 'text-slate-500 hover:text-amber-600 hover:bg-slate-200/50'}">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span> Chờ duyệt
+            </a>
+            <a href="${pageContext.request.contextPath}/admin?action=items&status=AVAILABLE"
+               class="px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center gap-2
+               ${param.status == 'AVAILABLE' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-emerald-600 hover:bg-slate-200/50'}">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Đang hiển thị
+            </a>
+            <a href="${pageContext.request.contextPath}/admin?action=items&status=CONFIRMED"
+               class="px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center gap-2
+               ${param.status == 'CONFIRMED' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-blue-600 hover:bg-slate-200/50'}">
+                <span class="w-2 h-2 rounded-full bg-blue-500"></span> Đã chốt
+            </a>
+            <a href="${pageContext.request.contextPath}/admin?action=items&status=COMPLETED"
+               class="px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center gap-2
+               ${param.status == 'COMPLETED' ? 'bg-white text-purple-600 shadow-sm' : 'text-slate-500 hover:text-purple-600 hover:bg-slate-200/50'}">
+                <span class="w-2 h-2 rounded-full bg-purple-500"></span> Hoàn thành
+            </a>
+            <a href="${pageContext.request.contextPath}/admin?action=items&status=CANCELLED"
+               class="px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center gap-2
+               ${param.status == 'CANCELLED' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-500 hover:text-red-600 hover:bg-slate-200/50'}">
+                <span class="w-2 h-2 rounded-full bg-red-500"></span> Đã hủy
+            </a>
         </div>
-    </c:if>
 
-    <!-- Table -->
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-6">
-        <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-                <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-bold tracking-wider">
-                <tr>
-                    <th class="px-6 py-4 border-b border-slate-100">Vật phẩm</th>
-                    <th class="px-6 py-4 border-b border-slate-100">Người đăng</th>
-                    <th class="px-6 py-4 border-b border-slate-100">Danh mục</th>
-                    <th class="px-6 py-4 border-b border-slate-100">Trạng thái</th>
-                    <th class="px-6 py-4 border-b border-slate-100 text-right">Hành động</th>
-                </tr>
-                </thead>
-                <tbody class="text-sm divide-y divide-slate-100">
-                <c:forEach var="item" items="${items}">
-                    <!-- Xử lý URL ảnh trước để dùng cho cả hiển thị và data attribute -->
-                    <c:choose>
-                        <c:when test="${fn:startsWith(item.imageUrl, 'http')}">
-                            <c:set var="finalImgUrl" value="${item.imageUrl}" />
-                        </c:when>
-                        <c:otherwise>
-                            <c:url value="/images" var="localImgUrl">
-                                <c:param name="path" value="${item.imageUrl}" />
-                            </c:url>
-                            <c:set var="finalImgUrl" value="${localImgUrl}" />
-                        </c:otherwise>
-                    </c:choose>
+        <!-- AI Message -->
+        <c:if test="${not empty param.msg}">
+            <div class="mb-8 p-4 bg-blue-50 border border-blue-100 text-blue-700 rounded-xl flex items-start gap-3 shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                </svg>
+                <span class="font-medium">${fn:replace(param.msg, '_', ' ')}</span>
+            </div>
+        </c:if>
 
-                    <tr class="hover:bg-slate-50 transition-colors cursor-pointer group"
-                        onclick="openItemModal(this)"
-                        data-id="${item.itemId}"
-                        data-title="${item.title}"
-                        data-desc="${item.description}"
-                        data-image="${finalImgUrl}"
-                        data-giver="${item.giverId}"
-                        data-category="${item.categoryId}"
-                        data-category-name="${categoryMap[item.categoryId]}"
-                        data-status="${item.status}"
-                        data-points="${item.ecoPoints}"
-                        data-date="${item.postDate}"
-                        data-address="${item.address}">
+        <!-- Items Grid/Table -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-bold tracking-wider">
+                    <tr>
+                        <th class="px-6 py-4 border-b border-slate-100">Vật phẩm</th>
+                        <th class="px-6 py-4 border-b border-slate-100">Người đăng</th>
+                        <th class="px-6 py-4 border-b border-slate-100">Danh mục</th>
+                        <th class="px-6 py-4 border-b border-slate-100">Trạng thái</th>
+                        <th class="px-6 py-4 border-b border-slate-100 text-right">Hành động</th>
+                    </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-sm">
+                    <c:forEach var="item" items="${items}">
+                        <c:choose>
+                            <c:when test="${fn:startsWith(item.imageUrl, 'http')}">
+                                <c:set var="finalImgUrl" value="${item.imageUrl}" />
+                            </c:when>
+                            <c:otherwise>
+                                <c:url value="/images" var="localImgUrl">
+                                    <c:param name="path" value="${item.imageUrl}" />
+                                </c:url>
+                                <c:set var="finalImgUrl" value="${localImgUrl}" />
+                            </c:otherwise>
+                        </c:choose>
 
-                        <td class="px-6 py-4">
-                            <div class="flex items-center gap-3">
-                                <div class="h-12 w-12 rounded-lg bg-slate-200 overflow-hidden flex-shrink-0 border border-slate-200">
-                                    <img src="${finalImgUrl}" alt="${item.title}" class="h-full w-full object-cover"
-                                         onerror="this.src='https://placehold.co/100x100?text=No+Image'">
-                                </div>
-                                <div>
-                                    <div class="font-medium text-slate-800 group-hover:text-emerald-600 transition-colors">${item.title}</div>
-                                    <div class="text-xs text-slate-500 truncate w-32" title="${item.description}">
-                                            ${item.description}
+                        <tr class="group hover:bg-slate-50 transition-colors cursor-pointer"
+                            onclick="openItemModal(this)"
+                            data-id="${item.itemId}"
+                            data-title="${item.title}"
+                            data-desc="${item.description}"
+                            data-image="${finalImgUrl}"
+                            data-giver="${item.giverId}"
+                            data-category="${item.categoryId}"
+                            data-status="${item.status}"
+                            data-points="${item.ecoPoints}"
+                            data-date="${item.postDate}"
+                            data-address="${item.address}">
+
+                            <td class="px-6 py-4">
+                                <div class="flex items-start gap-4">
+                                    <div class="h-16 w-16 rounded-xl bg-slate-100 overflow-hidden flex-shrink-0 border border-slate-200 shadow-sm">
+                                        <img src="${finalImgUrl}" alt="${item.title}" class="h-full w-full object-cover transition-transform group-hover:scale-110 duration-500"
+                                             onerror="this.src='https://placehold.co/100x100?text=No+Image'">
+                                    </div>
+                                    <div>
+                                        <div class="font-bold text-slate-800 text-base mb-1 group-hover:text-emerald-600 transition-colors line-clamp-1">${item.title}</div>
+                                        <div class="text-xs text-slate-500 line-clamp-2 max-w-xs leading-relaxed">
+                                                ${item.description}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </td>
+                            </td>
 
-                        <td class="px-6 py-4 text-slate-500 font-mono text-xs">ID: ${item.giverId}</td>
-                        <td class="px-6 py-4 text-slate-500 font-medium text-xs">
-                            ${categoryMap[item.categoryId]}
-                        </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500">ID</span>
+                                    <span class="font-mono text-slate-600 font-medium">#${item.giverId}</span>
+                                </div>
+                            </td>
 
-                        <td class="px-6 py-4">
-                            <c:choose>
-                                <c:when test="${item.status == 'PENDING'}">
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-100">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Chờ duyệt
-                                    </span>
-                                </c:when>
-                                <c:when test="${item.status == 'AVAILABLE'}">
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Đang hiển thị
-                                    </span>
-                                </c:when>
-                                <c:when test="${item.status == 'CONFIRMED'}">
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Đã chốt tặng
-                                    </span>
-                                </c:when>
-                                <c:when test="${item.status == 'COMPLETED'}">
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-100">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span> Hoàn thành
-                                    </span>
-                                </c:when>
-                                <c:when test="${item.status == 'CANCELLED'}">
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-100">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Đã hủy
-                                    </span>
-                                </c:when>
-                                <c:otherwise>
-                                    <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">${item.status}</span>
-                                </c:otherwise>
-                            </c:choose>
-                        </td>
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                                    ${categoryMap[item.categoryId]}
+                                </span>
+                            </td>
 
-                        <td class="px-6 py-4 text-right" onclick="event.stopPropagation()">
-                            <c:choose>
-                                <c:when test="${item.status == 'PENDING'}">
-                                    <a href="${pageContext.request.contextPath}/admin?action=approve-item&id=${item.itemId}"
-                                       class="text-emerald-600 hover:text-emerald-800 font-medium text-xs border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 rounded px-3 py-1 mr-2 transition-colors">
-                                        ✓ Duyệt
-                                    </a>
-                                    <a href="${pageContext.request.contextPath}/admin?action=reject-item&id=${item.itemId}"
-                                       class="text-red-600 hover:text-red-800 font-medium text-xs border border-red-200 bg-red-50 hover:bg-red-100 rounded px-3 py-1 transition-colors"
-                                       onclick="return confirm('Từ chối vật phẩm này?');">
-                                        ✗ Hủy
-                                    </a>
-                                </c:when>
-                                <c:when test="${item.status == 'AVAILABLE'}">
-                                    <a href="${pageContext.request.contextPath}/admin?action=reject-item&id=${item.itemId}"
-                                       class="text-orange-600 hover:text-orange-800 font-medium text-xs border border-orange-200 bg-orange-50 hover:bg-orange-100 rounded px-3 py-1 transition-colors"
-                                       onclick="return confirm('Bạn chắc chắn muốn gỡ bỏ vật phẩm đang hiển thị này?');">
-                                        ✗ Gỡ bỏ
-                                    </a>
-                                </c:when>
-                                <c:otherwise>
-                                    <span class="text-slate-400 text-xs italic">Đã xử lý</span>
-                                </c:otherwise>
-                            </c:choose>
-                        </td>
-                    </tr>
-                </c:forEach>
+                            <td class="px-6 py-4">
+                                <c:choose>
+                                    <c:when test="${item.status == 'PENDING'}">
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-100">
+                                            <span class="relative flex h-2 w-2">
+                                              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                                              <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                                            </span>
+                                            Chờ duyệt
+                                        </span>
+                                    </c:when>
+                                    <c:when test="${item.status == 'AVAILABLE'}">
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Đang hiển thị
+                                        </span>
+                                    </c:when>
+                                    <c:when test="${item.status == 'CONFIRMED'}">
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100">
+                                            <span class="w-2 h-2 rounded-full bg-blue-500"></span> Đã chốt
+                                        </span>
+                                    </c:when>
+                                    <c:when test="${item.status == 'COMPLETED'}">
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-100">
+                                            <span class="w-2 h-2 rounded-full bg-purple-500"></span> Hoàn thành
+                                        </span>
+                                    </c:when>
+                                    <c:when test="${item.status == 'CANCELLED'}">
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-100">
+                                            <span class="w-2 h-2 rounded-full bg-red-500"></span> Đã hủy
+                                        </span>
+                                    </c:when>
+                                </c:choose>
+                            </td>
 
-                <c:if test="${empty items}">
-                    <tr>
-                        <td colspan="5" class="px-6 py-12 text-center text-slate-400 italic">
-                            <div class="flex flex-col items-center">
-                                <span class="text-2xl mb-2">📭</span>
-                                <span>Không có vật phẩm nào trong danh sách này.</span>
-                            </div>
-                        </td>
-                    </tr>
+                            <td class="px-6 py-4 text-right" onclick="event.stopPropagation()">
+                                <c:choose>
+                                    <c:when test="${item.status == 'PENDING'}">
+                                        <div class="flex justify-end gap-2">
+                                            <a href="${pageContext.request.contextPath}/admin?action=approve-item&id=${item.itemId}"
+                                               class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-sm transition-colors">
+                                                Duyệt
+                                            </a>
+                                            <a href="${pageContext.request.contextPath}/admin?action=reject-item&id=${item.itemId}"
+                                               onclick="return confirm('Từ chối vật phẩm này?');"
+                                               class="px-3 py-1.5 bg-white border border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 text-slate-600 text-xs font-bold rounded-lg transition-colors">
+                                                Hủy
+                                            </a>
+                                        </div>
+                                    </c:when>
+                                    <c:when test="${item.status == 'AVAILABLE'}">
+                                        <a href="${pageContext.request.contextPath}/admin?action=reject-item&id=${item.itemId}"
+                                           onclick="return confirm('Gỡ bỏ vật phẩm này?');"
+                                           class="px-3 py-1.5 bg-white border border-slate-200 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 text-slate-600 text-xs font-bold rounded-lg transition-colors">
+                                            Gỡ bỏ
+                                        </a>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <span class="text-slate-300 text-xs font-medium italic">--</span>
+                                    </c:otherwise>
+                                </c:choose>
+                            </td>
+                        </tr>
+                    </c:forEach>
+
+                    <c:if test="${empty items}">
+                        <tr>
+                            <td colspan="5" class="px-6 py-16 text-center">
+                                <div class="flex flex-col items-center justify-center">
+                                    <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                                        <span class="text-3xl opacity-50">📭</span>
+                                    </div>
+                                    <h3 class="text-slate-800 font-bold mb-1">Không tìm thấy vật phẩm</h3>
+                                    <p class="text-slate-500 text-sm">Thử thay đổi bộ lọc trạng thái xem sao.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </c:if>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <c:if test="${totalPages > 1}">
+            <div class="flex justify-center items-center gap-2 mt-8">
+                <c:if test="${currentPage > 1}">
+                    <a href="${pageContext.request.contextPath}/admin?action=items&page=${currentPage - 1}&status=${currentStatus}"
+                       class="w-10 h-10 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-emerald-600 transition-colors">
+                        &laquo;
+                    </a>
                 </c:if>
-                </tbody>
-            </table>
-        </div>
+                <span class="px-4 py-2 rounded-lg bg-slate-100 text-slate-600 text-sm font-bold">
+                    Trang ${currentPage} / ${totalPages}
+                </span>
+                <c:if test="${currentPage < totalPages}">
+                    <a href="${pageContext.request.contextPath}/admin?action=items&page=${currentPage + 1}&status=${currentStatus}"
+                       class="w-10 h-10 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-emerald-600 transition-colors">
+                        &raquo;
+                    </a>
+                </c:if>
+            </div>
+        </c:if>
     </div>
-
-    <!-- Pagination -->
-    <c:if test="${totalPages > 1}">
-        <div class="flex justify-center items-center gap-2 mt-6">
-            <c:if test="${currentPage > 1}">
-                <a href="${pageContext.request.contextPath}/admin?action=items&page=${currentPage - 1}&status=${currentStatus}"
-                   class="px-3 py-1 rounded border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 text-sm">
-                    &laquo; Trước
-                </a>
-            </c:if>
-            <span class="text-sm text-slate-600 font-medium">
-                Trang ${currentPage} / ${totalPages}
-            </span>
-            <c:if test="${currentPage < totalPages}">
-                <a href="${pageContext.request.contextPath}/admin?action=items&page=${currentPage + 1}&status=${currentStatus}"
-                   class="px-3 py-1 rounded border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 text-sm">
-                    Sau &raquo;
-                </a>
-            </c:if>
-        </div>
-    </c:if>
 </main>
 
-<!-- ITEM DETAIL MODAL -->
+<!-- MODAL -->
 <div id="itemDetailModal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <!-- Backdrop -->
-    <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" onclick="closeItemModal()"></div>
+    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeItemModal()"></div>
 
     <div class="fixed inset-0 z-10 overflow-y-auto">
         <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
-            <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl">
+            <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-3xl border border-slate-100">
 
                 <form action="${pageContext.request.contextPath}/admin" method="post">
                     <input type="hidden" name="action" value="update-item-details">
                     <input type="hidden" id="modalItemId" name="id" value="">
 
-                    <!-- Header -->
-                    <div class="bg-slate-50 px-4 py-3 sm:px-6 flex justify-between items-center border-b border-slate-100">
-                        <h3 class="text-lg font-bold leading-6 text-slate-800" id="modal-title">Chi tiết Vật phẩm</h3>
-                        <button type="button" class="text-slate-400 hover:text-slate-600" onclick="closeItemModal()">
-                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <!-- Modal Header -->
+                    <div class="bg-white px-6 py-4 border-b border-slate-100 flex justify-between items-center sticky top-0 z-10">
+                        <h3 class="text-lg font-bold text-slate-800">Chi tiết Vật phẩm</h3>
+                        <button type="button" class="text-slate-400 hover:text-slate-600 bg-slate-50 hover:bg-slate-100 p-2 rounded-full transition-colors" onclick="closeItemModal()">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                             </svg>
                         </button>
                     </div>
 
-                    <!-- Body -->
-                    <div class="px-4 py-5 sm:p-6">
-                        <div class="flex flex-col md:flex-row gap-6">
-                            <!-- Image Section -->
-                            <div class="w-full md:w-1/2">
-                                <div class="aspect-w-4 aspect-h-3 rounded-xl overflow-hidden bg-slate-100 border border-slate-200">
-                                    <img id="modalImg" src="" alt="Item Image" class="object-contain w-full h-64 bg-slate-50">
+                    <!-- Modal Body -->
+                    <div class="px-6 py-6">
+                        <div class="flex flex-col md:flex-row gap-8">
+                            <!-- Left: Image & Points -->
+                            <div class="w-full md:w-5/12 space-y-4">
+                                <div class="aspect-[4/3] rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shadow-inner relative group">
+                                    <img id="modalImg" src="" alt="Item Image" class="object-cover w-full h-full">
+                                    <div class="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors"></div>
                                 </div>
-                                <div class="mt-4 flex justify-between items-center bg-emerald-50 p-3 rounded-lg border border-emerald-100">
-                                    <span class="text-xs font-bold text-emerald-800 uppercase">Eco Points</span>
-                                    <!-- Input Eco Points -->
-                                    <input type="number" id="modalPoints" name="eco_points" step="0.01" class="text-lg font-bold text-emerald-600 bg-transparent border-b border-emerald-300 focus:outline-none focus:border-emerald-600 w-24 text-right">
+
+                                <div class="bg-emerald-50 rounded-xl p-4 border border-emerald-100 flex items-center justify-between">
+                                    <div>
+                                        <p class="text-[10px] font-bold text-emerald-800 uppercase tracking-wider mb-0.5">Eco Points</p>
+                                        <p class="text-xs text-emerald-600/80">Điểm thưởng dự kiến</p>
+                                    </div>
+                                    <div class="relative">
+                                        <input type="number" id="modalPoints" name="eco_points" step="0.5"
+                                               class="text-2xl font-bold text-emerald-700 bg-transparent border-b-2 border-emerald-200 focus:border-emerald-600 focus:outline-none w-24 text-right transition-colors p-0"
+                                               placeholder="0.0">
+                                    </div>
                                 </div>
                             </div>
 
-                            <!-- Info Section -->
-                            <div class="w-full md:w-1/2 space-y-4">
+                            <!-- Right: Info -->
+                            <div class="w-full md:w-7/12 space-y-6">
                                 <div>
-                                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Tên vật phẩm</label>
-                                    <h2 id="modalItemTitle" class="text-xl font-bold text-slate-800 leading-tight"></h2>
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Tiêu đề</label>
+                                    <h2 id="modalItemTitle" class="text-xl font-bold text-slate-800 leading-snug"></h2>
                                 </div>
 
                                 <div>
-                                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Mô tả chi tiết</label>
-                                    <div id="modalDesc" class="text-sm text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-100 max-h-40 overflow-y-auto"></div>
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Thông tin chi tiết</label>
+                                    <div class="grid grid-cols-2 gap-4 mb-4">
+                                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                            <span class="text-xs text-slate-500 block mb-1">Danh mục</span>
+                                            <select id="modalCategory" name="category_id" class="w-full bg-transparent text-sm font-semibold text-slate-700 focus:outline-none cursor-pointer">
+                                                <c:forEach var="cat" items="${categories}">
+                                                    <option value="${cat.categoryId}">${cat.name}</option>
+                                                </c:forEach>
+                                            </select>
+                                        </div>
+                                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                            <span class="text-xs text-slate-500 block mb-1">Trạng thái</span>
+                                            <div id="modalStatus" class="text-sm font-bold"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 max-h-32 overflow-y-auto custom-scrollbar">
+                                        <p id="modalDesc" class="text-sm text-slate-600 leading-relaxed whitespace-pre-line"></p>
+                                    </div>
                                 </div>
 
-                                <div>
-                                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Địa chỉ</label>
-                                    <div id="modalAddress" class="text-sm text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-100"></div>
-                                </div>
-
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Người đăng (ID)</label>
-                                        <div id="modalGiver" class="text-sm font-medium text-slate-700"></div>
+                                <div class="space-y-3">
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 flex-shrink-0">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs font-bold text-slate-700">Người đăng</p>
+                                            <p id="modalGiver" class="text-sm text-slate-500 font-mono"></p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Danh mục</label>
-                                        <!-- Select Category -->
-                                        <select id="modalCategory" name="category_id" class="text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded px-2 py-1 w-full">
-                                            <c:forEach var="cat" items="${categories}">
-                                                <option value="${cat.categoryId}">${cat.name}</option>
-                                            </c:forEach>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Ngày đăng</label>
-                                        <div id="modalDate" class="text-sm font-medium text-slate-700"></div>
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Trạng thái</label>
-                                        <div id="modalStatus" class="text-sm font-bold"></div>
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 flex-shrink-0">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs font-bold text-slate-700">Địa chỉ</p>
+                                            <p id="modalAddress" class="text-sm text-slate-500"></p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Footer -->
-                    <div class="bg-slate-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 border-t border-slate-100 gap-2">
-                        <!-- Nút Lưu Thay Đổi -->
-                        <button type="submit" id="btnSaveDetails" class="inline-flex w-full justify-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-blue-700 sm:w-auto">
+                    <!-- Modal Footer -->
+                    <div class="bg-slate-50 px-6 py-4 flex flex-row-reverse gap-3 border-t border-slate-100">
+                        <button type="submit" id="btnSaveDetails" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl shadow-lg shadow-blue-200 transition-all active:scale-95">
                             💾 Lưu thay đổi
                         </button>
 
-                        <!-- Action Buttons -->
-                        <div id="modalActions" class="hidden sm:flex-row-reverse gap-2 w-full sm:w-auto">
-                            <a id="btnModalApprove" href="#" class="inline-flex w-full justify-center rounded-lg bg-emerald-600 px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-emerald-700 sm:w-auto">
-                                ✓ Duyệt
+                        <div id="modalActions" class="hidden flex-row-reverse gap-3">
+                            <a id="btnModalApprove" href="#" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-xl shadow-lg shadow-emerald-200 transition-all active:scale-95">
+                                ✓ Duyệt bài
                             </a>
-                            <a id="btnModalReject" href="#" onclick="return confirm('Xác nhận hành động này?');" class="inline-flex w-full justify-center rounded-lg bg-red-600 px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-red-700 sm:w-auto">
-                                ✗ Hủy
+                            <a id="btnModalReject" href="#" onclick="return confirm('Xác nhận hành động này?');" class="px-5 py-2.5 bg-white border border-slate-200 text-red-600 hover:bg-red-50 hover:border-red-200 text-sm font-bold rounded-xl transition-all">
+                                ✗ Từ chối
                             </a>
                         </div>
 
-                        <button type="button" class="mt-3 inline-flex w-full justify-center rounded-lg bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 sm:mt-0 sm:w-auto" onclick="closeItemModal()">Đóng</button>
+                        <button type="button" class="px-5 py-2.5 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-bold rounded-xl transition-all" onclick="closeItemModal()">
+                            Đóng
+                        </button>
                     </div>
                 </form>
             </div>
@@ -345,101 +378,65 @@
 
 <script>
     function openItemModal(row) {
-        // Lấy dữ liệu từ data attributes
-        const id = row.getAttribute('data-id');
-        const title = row.getAttribute('data-title');
-        const desc = row.getAttribute('data-desc');
-        const imgUrl = row.getAttribute('data-image');
-        const giver = row.getAttribute('data-giver');
-        const categoryId = row.getAttribute('data-category'); // ID danh mục
-        const status = row.getAttribute('data-status');
-        const points = row.getAttribute('data-points');
-        const date = row.getAttribute('data-date');
-        const address = row.getAttribute('data-address');
+        const d = row.dataset;
 
-        // Điền dữ liệu vào modal
-        document.getElementById('modalItemId').value = id;
-        document.getElementById('modalItemTitle').innerText = title;
-        document.getElementById('modalDesc').innerText = desc;
-        document.getElementById('modalImg').src = imgUrl;
-        document.getElementById('modalGiver').innerText = giver;
-        document.getElementById('modalDate').innerText = date.replace('T', ' ');
-        document.getElementById('modalAddress').innerText = address ? address : 'Không có địa chỉ';
+        // Fill Data
+        document.getElementById('modalItemId').value = d.id;
+        document.getElementById('modalItemTitle').innerText = d.title;
+        document.getElementById('modalDesc').innerText = d.desc;
+        document.getElementById('modalImg').src = d.image;
+        document.getElementById('modalGiver').innerText = 'ID: ' + d.giver;
+        document.getElementById('modalAddress').innerText = d.address || 'Chưa cập nhật';
+        document.getElementById('modalCategory').value = d.category;
+        document.getElementById('modalPoints').value = d.points;
 
-        // Set giá trị cho Select Category
-        const catSelect = document.getElementById('modalCategory');
-        catSelect.value = categoryId;
-
-        // Set giá trị cho Input Eco Points
-        const pointsInput = document.getElementById('modalPoints');
-        pointsInput.value = points;
-
-        // Style cho status
+        // Status Styling
         const statusEl = document.getElementById('modalStatus');
-        statusEl.innerText = status;
-        statusEl.className = 'text-sm font-bold'; // Reset class
-        if (status === 'PENDING') statusEl.classList.add('text-amber-600');
-        else if (status === 'AVAILABLE') statusEl.classList.add('text-emerald-600');
-        else if (status === 'CONFIRMED') statusEl.classList.add('text-blue-600');
-        else if (status === 'COMPLETED') statusEl.classList.add('text-purple-600');
+        statusEl.innerText = d.status;
+        statusEl.className = 'text-sm font-bold';
+        if (d.status === 'PENDING') statusEl.classList.add('text-amber-600');
+        else if (d.status === 'AVAILABLE') statusEl.classList.add('text-emerald-600');
+        else if (d.status === 'CONFIRMED') statusEl.classList.add('text-blue-600');
+        else if (d.status === 'COMPLETED') statusEl.classList.add('text-purple-600');
         else statusEl.classList.add('text-red-600');
 
-        // --- LOGIC MỚI: Enable/Disable input dựa trên trạng thái ---
-        if (status === 'PENDING' || status === 'AVAILABLE') {
-            // Cho phép sửa cả 2
+        // Logic Input State
+        const pointsInput = document.getElementById('modalPoints');
+        const btnSave = document.getElementById('btnSaveDetails');
+
+        if (d.status === 'PENDING' || d.status === 'AVAILABLE') {
             pointsInput.readOnly = false;
-            pointsInput.classList.remove('text-gray-500', 'cursor-not-allowed');
-            pointsInput.classList.add('text-emerald-600');
-
-            catSelect.disabled = false;
-            catSelect.classList.remove('bg-gray-100', 'cursor-not-allowed');
-            catSelect.classList.add('bg-white');
-
-            document.getElementById('btnSaveDetails').classList.remove('hidden');
+            pointsInput.classList.remove('opacity-50', 'cursor-not-allowed');
+            btnSave.classList.remove('hidden');
         } else {
-            // Chỉ cho phép sửa danh mục, không cho sửa điểm
             pointsInput.readOnly = true;
-            pointsInput.classList.remove('text-emerald-600');
-            pointsInput.classList.add('text-gray-500', 'cursor-not-allowed');
-
-            // Vẫn cho phép sửa danh mục (theo yêu cầu)
-            catSelect.disabled = false;
-            catSelect.classList.remove('bg-gray-100', 'cursor-not-allowed');
-            catSelect.classList.add('bg-white');
-
-            document.getElementById('btnSaveDetails').classList.remove('hidden');
+            pointsInput.classList.add('opacity-50', 'cursor-not-allowed');
+            // Vẫn cho save category nếu muốn, hoặc ẩn luôn nút save
+            // btnSave.classList.add('hidden');
         }
-        // -----------------------------------------------------------
 
-        // Xử lý nút Duyệt/Hủy (Logic cũ)
+        // Action Buttons Logic
         const actionDiv = document.getElementById('modalActions');
         const btnApprove = document.getElementById('btnModalApprove');
         const btnReject = document.getElementById('btnModalReject');
 
         actionDiv.classList.add('hidden');
         actionDiv.classList.remove('flex');
-        btnApprove.classList.remove('hidden');
-        btnReject.innerText = '✗ Hủy';
-        btnReject.classList.remove('bg-orange-600', 'hover:bg-orange-700');
-        btnReject.classList.add('bg-red-600', 'hover:bg-red-700');
 
-        if (status === 'PENDING') {
+        if (d.status === 'PENDING') {
             actionDiv.classList.remove('hidden');
             actionDiv.classList.add('flex');
-            btnApprove.href = '${pageContext.request.contextPath}/admin?action=approve-item&id=' + id;
-            btnReject.href = '${pageContext.request.contextPath}/admin?action=reject-item&id=' + id;
-        }
-        else if (status === 'AVAILABLE') {
+            btnApprove.href = '${pageContext.request.contextPath}/admin?action=approve-item&id=' + d.id;
+            btnReject.href = '${pageContext.request.contextPath}/admin?action=reject-item&id=' + d.id;
+            btnReject.innerText = '✗ Từ chối';
+        } else if (d.status === 'AVAILABLE') {
             actionDiv.classList.remove('hidden');
             actionDiv.classList.add('flex');
             btnApprove.classList.add('hidden');
+            btnReject.href = '${pageContext.request.contextPath}/admin?action=reject-item&id=' + d.id;
             btnReject.innerText = '✗ Gỡ bỏ';
-            btnReject.href = '${pageContext.request.contextPath}/admin?action=reject-item&id=' + id;
-            btnReject.classList.remove('bg-red-600', 'hover:bg-red-700');
-            btnReject.classList.add('bg-orange-600', 'hover:bg-orange-700');
         }
 
-        // Hiển thị modal
         document.getElementById('itemDetailModal').classList.remove('hidden');
     }
 
@@ -447,11 +444,8 @@
         document.getElementById('itemDetailModal').classList.add('hidden');
     }
 
-    document.addEventListener('keydown', function(event) {
-        if (event.key === "Escape") {
-            closeItemModal();
-        }
-    });
+    // Close on Escape
+    document.addEventListener('keydown', (e) => { if(e.key === "Escape") closeItemModal(); });
 </script>
 
 </body>
