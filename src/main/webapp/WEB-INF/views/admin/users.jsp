@@ -27,7 +27,7 @@
             <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Người dùng</h1>
             <p class="text-sm text-slate-500 mt-1">Quản lý tài khoản và phân quyền hệ thống.</p>
         </div>
-        <button onclick="toggleForm()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-semibold shadow-lg shadow-emerald-200 transition-all flex items-center gap-2 active:scale-95">
+        <button onclick="openAddForm()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-semibold shadow-lg shadow-emerald-200 transition-all flex items-center gap-2 active:scale-95">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             Thêm mới
         </button>
@@ -35,14 +35,14 @@
 
     <div class="p-8 max-w-7xl mx-auto w-full space-y-8">
 
-        <!-- Form Section (Hidden by default or Toggle) -->
-        <div id="user-form-container" class="hidden bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden transition-all duration-300">
+        <!-- Form Section (Hidden by default) -->
+        <div id="user-form-container" class="hidden bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden transition-all duration-300 scroll-mt-24">
             <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
                 <h3 id="form-title" class="text-lg font-bold text-slate-800 flex items-center gap-2">
                     <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm">👤</span>
-                    Thông tin người dùng
+                    Thêm người dùng mới
                 </h3>
-                <button onclick="toggleForm()" class="text-slate-400 hover:text-slate-600 transition-colors">
+                <button onclick="closeForm()" class="text-slate-400 hover:text-slate-600 transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </button>
             </div>
@@ -70,6 +70,7 @@
                             <input type="password" id="password" name="password" required
                                    class="w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-2.5 text-sm focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all placeholder:text-slate-400"
                                    placeholder="••••••••">
+                            <p id="pwd-hint" class="text-[10px] text-slate-400 mt-1 hidden">Để trống nếu không muốn đổi mật khẩu.</p>
                         </div>
                     </div>
 
@@ -80,6 +81,7 @@
                                 <select id="role" name="role" class="w-full appearance-none rounded-xl border-slate-200 bg-slate-50 px-4 py-2.5 text-sm focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all cursor-pointer">
                                     <option value="USER">Người dùng (User)</option>
                                     <option value="ADMIN">Quản trị viên (Admin)</option>
+                                    <option value="COLLECTOR_COMPANY">Doanh nghiệp thu gom</option>
                                 </select>
                                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">
                                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -106,7 +108,7 @@
                 </div>
 
                 <div class="flex justify-end gap-3 pt-4 border-t border-slate-100">
-                    <button type="button" onclick="toggleForm()" class="px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-colors">
+                    <button type="button" onclick="closeForm()" class="px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-colors">
                         Hủy bỏ
                     </button>
                     <button id="submit-button" type="submit" class="px-6 py-2.5 rounded-xl text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-200 transition-all active:scale-95">
@@ -145,9 +147,17 @@
                                 </div>
                             </td>
                             <td class="px-6 py-4">
-                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${u.role == 'ADMIN' ? 'bg-purple-50 text-purple-700 border-purple-100' : 'bg-emerald-50 text-emerald-700 border-emerald-100'}">
-                                    ${u.role == 'ADMIN' ? '🛡️ Admin' : '👤 User'}
-                                </span>
+                                <c:choose>
+                                    <c:when test="${u.role == 'ADMIN'}">
+                                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border bg-purple-50 text-purple-700 border-purple-100">🛡️ Admin</span>
+                                    </c:when>
+                                    <c:when test="${u.role == 'COLLECTOR_COMPANY'}">
+                                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border bg-yellow-50 text-yellow-700 border-yellow-100">🏢 Doanh nghiệp</span>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border bg-emerald-50 text-emerald-700 border-emerald-100">👤 User</span>
+                                    </c:otherwise>
+                                </c:choose>
                             </td>
                             <td class="px-6 py-4">
                                 <div class="font-bold text-emerald-600">${u.ecoPoints}</div>
@@ -194,66 +204,81 @@
 </main>
 
 <script>
-    function toggleForm() {
+    // Hàm mở form Thêm mới (Luôn reset về trạng thái sạch)
+    function openAddForm() {
+        resetFormState();
         const formContainer = document.getElementById('user-form-container');
-        formContainer.classList.toggle('hidden');
-        if (!formContainer.classList.contains('hidden')) {
-            // Reset form when opening if it was in edit mode but closed
-            if(document.getElementById('form-action').value === 'add-user') {
-                document.getElementById('user-form').reset();
-            }
-        }
+        formContainer.classList.remove('hidden');
+        formContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
+    // Hàm đóng form
+    function closeForm() {
+        document.getElementById('user-form-container').classList.add('hidden');
+    }
+
+    // Hàm mở form Chỉnh sửa
     function editUser(id, username, email, role, ecoPoints, reputation) {
-        // Show form
+        // 1. Hiển thị form
         const formContainer = document.getElementById('user-form-container');
         formContainer.classList.remove('hidden');
 
-        // Set values
+        // 2. Điền dữ liệu
         document.getElementById('form-action').value = 'update-user';
         document.getElementById('user-id').value = id;
         document.getElementById('username').value = username;
         document.getElementById('email').value = email;
         document.getElementById('role').value = role;
 
-        // Display read-only values
+        // 3. Hiển thị thông tin Read-only
         document.getElementById('displayEco').innerText = ecoPoints;
         document.getElementById('displayRep').innerText = reputation;
 
-        // UI Updates
+        // 4. Cập nhật giao diện (Tiêu đề, Nút, Mật khẩu)
         document.getElementById('form-title').innerHTML = '<span class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-sm">✏️</span> Cập nhật: ' + username;
+
         const btn = document.getElementById('submit-button');
         btn.innerText = 'Lưu thay đổi';
         btn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700', 'shadow-emerald-200');
         btn.classList.add('bg-blue-600', 'hover:bg-blue-700', 'shadow-blue-200');
 
-        // Password optional
-        document.getElementById('password').required = false;
-        document.getElementById('password').placeholder = "Nhập mật khẩu mới (nếu muốn đổi)";
+        // Mật khẩu không bắt buộc khi sửa
+        const pwdInput = document.getElementById('password');
+        pwdInput.required = false;
+        pwdInput.placeholder = "••••••••";
+        pwdInput.value = ""; // Xóa giá trị cũ để tránh gửi đi nếu không sửa
         document.getElementById('pwd-star').classList.add('hidden');
+        document.getElementById('pwd-hint').classList.remove('hidden');
 
-        // Scroll to form
+        // 5. Cuộn tới form
         formContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
-    // Reset form when manually cancelled or toggled closed (optional logic enhancement)
-    document.getElementById('user-form').addEventListener('reset', function() {
-        setTimeout(() => {
-            document.getElementById('form-action').value = 'add-user';
-            document.getElementById('user-id').value = '';
-            document.getElementById('form-title').innerHTML = '<span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm">👤</span> Thông tin người dùng';
-            const btn = document.getElementById('submit-button');
-            btn.innerText = 'Thêm người dùng';
-            btn.classList.add('bg-emerald-600', 'hover:bg-emerald-700', 'shadow-emerald-200');
-            btn.classList.remove('bg-blue-600', 'hover:bg-blue-700', 'shadow-blue-200');
-            document.getElementById('password').required = true;
-            document.getElementById('password').placeholder = "••••••••";
-            document.getElementById('pwd-star').classList.remove('hidden');
-            document.getElementById('displayEco').innerText = '0.00';
-            document.getElementById('displayRep').innerText = '5.00';
-        }, 10);
-    });
+    // Hàm Reset form về trạng thái Thêm mới
+    function resetFormState() {
+        document.getElementById('user-form').reset();
+        document.getElementById('form-action').value = 'add-user';
+        document.getElementById('user-id').value = '';
+
+        // Reset giao diện
+        document.getElementById('form-title').innerHTML = '<span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm">👤</span> Thêm người dùng mới';
+
+        const btn = document.getElementById('submit-button');
+        btn.innerText = 'Thêm người dùng';
+        btn.classList.add('bg-emerald-600', 'hover:bg-emerald-700', 'shadow-emerald-200');
+        btn.classList.remove('bg-blue-600', 'hover:bg-blue-700', 'shadow-blue-200');
+
+        // Mật khẩu bắt buộc khi thêm mới
+        const pwdInput = document.getElementById('password');
+        pwdInput.required = true;
+        pwdInput.placeholder = "••••••••";
+        document.getElementById('pwd-star').classList.remove('hidden');
+        document.getElementById('pwd-hint').classList.add('hidden');
+
+        // Reset hiển thị điểm
+        document.getElementById('displayEco').innerText = '0.00';
+        document.getElementById('displayRep').innerText = '5.00';
+    }
 </script>
 
 </body>
