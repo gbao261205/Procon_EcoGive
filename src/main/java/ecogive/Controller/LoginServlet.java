@@ -78,6 +78,12 @@ public class LoginServlet extends HttpServlet {
                 handleError(request, response, "Tài khoản hoặc mật khẩu không chính xác.", username);
                 return;
             }
+            
+            // Kiểm tra xác thực email
+            if (!user.isVerified()) {
+                handleError(request, response, "Tài khoản chưa được xác thực. Vui lòng kiểm tra email của bạn.", username);
+                return;
+            }
 
             HttpSession session = request.getSession(true);
             session.setAttribute("currentUser", user);

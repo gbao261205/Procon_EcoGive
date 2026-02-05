@@ -25,6 +25,13 @@
             </div>
         </c:if>
 
+        <!-- Thông báo thành công từ reset password -->
+        <c:if test="${not empty message}">
+            <div class="mb-4 px-4 py-3 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm">
+                ${message}
+            </div>
+        </c:if>
+
         <!-- Thông báo lỗi -->
         <c:if test="${not empty error}">
             <div class="mb-4 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
@@ -59,7 +66,7 @@
                     <input type="checkbox" class="rounded border-slate-300 text-emerald-600">
                     Ghi nhớ đăng nhập
                 </label>
-                <a href="#" class="hover:text-emerald-600">Quên mật khẩu?</a>
+                <a href="${pageContext.request.contextPath}/forgot-password" class="hover:text-emerald-600">Quên mật khẩu?</a>
             </div>
 
             <button type="submit"

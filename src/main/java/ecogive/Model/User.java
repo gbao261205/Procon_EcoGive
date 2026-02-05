@@ -12,13 +12,16 @@ public class User {
     private BigDecimal reputationScore;
     private LocalDateTime joinDate;
     private Role role;
-    private String phoneNumber; // Thêm số điện thoại
-    private String address;     // Thêm địa chỉ
+    private String phoneNumber;
+    private String address;
+    private String resetToken;
+    private LocalDateTime resetTokenExpiry;
+    private boolean isVerified;
+    private String verificationToken;
 
     public User() {
     }
 
-    // Constructor cũ vẫn giữ
     public User(long userId, String username, String email, String passwordHash,
                 BigDecimal ecoPoints, BigDecimal reputationScore, LocalDateTime joinDate, Role role) {
         this.userId = userId;
@@ -31,7 +34,6 @@ public class User {
         this.role = role;
     }
     
-    // Thêm constructor mới đầy đủ hơn (tùy chọn)
     public User(long userId, String username, String email, String passwordHash, BigDecimal ecoPoints, BigDecimal reputationScore, LocalDateTime joinDate, Role role, String phoneNumber, String address) {
         this.userId = userId;
         this.username = username;
@@ -124,5 +126,37 @@ public class User {
 
     public void setAddress(String address) {
         this.address = address;
+    }
+
+    public String getResetToken() {
+        return resetToken;
+    }
+
+    public void setResetToken(String resetToken) {
+        this.resetToken = resetToken;
+    }
+
+    public LocalDateTime getResetTokenExpiry() {
+        return resetTokenExpiry;
+    }
+
+    public void setResetTokenExpiry(LocalDateTime resetTokenExpiry) {
+        this.resetTokenExpiry = resetTokenExpiry;
+    }
+
+    public boolean isVerified() {
+        return isVerified;
+    }
+
+    public void setVerified(boolean verified) {
+        isVerified = verified;
+    }
+
+    public String getVerificationToken() {
+        return verificationToken;
+    }
+
+    public void setVerificationToken(String verificationToken) {
+        this.verificationToken = verificationToken;
     }
 }

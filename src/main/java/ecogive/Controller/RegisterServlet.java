@@ -3,6 +3,7 @@ package ecogive.Controller;
 import ecogive.Model.Role;
 import ecogive.Model.User;
 import ecogive.dao.UserDAO;
+import ecogive.util.EmailUtility;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -14,6 +15,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @WebServlet("/register")
 public class RegisterServlet extends HttpServlet {
@@ -55,7 +57,14 @@ public class RegisterServlet extends HttpServlet {
                 return;
             }
             
+            if (userDAO.findByEmail(email) != null) {
+                request.setAttribute("error", "Email đã được sử dụng.");
+                request.getRequestDispatcher("/WEB-INF/views/register.jsp").forward(request, response);
+                return;
+            }
+            
             String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt());
+            String verificationToken = UUID.randomUUID().toString();
 
             User newUser = new User();
             newUser.setUsername(username);
@@ -65,10 +74,29 @@ public class RegisterServlet extends HttpServlet {
             newUser.setEcoPoints(BigDecimal.ZERO);
             newUser.setReputationScore(BigDecimal.valueOf(1.00));
             newUser.setJoinDate(LocalDateTime.now());
+            newUser.setVerified(false); // Chưa xác thực
+            newUser.setVerificationToken(verificationToken);
 
             userDAO.insert(newUser);
 
-            response.sendRedirect(request.getContextPath() + "/login?success=true");
+            // Gửi email xác thực
+            String verifyLink = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort()
+                    + request.getContextPath() + "/verify?token=" + verificationToken;
+            
+            String subject = "Xác thực tài khoản EcoGive";
+            String content = "<p>Xin chào " + username + ",</p>"
+                    + "<p>Cảm ơn bạn đã đăng ký tài khoản EcoGive. Vui lòng nhấp vào liên kết bên dưới để kích hoạt tài khoản của bạn:</p>"
+                    + "<p><a href=\"" + verifyLink + "\">Xác thực tài khoản</a></p>";
+
+            try {
+                EmailUtility.sendEmail(email, subject, content);
+                request.setAttribute("message", "Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.");
+                request.getRequestDispatcher("/WEB-INF/views/login.jsp").forward(request, response);
+            } catch (Exception e) {
+                e.printStackTrace();
+                request.setAttribute("error", "Đăng ký thành công nhưng không thể gửi email xác thực. Vui lòng liên hệ admin.");
+                request.getRequestDispatcher("/WEB-INF/views/register.jsp").forward(request, response);
+            }
 
         } catch (SQLException e) {
             e.printStackTrace();

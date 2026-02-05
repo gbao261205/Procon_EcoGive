@@ -23,7 +23,11 @@ CREATE TABLE users (
     join_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     role ENUM('USER', 'ADMIN', 'COLLECTOR_COMPANY') NOT NULL DEFAULT 'USER',
     phone_number VARCHAR(20) NULL,
-    address TEXT NULL
+    address TEXT NULL,
+    reset_token VARCHAR(255) NULL,
+    reset_token_expiry TIMESTAMP NULL,
+    is_verified BOOLEAN DEFAULT FALSE,
+    verification_token VARCHAR(255) NULL
 );
 
 -- Bảng 2: Danh mục (Categories) - ĐÃ KHÔI PHỤC
@@ -113,4 +117,3 @@ CREATE TABLE collection_requests (
     location POINT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
-
