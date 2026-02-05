@@ -4,118 +4,262 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Bản đồ EcoGive</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bản đồ EcoGive - Chia sẻ & Tái chế</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#05976a',
+                        'primary-hover': '#047857',
+                        secondary: '#1e293b',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    animation: {
+                        'scale-in': 'scaleIn 0.2s ease-out forwards',
+                        'slide-up': 'slideUp 0.3s ease-out forwards',
+                    },
+                    keyframes: {
+                        scaleIn: {
+                            '0%': { transform: 'scale(0.9)', opacity: '0' },
+                            '100%': { transform: 'scale(1)', opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(100%)' },
+                            '100%': { transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+
     <style>
-        .leaflet-popup-content-wrapper { border-radius: 12px; overflow: hidden; padding: 0; }
-        .leaflet-popup-content { margin: 0; width: 240px !important; }
-        /* Đã chỉnh sửa theo yêu cầu: object-fit: contain và thêm background */
-        .custom-popup-img { width: 100%; height: 150px; object-fit: contain; background-color: #f1f5f9; }
-        .custom-popup-body { padding: 12px; }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        body { font-family: 'Inter', sans-serif; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-        .gift-popup { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+        /* Leaflet Popup Customization */
+        .leaflet-popup-content-wrapper {
+            border-radius: 16px;
+            overflow: hidden;
+            padding: 0;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .leaflet-popup-content { margin: 0; width: 260px !important; }
+        .custom-popup-img {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            background-color: #f8fafc;
+        }
+        .custom-popup-body { padding: 16px; }
+
+        /* Animations */
+        @keyframes popIn {
+            0% { transform: scale(0.9); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .modal-animate { animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Mobile specific adjustments */
+        @media (max-width: 768px) {
+            .leaflet-control-container .leaflet-top { top: 70px; } /* Tránh header */
+        }
     </style>
 </head>
 
-<body class="h-screen flex flex-col bg-slate-50 relative">
+<body class="h-screen flex flex-col bg-slate-50 relative overflow-hidden">
 
-<header class="bg-white shadow-sm z-20 px-6 py-3 flex justify-between items-center h-16 flex-shrink-0">
+<!-- HEADER -->
+<header class="bg-white shadow-sm z-30 px-4 md:px-6 h-16 flex justify-between items-center flex-shrink-0 border-b border-slate-100 relative">
+    <!-- Logo Section -->
     <div class="flex items-center gap-2">
-        <h1 class="text-2xl font-bold text-emerald-600 tracking-tight">EcoGive <span class="text-slate-400 font-normal text-sm">Map</span></h1>
+        <span class="material-symbols-outlined text-primary" style="font-size: 28px md:32px;">spa</span>
+        <h1 class="text-lg md:text-xl font-bold tracking-tight text-slate-800">EcoGive <span class="text-slate-400 font-normal text-sm ml-1 hidden md:inline">Map</span></h1>
     </div>
 
-    <div class="flex items-center gap-3">
-        <div class="flex items-center gap-2 border-r border-slate-200 pr-4 mr-2">
+    <!-- Actions & Profile -->
+    <div class="flex items-center gap-2 md:gap-4">
+        <!-- Action Buttons Group (Desktop) -->
+        <div class="hidden md:flex items-center gap-3 pr-4 border-r border-slate-200">
             <c:if test="${sessionScope.currentUser.role == 'ADMIN'}">
                 <a href="${pageContext.request.contextPath}/admin?action=dashboard"
-                   class="flex items-center gap-2 px-3 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition" title="Trang quản trị">
-                    <span>📊</span>
+                   class="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-slate-600 bg-slate-50 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-all" title="Trang quản trị">
+                    <span class="material-symbols-outlined text-[20px]">analytics</span>
+                    <span>Dashboard</span>
                 </a>
             </c:if>
             <c:if test="${sessionScope.currentUser.role == 'COLLECTOR_COMPANY'}">
                 <a href="${pageContext.request.contextPath}/dashboard/company"
-                   class="flex items-center gap-2 px-3 py-2 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition" title="Trang quản lý Doanh nghiệp">
-                    <span>🏢</span>
+                   class="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-slate-600 bg-slate-50 hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-all" title="Quản lý Doanh nghiệp">
+                    <span class="material-symbols-outlined text-[20px]">domain</span>
+                    <span>Quản lý</span>
                 </a>
             </c:if>
              <c:if test="${sessionScope.currentUser.role == 'ADMIN' || sessionScope.currentUser.role == 'COLLECTOR_COMPANY'}">
                 <button id="btnAddPoint"
-                        class="flex items-center gap-2 px-3 py-2 text-sm font-bold text-white bg-emerald-600 hover:bg-blue-700 rounded-lg shadow-sm transition" title="Thêm điểm tập kết">
-                    <span>📍</span>
+                        class="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg shadow-sm transition-all transform active:scale-95" title="Thêm điểm tập kết">
+                    <span class="material-symbols-outlined text-[20px]">add_location_alt</span>
+                    <span>Thêm điểm</span>
                 </button>
             </c:if>
             <button id="btnPostItem"
-                    class="flex items-center gap-2 px-3 py-2 text-sm font-bold text-white bg-emerald-600 hover:bg-blue-700 rounded-lg shadow-sm transition">
-                Đăng tin
+                    class="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-primary hover:bg-primary-hover rounded-lg shadow-md hover:shadow-lg transition-all transform active:scale-95">
+                <span class="material-symbols-outlined text-[20px]">volunteer_activism</span>
+                <span>Đăng tin</span>
             </button>
         </div>
 
+        <!-- Mobile Post Button -->
+        <button id="btnPostItemMobile" class="md:hidden w-9 h-9 flex items-center justify-center bg-primary text-white rounded-full shadow-md active:scale-95">
+            <span class="material-symbols-outlined text-[20px]">add</span>
+        </button>
+
+        <!-- User Profile -->
         <c:if test="${sessionScope.currentUser != null}">
-            <a href="${pageContext.request.contextPath}/profile"
-               class="text-right hidden md:block group hover:bg-slate-50 px-3 py-1 rounded-lg transition cursor-pointer"
-               title="Xem hồ sơ cá nhân">
-                <div class="text-sm font-bold text-slate-700 group-hover:text-blue-600 transition">
+            <a href="${pageContext.request.contextPath}/profile" class="flex items-center gap-3 group cursor-pointer">
+                <div class="text-right hidden md:block">
+                    <div class="text-sm font-bold text-slate-700 group-hover:text-primary transition">
                         ${sessionScope.currentUser.username}
-                </div>
-                <div class="text-xs text-emerald-600 font-medium">
+                    </div>
+                    <div class="text-xs text-primary font-medium flex items-center justify-end gap-1">
+                        <span class="material-symbols-outlined text-[14px]">eco</span>
                         ${sessionScope.currentUser.ecoPoints} EcoPoints
+                    </div>
                 </div>
+                <img src="https://api.dicebear.com/9.x/notionists-neutral/svg?seed=${sessionScope.currentUser.username}"
+                     alt="Avatar"
+                     class="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-slate-100 bg-slate-50 shadow-sm group-hover:border-primary transition-colors">
             </a>
-            <a href="${pageContext.request.contextPath}/logout" class="text-sm font-medium text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-2 rounded-lg transition">Thoát</a>
+            <a href="${pageContext.request.contextPath}/logout"
+               class="md:flex hidden items-center justify-center w-9 h-9 rounded-full text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all" title="Đăng xuất">
+                <span class="material-symbols-outlined text-[20px]">logout</span>
+            </a>
         </c:if>
 
         <c:if test="${sessionScope.currentUser == null}">
-            <a href="${pageContext.request.contextPath}/login" class="px-4 py-2 text-sm font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition">Đăng nhập</a>
+            <a href="${pageContext.request.contextPath}/login" class="px-3 py-1.5 md:px-5 md:py-2 text-xs md:text-sm font-bold text-primary bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors">Đăng nhập</a>
         </c:if>
     </div>
 </header>
 
-<!-- Filter Bar -->
-<div class="bg-white border-b border-slate-200 px-6 py-2 flex flex-wrap items-center gap-4 z-10 shadow-sm text-sm">
-    <div class="flex items-center gap-2">
-        <span class="font-bold text-slate-600">Lọc tin:</span>
-        <select id="filterCategory" class="border border-slate-300 rounded px-2 py-1 text-slate-700 focus:outline-none focus:border-emerald-500" onchange="reloadMapData()">
-            <option value="">-- Tất cả danh mục --</option>
-        </select>
-    </div>
-    <div class="h-4 w-px bg-slate-300 mx-2 hidden md:block"></div>
-    <div class="flex items-center gap-4">
-        <label class="flex items-center gap-2 cursor-pointer select-none">
-            <input type="checkbox" id="filterPublicPoint" class="accent-emerald-600 w-4 h-4" checked onchange="reloadMapData()">
-            <span class="text-slate-700">♻️ Điểm công cộng</span>
-        </label>
-        <label class="flex items-center gap-2 cursor-pointer select-none">
-            <input type="checkbox" id="filterCompanyPoint" class="accent-yellow-500 w-4 h-4" checked onchange="reloadMapData()">
-            <span class="text-slate-700">🏢 Điểm doanh nghiệp</span>
-        </label>
+<!-- MAP CONTAINER -->
+<div class="flex-1 relative w-full h-full">
+    <div id="map" class="absolute inset-0 z-0 bg-slate-100"></div>
+
+    <!-- FILTER BUTTON (Floating - Right Side, Low Z-Index) -->
+    <button onclick="toggleFilterPanel()"
+            class="absolute top-4 right-4 md:top-6 md:right-6 z-20 w-10 h-10 md:w-12 md:h-12 bg-white text-slate-700 rounded-full shadow-lg hover:text-primary hover:scale-110 transition-all duration-300 flex items-center justify-center border border-slate-100 group"
+            title="Bộ lọc bản đồ">
+        <span class="material-symbols-outlined group-hover:rotate-180 transition-transform duration-500 text-xl md:text-2xl">filter_alt</span>
+    </button>
+
+    <!-- FILTER PANEL (Right Aligned) -->
+    <div id="filterPanel" class="absolute top-16 right-4 md:top-20 md:right-6 z-20 w-64 md:w-72 bg-white rounded-2xl shadow-2xl p-4 md:p-5 hidden border border-slate-100 origin-top-right animate-scale-in">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-50">
+            <h3 class="font-bold text-slate-800 flex items-center gap-2 text-sm md:text-base">
+                <span class="material-symbols-outlined text-primary text-lg">tune</span>
+                Bộ lọc hiển thị
+            </h3>
+            <button onclick="toggleFilterPanel()" class="text-slate-400 hover:text-slate-600 transition">
+                <span class="material-symbols-outlined text-lg">close</span>
+            </button>
+        </div>
+
+        <!-- Content -->
+        <div class="space-y-4">
+            <!-- Category Select -->
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Danh mục</label>
+                <div class="relative">
+                    <select id="filterCategory" class="w-full pl-3 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:ring-2 focus:ring-primary focus:border-transparent outline-none appearance-none cursor-pointer transition" onchange="reloadMapData()">
+                        <option value="">Tất cả danh mục</option>
+                    </select>
+                    <span class="absolute right-3 top-2.5 pointer-events-none text-slate-500">
+                        <span class="material-symbols-outlined text-lg">expand_more</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Checkboxes -->
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Loại điểm</label>
+                <div class="space-y-2">
+                    <label class="flex items-center gap-3 cursor-pointer group p-2 hover:bg-slate-50 rounded-lg transition -mx-2">
+                        <div class="relative flex items-center">
+                            <input type="checkbox" id="filterPublicPoint" class="peer sr-only" checked onchange="reloadMapData()">
+                            <div class="w-5 h-5 border-2 border-slate-300 rounded peer-checked:bg-primary peer-checked:border-primary transition-all"></div>
+                            <span class="material-symbols-outlined text-white text-[14px] absolute top-0.5 left-0.5 opacity-0 peer-checked:opacity-100">check</span>
+                        </div>
+                        <span class="text-sm text-slate-700 font-medium group-hover:text-primary transition-colors">♻️ Điểm công cộng</span>
+                    </label>
+
+                    <label class="flex items-center gap-3 cursor-pointer group p-2 hover:bg-slate-50 rounded-lg transition -mx-2">
+                        <div class="relative flex items-center">
+                            <input type="checkbox" id="filterCompanyPoint" class="peer sr-only" checked onchange="reloadMapData()">
+                            <div class="w-5 h-5 border-2 border-slate-300 rounded peer-checked:bg-yellow-500 peer-checked:border-yellow-500 transition-all"></div>
+                            <span class="material-symbols-outlined text-white text-[14px] absolute top-0.5 left-0.5 opacity-0 peer-checked:opacity-100">check</span>
+                        </div>
+                        <span class="text-sm text-slate-700 font-medium group-hover:text-yellow-600 transition-colors">🏢 Điểm doanh nghiệp</span>
+                    </label>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
-<div id="map" class="flex-1 z-0 w-full h-full"></div>
+<!-- MODALS -->
 
-<div id="congratsModal" class="fixed inset-0 hidden bg-black bg-opacity-70 flex items-center justify-center p-4 z-[60]">
-    <div class="bg-white p-8 rounded-2xl w-full max-w-sm shadow-2xl text-center gift-popup relative">
-        <button onclick="document.getElementById('congratsModal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">✕</button>
-        <div class="text-6xl mb-4">🎉</div>
-        <h2 class="text-2xl font-bold text-emerald-600 mb-2">Chúc mừng bạn!</h2>
-        <p class="text-gray-700 mb-2" id="congratsText">Bạn vừa được xác nhận tặng quà.</p>
-        <div class="text-xs text-gray-500 bg-gray-100 p-2 rounded">Trạng thái: <b>CONFIRMED</b>. Hãy liên hệ nhận đồ nhé!</div>
-        <button onclick="document.getElementById('congratsModal').classList.add('hidden')" class="mt-4 w-full bg-emerald-600 text-white font-bold py-2 rounded-lg hover:bg-emerald-700">Tuyệt vời</button>
+<!-- 1. Congrats Modal -->
+<div id="congratsModal" class="fixed inset-0 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
+    <div class="bg-white p-8 rounded-2xl w-full max-w-sm shadow-2xl text-center modal-animate relative">
+        <button onclick="document.getElementById('congratsModal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition">
+            <span class="material-symbols-outlined">close</span>
+        </button>
+        <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span class="text-5xl">🎉</span>
+        </div>
+        <h2 class="text-2xl font-bold text-primary mb-2">Chúc mừng bạn!</h2>
+        <p class="text-slate-600 mb-4" id="congratsText">Bạn vừa được xác nhận tặng quà.</p>
+        <div class="inline-flex items-center gap-2 px-3 py-1 bg-green-50 text-green-700 rounded-full text-xs font-bold border border-green-100 mb-6">
+            <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+            CONFIRMED
+        </div>
+        <button onclick="document.getElementById('congratsModal').classList.add('hidden')" class="w-full bg-primary text-white font-bold py-3 rounded-xl hover:bg-primary-hover transition shadow-lg shadow-emerald-100">Tuyệt vời</button>
     </div>
 </div>
 
-<div id="ratingModal" class="fixed inset-0 hidden bg-black bg-opacity-70 flex items-center justify-center p-4 z-[70]">
-    <div class="bg-white p-6 rounded-xl w-full max-w-sm shadow-2xl relative">
-        <h2 class="text-xl font-bold text-slate-800 text-center mb-4">Đánh giá người tặng</h2>
-        <p class="text-xs text-gray-500 text-center mb-4">Xác nhận bạn đã nhận được món đồ và đánh giá trải nghiệm.</p>
-        <div class="flex justify-center gap-2 mb-4">
-            <select id="ratingValue" class="p-2 border rounded bg-yellow-50 text-yellow-700 font-bold w-full text-center">
+<!-- 2. Rating Modal -->
+<div id="ratingModal" class="fixed inset-0 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[70]">
+    <div class="bg-white p-6 rounded-2xl w-full max-w-sm shadow-2xl relative modal-animate">
+        <h2 class="text-xl font-bold text-slate-800 text-center mb-2">Đánh giá người tặng</h2>
+        <p class="text-sm text-slate-500 text-center mb-6">Xác nhận bạn đã nhận được món đồ và đánh giá trải nghiệm.</p>
+
+        <div class="mb-4">
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-2">Mức độ hài lòng</label>
+            <select id="ratingValue" class="w-full p-3 border border-slate-200 rounded-xl bg-yellow-50 text-yellow-700 font-bold focus:ring-2 focus:ring-yellow-400 outline-none">
                 <option value="5">⭐⭐⭐⭐⭐ (Tuyệt vời)</option>
                 <option value="4">⭐⭐⭐⭐ (Tốt)</option>
                 <option value="3">⭐⭐⭐ (Bình thường)</option>
@@ -123,117 +267,181 @@
                 <option value="1">⭐ (Rất tệ)</option>
             </select>
         </div>
-        <textarea id="ratingComment" rows="3" class="w-full p-3 border rounded-lg text-sm mb-4 focus:ring-emerald-500" placeholder="Viết lời cảm ơn hoặc nhận xét..."></textarea>
-        <div class="flex gap-2">
-            <button onclick="document.getElementById('ratingModal').classList.add('hidden')" class="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg font-bold hover:bg-gray-300 transition">Hủy</button>
-            <button onclick="submitRating()" class="flex-1 bg-emerald-600 text-white py-2 rounded-lg font-bold hover:bg-emerald-700 transition shadow-md">Gửi đánh giá</button>
+
+        <div class="mb-6">
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-2">Lời nhắn</label>
+            <textarea id="ratingComment" rows="3" class="w-full p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary outline-none resize-none" placeholder="Viết lời cảm ơn hoặc nhận xét..."></textarea>
+        </div>
+
+        <div class="flex gap-3">
+            <button onclick="document.getElementById('ratingModal').classList.add('hidden')" class="flex-1 bg-slate-100 text-slate-700 py-2.5 rounded-xl font-bold hover:bg-slate-200 transition">Hủy</button>
+            <button onclick="submitRating()" class="flex-1 bg-primary text-white py-2.5 rounded-xl font-bold hover:bg-primary-hover transition shadow-md">Gửi đánh giá</button>
         </div>
     </div>
 </div>
 
-<div id="giveAwayModal" class="fixed inset-0 hidden bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
-    <div class="bg-white p-6 rounded-xl w-full max-w-lg shadow-2xl relative">
-        <button onclick="closeModal('giveAwayModal')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">✕</button>
-        <h2 class="text-2xl font-bold mb-6 text-emerald-700 text-center">Đăng tin Tặng đồ</h2>
-        <div id="step1" class="modal-step">
-            <input type="text" id="itemName" placeholder="Tên vật phẩm" class="w-full p-3 mb-3 border rounded-lg" required />
-            <select id="itemCategory" class="w-full p-3 mb-3 border rounded-lg bg-white" required onchange="updateEcoPoints()">
-                <option value="" disabled selected>-- Chọn danh mục --</option>
-            </select>
-            <div class="relative">
-                <input type="number" id="itemEcoPoints" placeholder="Điểm EcoPoints thưởng" class="w-full p-3 mb-3 border rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed" readonly />
-                <span class="absolute right-4 top-3 text-gray-400 text-sm font-bold">🌱</span>
-            </div>
-            <textarea id="itemDescription" placeholder="Mô tả..." rows="3" class="w-full p-3 mb-4 border rounded-lg" required></textarea>
-            <button onclick="nextStep(2)" class="w-full bg-emerald-600 text-white p-3 rounded-lg font-bold">Tiếp tục</button>
-        </div>
-        <div id="step2" class="modal-step hidden">
-            <input type="file" id="itemPhoto" accept="image/*" class="w-full p-3 mb-4 border rounded-lg" required />
-            <button onclick="nextStep(3)" class="w-full bg-emerald-600 text-white p-3 rounded-lg font-bold">Tiếp tục</button>
-        </div>
-        <div id="step3" class="modal-step hidden">
-            <div class="flex gap-2 mb-3 relative">
-                <div class="flex-1 relative">
-                    <input type="text" id="itemAddress" placeholder="Nhập địa chỉ (VD: 123 Lê Lợi...)" class="w-full p-2 border rounded-lg" autocomplete="off" />
-                    <!-- Autocomplete Dropdown: Tăng z-index lên 9999 -->
-                    <ul id="suggestionList" class="absolute left-0 right-0 top-full bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] max-h-60 overflow-y-auto hidden mt-1"></ul>
-                </div>
-                <button onclick="searchAddress()" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-blue-700 h-full">Tìm</button>
-            </div>
-            <div id="miniMap" class="h-64 w-full rounded-lg mb-4 border"></div>
-            <button onclick="submitItem()" class="w-full bg-emerald-600 text-white p-3 rounded-lg font-bold">Đăng tin</button>
-        </div>
-    </div>
-</div>
+<!-- 3. Give Away Modal (Post Item) -->
+<div id="giveAwayModal" class="fixed inset-0 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="bg-white p-6 md:p-8 rounded-2xl w-full max-w-lg shadow-2xl relative modal-animate max-h-[90vh] overflow-y-auto">
+        <button onclick="closeModal('giveAwayModal')" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 transition">
+            <span class="material-symbols-outlined">close</span>
+        </button>
+        <h2 class="text-xl md:text-2xl font-bold mb-6 text-slate-800 flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary">volunteer_activism</span>
+            Đăng tin Tặng đồ
+        </h2>
 
-<div id="addPointModal" class="fixed inset-0 hidden bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
-    <div class="bg-white p-6 rounded-xl w-full max-w-lg shadow-2xl relative">
-        <button onclick="document.getElementById('addPointModal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">✕</button>
-        <h2 class="text-2xl font-bold mb-6 text-green-700 text-center">Thêm Điểm Tập Kết</h2>
-        <div class="space-y-3">
-            <input type="text" id="pointName" placeholder="Tên điểm (VD: Trạm Pin Q1)" class="w-full p-2 border rounded-lg" required />
-            <select id="pointType" class="w-full p-2 border rounded-lg bg-white">
-                <option value="BATTERY">🔋 Thu gom Pin</option>
-                <option value="E_WASTE">💻 Rác thải điện tử</option>
-                <option value="TEXTILE">👕 Quần áo cũ</option>
-            </select>
-            <input type="text" id="pointAddress" placeholder="Địa chỉ hiển thị..." class="w-full p-2 border rounded-lg" required />
+        <!-- Step 1 -->
+        <div id="step1" class="modal-step space-y-4">
             <div>
-                <label class="block text-xs font-bold text-gray-700 mb-1">Vị trí (Kéo để chỉnh)</label>
-                <div id="pointMiniMap" class="h-48 w-full rounded-lg border z-0"></div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Tên vật phẩm</label>
+                <input type="text" id="itemName" placeholder="VD: Sách giáo khoa cũ..." class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary outline-none transition" required />
             </div>
-            <button onclick="submitCollectionPoint()" class="w-full bg-green-600 text-white p-3 rounded-lg font-bold hover:bg-green-700">Xác nhận Thêm</button>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Danh mục</label>
+                <select id="itemCategory" class="w-full p-3 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-primary outline-none transition" required onchange="updateEcoPoints()">
+                    <option value="" disabled selected>-- Chọn danh mục --</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Điểm thưởng (EcoPoints)</label>
+                <div class="relative">
+                    <input type="number" id="itemEcoPoints" class="w-full p-3 border border-slate-200 rounded-xl bg-slate-50 text-slate-600 font-bold cursor-not-allowed" readonly />
+                    <span class="absolute right-4 top-3.5 text-primary font-bold flex items-center gap-1"><span class="material-symbols-outlined text-sm">eco</span></span>
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Mô tả chi tiết</label>
+                <textarea id="itemDescription" placeholder="Tình trạng, kích thước, lưu ý..." rows="3" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary outline-none transition resize-none" required></textarea>
+            </div>
+            <button onclick="nextStep(2)" class="w-full bg-primary text-white p-3 rounded-xl font-bold hover:bg-primary-hover transition shadow-md mt-2">Tiếp tục</button>
+        </div>
+
+        <!-- Step 2 -->
+        <div id="step2" class="modal-step hidden space-y-4">
+            <div class="text-center mb-4">
+                <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <span class="material-symbols-outlined text-slate-400 text-3xl">add_a_photo</span>
+                </div>
+                <p class="text-sm text-slate-500">Chụp ảnh vật phẩm rõ nét để người nhận dễ hình dung</p>
+            </div>
+            <input type="file" id="itemPhoto" accept="image/*" class="w-full p-3 border border-slate-200 rounded-xl file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-primary hover:file:bg-emerald-100 transition" required />
+            <button onclick="nextStep(3)" class="w-full bg-primary text-white p-3 rounded-xl font-bold hover:bg-primary-hover transition shadow-md mt-4">Tiếp tục</button>
+        </div>
+
+        <!-- Step 3 -->
+        <div id="step3" class="modal-step hidden space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Địa chỉ lấy đồ</label>
+                <div class="flex gap-2 relative">
+                    <div class="flex-1 relative">
+                        <input type="text" id="itemAddress" placeholder="Nhập địa chỉ (VD: 123 Lê Lợi...)" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary outline-none" autocomplete="off" />
+                        <ul id="suggestionList" class="absolute left-0 right-0 top-full bg-white border border-slate-200 rounded-xl shadow-lg z-[9999] max-h-60 overflow-y-auto hidden mt-1"></ul>
+                    </div>
+                    <button onclick="searchAddress()" class="bg-blue-600 text-white px-4 rounded-xl font-bold hover:bg-blue-700 transition">
+                        <span class="material-symbols-outlined">search</span>
+                    </button>
+                </div>
+            </div>
+            <div class="rounded-xl overflow-hidden border border-slate-200">
+                <div id="miniMap" class="h-56 w-full"></div>
+            </div>
+            <button onclick="submitItem()" class="w-full bg-primary text-white p-3 rounded-xl font-bold hover:bg-primary-hover transition shadow-lg mt-2">Đăng tin ngay</button>
         </div>
     </div>
 </div>
 
-<!-- MỚI: Modal Chi tiết sản phẩm -->
-<div id="itemDetailModal" class="fixed inset-0 hidden bg-black bg-opacity-70 flex items-center justify-center p-4 z-[80]">
-    <div class="bg-white rounded-2xl w-full max-w-2xl shadow-2xl relative flex flex-col max-h-[90vh] overflow-hidden">
-        <button onclick="document.getElementById('itemDetailModal').classList.add('hidden')" class="absolute top-4 right-4 z-10 bg-white/80 rounded-full p-1 text-gray-500 hover:text-gray-800 hover:bg-white transition">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+<!-- 4. Add Point Modal -->
+<div id="addPointModal" class="fixed inset-0 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="bg-white p-6 md:p-8 rounded-2xl w-full max-w-lg shadow-2xl relative modal-animate max-h-[90vh] overflow-y-auto">
+        <button onclick="document.getElementById('addPointModal').classList.add('hidden')" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 transition">
+            <span class="material-symbols-outlined">close</span>
+        </button>
+        <h2 class="text-2xl font-bold mb-6 text-primary text-center">Thêm Điểm Tập Kết</h2>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Tên điểm</label>
+                <input type="text" id="pointName" placeholder="VD: Trạm Pin Q1" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary outline-none" required />
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Loại hình</label>
+                <select id="pointType" class="w-full p-3 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-primary outline-none">
+                    <option value="BATTERY">🔋 Thu gom Pin</option>
+                    <option value="E_WASTE">💻 Rác thải điện tử</option>
+                    <option value="TEXTILE">👕 Quần áo cũ</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Địa chỉ</label>
+                <input type="text" id="pointAddress" placeholder="Địa chỉ hiển thị..." class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary outline-none" required />
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Vị trí (Kéo để chỉnh)</label>
+                <div class="rounded-xl overflow-hidden border border-slate-200">
+                    <div id="pointMiniMap" class="h-48 w-full z-0"></div>
+                </div>
+            </div>
+            <button onclick="submitCollectionPoint()" class="w-full bg-primary text-white p-3 rounded-xl font-bold hover:bg-primary-hover transition shadow-md mt-2">Xác nhận Thêm</button>
+        </div>
+    </div>
+</div>
+
+<!-- 5. Item Detail Modal -->
+<div id="itemDetailModal" class="fixed inset-0 hidden bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 z-[80]">
+    <div class="bg-white rounded-2xl w-full max-w-2xl shadow-2xl relative flex flex-col max-h-[90vh] overflow-hidden modal-animate">
+        <button onclick="document.getElementById('itemDetailModal').classList.add('hidden')" class="absolute top-4 right-4 z-10 bg-white/80 backdrop-blur rounded-full p-2 text-slate-500 hover:text-slate-800 hover:bg-white transition shadow-sm">
+            <span class="material-symbols-outlined text-xl">close</span>
         </button>
 
-        <div class="overflow-y-auto flex-1">
+        <div class="overflow-y-auto flex-1 custom-scrollbar">
             <!-- Ảnh sản phẩm -->
-            <div class="w-full h-64 bg-gray-100 relative">
+            <div class="w-full h-64 md:h-72 bg-slate-100 relative">
                 <img id="detailImg" src="" class="w-full h-full object-contain" alt="Item Image">
             </div>
 
-            <div class="p-6">
+            <div class="p-6 md:p-8">
                 <!-- Header: Tên & Ngày -->
-                <div class="flex justify-between items-start mb-2">
-                    <h2 id="detailTitle" class="text-2xl font-bold text-slate-800">Tên sản phẩm</h2>
-                    <span id="detailDate" class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">...</span>
+                <div class="flex flex-col md:flex-row justify-between items-start mb-4 gap-2">
+                    <h2 id="detailTitle" class="text-xl md:text-2xl font-bold text-slate-800 leading-tight">Tên sản phẩm</h2>
+                    <span id="detailDate" class="text-xs font-medium text-slate-500 bg-slate-100 px-3 py-1 rounded-full whitespace-nowrap">...</span>
                 </div>
 
                 <!-- Người đăng & EcoPoints -->
-                <div class="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100">
-                    <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-lg">
+                <div class="flex items-center gap-4 mb-6 pb-6 border-b border-slate-100">
+                    <div class="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-primary font-bold text-xl shadow-inner">
                         <span id="detailAvatar">?</span>
                     </div>
                     <div>
-                        <div class="font-bold text-slate-700 text-sm" id="detailGiver">Người đăng</div>
-                        <div class="text-xs text-emerald-600 font-medium">🌱 <span id="detailGiverPoints">0</span> EcoPoints</div>
+                        <div class="font-bold text-slate-800" id="detailGiver">Người đăng</div>
+                        <div class="text-sm text-primary font-medium flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">eco</span>
+                            <span id="detailGiverPoints">0</span> EcoPoints
+                        </div>
                     </div>
                 </div>
 
                 <!-- Thông tin chi tiết -->
-                <div class="space-y-3 mb-6">
+                <div class="space-y-6 mb-8">
                     <div>
-                        <h4 class="text-xs font-bold text-gray-400 uppercase mb-1">Mô tả</h4>
-                        <p id="detailDesc" class="text-sm text-gray-700 leading-relaxed">...</p>
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Mô tả</h4>
+                        <p id="detailDesc" class="text-slate-600 leading-relaxed">...</p>
                     </div>
                     <div>
-                        <h4 class="text-xs font-bold text-gray-400 uppercase mb-1">Địa chỉ nhận</h4>
-                        <p id="detailAddress" class="text-sm text-gray-700 font-medium">...</p>
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Địa chỉ nhận</h4>
+                        <div class="flex items-start gap-2 text-slate-700 font-medium bg-slate-50 p-3 rounded-lg border border-slate-100">
+                            <span class="material-symbols-outlined text-slate-400">location_on</span>
+                            <span id="detailAddress">...</span>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Gợi ý sản phẩm -->
                 <div id="relatedSection" class="hidden">
-                    <h3 class="font-bold text-slate-700 mb-3 text-sm">✨ Có thể bạn cũng thích (Cùng danh mục)</h3>
-                    <div id="relatedItems" class="grid grid-cols-3 gap-3">
+                    <h3 class="font-bold text-slate-800 mb-4 text-sm flex items-center gap-2">
+                        <span class="material-symbols-outlined text-yellow-500">auto_awesome</span>
+                        Có thể bạn cũng thích
+                    </h3>
+                    <div id="relatedItems" class="grid grid-cols-3 gap-4">
                         <!-- Items will be injected here -->
                     </div>
                 </div>
@@ -241,134 +449,156 @@
         </div>
 
         <!-- Footer Actions -->
-        <div class="p-4 border-t bg-gray-50 flex justify-end gap-3">
-            <button onclick="document.getElementById('itemDetailModal').classList.add('hidden')" class="px-4 py-2 text-sm font-bold text-gray-600 hover:bg-gray-200 rounded-lg transition">Đóng</button>
-            <div id="detailActionContainer" class="flex-1 md:flex-none">
+        <div class="p-5 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
+            <button onclick="document.getElementById('itemDetailModal').classList.add('hidden')" class="px-6 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-200 rounded-xl transition hidden md:block">Đóng</button>
+            <div id="detailActionContainer" class="flex-1 md:flex-none min-w-[160px]">
                 <!-- Action button will be injected here -->
             </div>
         </div>
     </div>
 </div>
 
-<button id="btnOpenInbox" onclick="toggleChatModal(false)" class="fixed bottom-6 right-6 bg-emerald-600 hover:bg-emerald-700 text-white p-4 rounded-full shadow-2xl z-50 transition hover:scale-105 flex items-center justify-center gap-2">
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-    <span class="font-bold">Tin nhắn</span>
-    <span id="msgBadge" class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full hidden"></span>
-</button>
+<!-- Floating Buttons -->
+<div class="fixed bottom-6 right-4 md:right-6 flex flex-col gap-4 z-40">
+    <!-- AI Button -->
+    <button onclick="toggleAiModal()" class="w-12 h-12 md:w-14 md:h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg shadow-blue-200 transition transform hover:scale-110 flex items-center justify-center border-2 border-white group relative">
+        <span class="text-xl md:text-2xl">🤖</span>
+        <span class="absolute right-full mr-3 bg-slate-800 text-white text-xs font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none hidden md:block">Trợ lý AI</span>
+    </button>
 
-<div id="chatModal" class="fixed bottom-24 right-6 w-[95vw] md:w-[800px] h-[500px] bg-white rounded-xl shadow-2xl border border-slate-200 hidden z-50 flex overflow-hidden">
-    <div id="inboxPanel" class="w-full md:w-1/3 bg-slate-50 border-r border-slate-200 flex flex-col md:flex">
-        <div class="p-4 bg-white border-b font-bold text-slate-700 flex justify-between items-center">
-            <span>Hộp thư</span>
-            <button onclick="toggleChatModal(true)" class="text-gray-400 hover:text-gray-600">✕</button>
+    <!-- Chat Button -->
+    <button id="btnOpenInbox" onclick="toggleChatModal(false)" class="w-12 h-12 md:w-14 md:h-14 bg-primary hover:bg-primary-hover text-white rounded-full shadow-lg shadow-emerald-200 transition transform hover:scale-110 flex items-center justify-center border-2 border-white relative group">
+        <span class="material-symbols-outlined text-xl md:text-2xl">chat</span>
+        <span id="msgBadge" class="absolute top-0 right-0 w-4 h-4 bg-red-500 border-2 border-white rounded-full hidden"></span>
+        <span class="absolute right-full mr-3 bg-slate-800 text-white text-xs font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none hidden md:block">Tin nhắn</span>
+    </button>
+</div>
+
+<!-- CHAT MODAL (RESPONSIVE) -->
+<div id="chatModal" class="fixed inset-0 md:inset-auto md:bottom-24 md:right-6 md:w-[850px] md:h-[550px] bg-white md:rounded-2xl shadow-2xl border-0 md:border border-slate-200 hidden z-50 flex overflow-hidden modal-animate flex-col md:flex-row">
+
+    <!-- Inbox List -->
+    <div id="inboxPanel" class="w-full md:w-1/3 bg-slate-50 border-r border-slate-200 flex flex-col h-full">
+        <div class="p-4 bg-white border-b border-slate-100 font-bold text-slate-700 flex justify-between items-center h-16 shrink-0">
+            <span class="flex items-center gap-2"><span class="material-symbols-outlined">inbox</span> Hộp thư</span>
+            <button onclick="toggleChatModal(true)" class="text-slate-400 hover:text-slate-600 p-2">
+                <span class="material-symbols-outlined">close</span>
+            </button>
         </div>
-        <div id="inboxList" class="flex-1 overflow-y-auto p-2 space-y-1"></div>
+        <div id="inboxList" class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar"></div>
     </div>
-    <div id="chatDetailPanel" class="w-full md:w-2/3 flex flex-col bg-white hidden md:flex">
-        <div class="p-3 border-b flex justify-between items-center bg-white shadow-sm z-10">
-            <div class="flex items-center gap-3">
-                <button onclick="backToInbox()" class="md:hidden text-emerald-600 font-bold mr-2">⬅</button>
-                <div class="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold" id="chatHeaderAvatar">?</div>
-                <div>
-                    <div id="chatTitle" class="font-bold text-slate-700 text-sm">Chọn người chat</div>
-                    <div id="chatItemInfo" class="hidden text-[11px] text-gray-500 flex items-center gap-1 bg-gray-100 px-2 py-0.5 rounded mt-1">
-                        📦 <span id="chatItemName" class="font-bold text-emerald-600 truncate max-w-[120px]">...</span>
+
+    <!-- Chat Detail -->
+    <div id="chatDetailPanel" class="w-full md:w-2/3 flex-col bg-white hidden md:flex relative h-full absolute inset-0 md:static z-10">
+        <!-- Chat Header -->
+        <div class="p-3 border-b border-slate-100 flex justify-between items-center bg-white shadow-sm z-10 h-16 shrink-0">
+            <div class="flex items-center gap-3 overflow-hidden">
+                <button onclick="backToInbox()" class="md:hidden text-slate-500 hover:text-primary p-1 -ml-1">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </button>
+                <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-primary font-bold text-lg shadow-inner shrink-0" id="chatHeaderAvatar">?</div>
+                <div class="min-w-0">
+                    <div id="chatTitle" class="font-bold text-slate-800 text-sm truncate">Chọn người chat</div>
+                    <div id="chatItemInfo" class="hidden text-[11px] text-slate-500 flex items-center gap-1 bg-slate-100 px-2 py-0.5 rounded mt-0.5 truncate">
+                        <span>📦</span> <span id="chatItemName" class="font-bold text-primary truncate max-w-[120px]">...</span>
                     </div>
                 </div>
             </div>
-            <div class="flex items-center gap-2">
-                <!-- Nút cho người cho -->
-                <button id="btnGiverConfirm" onclick="confirmTransaction('giver_confirm')" class="hidden bg-emerald-600 text-white text-xs font-bold px-3 py-1.5 rounded hover:bg-emerald-700 shadow-md animate-pulse">
-                    🎁 Xác nhận đã cho
+            <div class="flex items-center gap-1 md:gap-2 shrink-0">
+                <!-- Action Buttons -->
+                <button id="btnGiverConfirm" onclick="confirmTransaction('giver_confirm')" class="hidden bg-primary text-white text-[10px] md:text-xs font-bold px-2 py-1.5 md:px-3 rounded-lg hover:bg-primary-hover shadow-md animate-pulse flex items-center gap-1">
+                    <span>🎁</span> <span class="hidden md:inline">Xác nhận đã cho</span><span class="md:hidden">Đã cho</span>
                 </button>
-                <!-- Nút cho người nhận -->
-                <button id="btnReceiverConfirm" onclick="confirmTransaction('receiver_confirm')" class="hidden bg-blue-600 text-white text-xs font-bold px-3 py-1.5 rounded hover:bg-blue-700 shadow-md animate-bounce">
-                    ✅ Xác nhận đã nhận
+                <button id="btnReceiverConfirm" onclick="confirmTransaction('receiver_confirm')" class="hidden bg-blue-600 text-white text-[10px] md:text-xs font-bold px-2 py-1.5 md:px-3 rounded-lg hover:bg-blue-700 shadow-md animate-bounce flex items-center gap-1">
+                    <span>✅</span> <span class="hidden md:inline">Xác nhận đã nhận</span><span class="md:hidden">Đã nhận</span>
                 </button>
-
-                <button onclick="toggleChatModal(true)" class="hidden md:block text-slate-400 hover:text-slate-600">✕</button>
+                <button onclick="toggleChatModal(true)" class="hidden md:block text-slate-400 hover:text-slate-600 ml-2">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
             </div>
         </div>
-        <div id="chatMessages" class="flex-1 p-4 overflow-y-auto bg-slate-50 text-sm space-y-3">
-            <div class="text-center text-xs text-gray-400 mt-20">Chọn hội thoại hoặc bấm Nhận trên bản đồ</div>
+
+        <!-- Messages Area -->
+        <div id="chatMessages" class="flex-1 p-4 overflow-y-auto bg-slate-50 text-sm space-y-3 custom-scrollbar pb-20 md:pb-4">
+            <div class="flex flex-col items-center justify-center h-full text-slate-400 gap-2">
+                <span class="material-symbols-outlined text-4xl opacity-50">chat_bubble_outline</span>
+                <p class="text-xs">Chọn hội thoại hoặc bấm Nhận trên bản đồ</p>
+            </div>
         </div>
 
-        <!-- MỚI: Khu vực tin nhắn nhanh -->
-        <div id="quickReplies" class="px-3 py-2 bg-gray-50 flex gap-2 overflow-x-auto border-t border-gray-100 hidden">
-            <!-- Nút cho Giver -->
+        <!-- Quick Replies -->
+        <div id="quickReplies" class="px-4 py-2 bg-white flex gap-2 overflow-x-auto border-t border-slate-100 hidden no-scrollbar shrink-0">
             <button id="qrGiver" onclick="confirmTransaction('giver_confirm')"
-                    class="hidden whitespace-nowrap bg-white border border-emerald-200 text-emerald-700 text-xs px-3 py-1.5 rounded-full hover:bg-emerald-50 transition shadow-sm">
+                    class="hidden whitespace-nowrap bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-medium px-3 py-1.5 rounded-full hover:bg-emerald-100 transition">
                 🎁 Xác nhận đã cho
             </button>
-
-            <!-- Nút cho Receiver -->
             <button id="qrReceiver1" onclick="confirmTransaction('receiver_confirm')"
-                    class="hidden whitespace-nowrap bg-white border border-blue-200 text-blue-700 text-xs px-3 py-1.5 rounded-full hover:bg-blue-50 transition shadow-sm">
+                    class="hidden whitespace-nowrap bg-blue-50 border border-blue-200 text-blue-700 text-xs font-medium px-3 py-1.5 rounded-full hover:bg-blue-100 transition">
                 ✅ Xác nhận đã nhận
             </button>
             <button id="qrReceiver2" onclick="sendQuickReply('Bạn ơi, khi nào mình có thể qua lấy đồ được ạ?')"
-                    class="hidden whitespace-nowrap bg-white border border-gray-200 text-gray-600 text-xs px-3 py-1.5 rounded-full hover:bg-gray-100 transition shadow-sm">
+                    class="hidden whitespace-nowrap bg-slate-50 border border-slate-200 text-slate-600 text-xs font-medium px-3 py-1.5 rounded-full hover:bg-slate-100 transition">
                 🕒 Hẹn lịch nhận
             </button>
         </div>
-        <!-- --------------------------- -->
 
-        <div class="p-3 border-t bg-white flex gap-2">
-            <input type="text" id="chatInput" disabled class="flex-1 border rounded-full px-4 py-2 text-sm bg-gray-50" placeholder="Nhập tin nhắn...">
-            <button onclick="sendMessage()" id="btnSend" disabled class="bg-emerald-600 text-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-emerald-700">➤</button>
+        <!-- Input Area -->
+        <div class="p-3 border-t border-slate-100 bg-white flex gap-2 shrink-0 pb-safe md:pb-3">
+            <input type="text" id="chatInput" disabled class="flex-1 border border-slate-200 rounded-full px-4 py-2.5 text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-primary outline-none transition" placeholder="Nhập tin nhắn...">
+            <button onclick="sendMessage()" id="btnSend" disabled class="bg-primary text-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-primary-hover transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed shrink-0">
+                <span class="material-symbols-outlined text-[20px]">send</span>
+            </button>
         </div>
     </div>
 </div>
 
-<!-- SỬA ĐỔI: Giảm z-index xuống z-40 -->
-<button onclick="toggleAiModal()" class="fixed bottom-24 right-6 bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-2xl z-40 transition transform hover:scale-110 flex items-center justify-center border-4 border-white" > <span class="text-2xl">🤖</span>
-</button>
-
-<!-- SỬA ĐỔI: Giảm z-index xuống z-40 -->
-<!-- SỬA ĐỔI: Tăng chiều rộng modal lên w-96 (384px) -->
-<div id="aiModal" class="fixed bottom-40 right-6 w-96 h-[500px] bg-white rounded-2xl shadow-2xl border border-slate-200 hidden z-40 flex flex-col overflow-hidden font-sans" >
-    <div class="bg-gradient-to-r from-blue-600 to-blue-500 p-4 flex justify-between items-center text-white">
-        <div class="flex items-center gap-2">
-            <span class="text-2xl">🤖</span>
+<!-- AI MODAL (RESPONSIVE) -->
+<div id="aiModal" class="fixed inset-0 md:inset-auto md:bottom-24 md:right-20 md:w-96 md:h-[500px] bg-white md:rounded-2xl shadow-2xl border-0 md:border border-slate-200 hidden z-40 flex flex-col overflow-hidden font-sans modal-animate" >
+    <div class="bg-gradient-to-r from-blue-600 to-blue-500 p-4 flex justify-between items-center text-white shadow-md shrink-0 h-16">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-xl backdrop-blur-sm">🤖</div>
             <div>
                 <h3 class="font-bold text-sm">Trợ lý EcoBot</h3>
                 <p class="text-[10px] opacity-90">Hỏi tôi về cách xử lý rác!</p>
             </div>
         </div>
-        <button onclick="toggleAiModal()" class="text-white hover:text-blue-200 font-bold">✕</button>
+        <button onclick="toggleAiModal()" class="text-white/80 hover:text-white transition p-2">
+            <span class="material-symbols-outlined">close</span>
+        </button>
     </div>
-    <div id="aiChatBody" class="flex-1 p-4 overflow-y-auto bg-slate-50 space-y-3 text-sm">
+    <div id="aiChatBody" class="flex-1 p-4 overflow-y-auto bg-slate-50 space-y-4 text-sm custom-scrollbar pb-20 md:pb-4">
         <div class="flex items-start gap-2">
-            <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs shrink-0">🤖</div>
-            <div class="bg-white border p-3 rounded-2xl rounded-tl-none shadow-sm max-w-[85%] text-slate-700">
+            <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs shrink-0 border border-blue-200">🤖</div>
+            <div class="bg-white border border-slate-200 p-3 rounded-2xl rounded-tl-none shadow-sm max-w-[85%] text-slate-700">
                 Xin chào! Bạn đang có loại rác thải nào cần xử lý? (VD: Pin cũ, thuốc hết hạn, đồ điện tử...)
             </div>
         </div>
 
         <!-- Quick Actions -->
         <div class="grid grid-cols-1 gap-2 mt-2 px-2">
-            <button onclick="quickAction('name')" class="text-left text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 px-3 rounded-lg border border-blue-100 transition">
-                🔍 Tìm sản phẩm theo tên...
+            <button onclick="quickAction('name')" class="text-left text-xs bg-white hover:bg-blue-50 text-blue-600 py-2.5 px-3 rounded-xl border border-blue-100 shadow-sm transition flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">search</span> Tìm sản phẩm theo tên...
             </button>
-            <button onclick="quickAction('category')" class="text-left text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 px-3 rounded-lg border border-blue-100 transition">
-                📂 Tìm sản phẩm theo danh mục...
+            <button onclick="quickAction('category')" class="text-left text-xs bg-white hover:bg-blue-50 text-blue-600 py-2.5 px-3 rounded-xl border border-blue-100 shadow-sm transition flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">category</span> Tìm sản phẩm theo danh mục...
             </button>
-            <button onclick="quickAction('point')" class="text-left text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 px-3 rounded-lg border border-blue-100 transition">
-                📍 Tìm điểm thu gom gần đây
+            <button onclick="quickAction('point')" class="text-left text-xs bg-white hover:bg-blue-50 text-blue-600 py-2.5 px-3 rounded-xl border border-blue-100 shadow-sm transition flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">location_on</span> Tìm điểm thu gom gần đây
             </button>
-            <button onclick="quickAction('guide')" class="text-left text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 px-3 rounded-lg border border-blue-100 transition">
-                ❓ Cách tích điểm EcoPoints?
+            <button onclick="quickAction('guide')" class="text-left text-xs bg-white hover:bg-blue-50 text-blue-600 py-2.5 px-3 rounded-xl border border-blue-100 shadow-sm transition flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">help</span> Cách tích điểm EcoPoints?
             </button>
-            <!-- MỚI: Nút hướng dẫn tái chế -->
-            <button onclick="quickAction('recycle')" class="text-left text-xs bg-green-50 hover:bg-green-100 text-green-700 py-2 px-3 rounded-lg border border-green-100 transition">
-                ♻️ Hướng dẫn cách tái chế: ...
+            <button onclick="quickAction('recycle')" class="text-left text-xs bg-white hover:bg-green-50 text-green-600 py-2.5 px-3 rounded-xl border border-green-100 shadow-sm transition flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">recycling</span> Hướng dẫn cách tái chế
             </button>
         </div>
     </div>
-    <div class="p-3 border-t bg-white">
+    <div class="p-3 border-t border-slate-100 bg-white shrink-0 pb-safe md:pb-3">
         <div class="flex gap-2">
-            <input type="text" id="aiInput" class="flex-1 border rounded-full px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Nhập câu hỏi...">
-            <button onclick="sendAiQuestion()" class="bg-blue-600 text-white w-9 h-9 rounded-full flex items-center justify-center hover:bg-blue-700">➤</button>
+            <input type="text" id="aiInput" class="flex-1 border border-slate-200 rounded-full px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="Nhập câu hỏi...">
+            <button onclick="sendAiQuestion()" class="bg-blue-600 text-white w-9 h-9 rounded-full flex items-center justify-center hover:bg-blue-700 transition shadow-sm shrink-0">
+                <span class="material-symbols-outlined text-[18px]">send</span>
+            </button>
         </div>
     </div>
 </div>
@@ -380,7 +610,7 @@
     const currentUserName = "${sessionScope.currentUser != null ? sessionScope.currentUser.username : ''}";
     const currentUserRole = "${sessionScope.currentUser != null ? sessionScope.currentUser.role : ''}";
     const currentUserId = currentUserIdStr ? Number(currentUserIdStr) : null;
-    const MAPTILER_API_KEY = 'N9qb9p6GF8fszXu3BPWt'; // Thay thế bằng API Key của bạn
+    const MAPTILER_API_KEY = 'N9qb9p6GF8fszXu3BPWt';
 
     let chatSocket = null;
     let currentReceiverId = null;
@@ -392,10 +622,9 @@
     let currentLatLng = { lat: 10.7769, lng: 106.7009 };
     let loadedItemIds = new Set();
 
-    // Lưu trữ các layer để quản lý (xóa/thêm lại)
     let itemLayers = [];
     let pointLayers = [];
-    let itemDataCache = {}; // MỚI: Cache dữ liệu item để dùng cho popup chi tiết
+    let itemDataCache = {};
 
     // --- ICONS ---
     var greenIcon = new L.Icon({
@@ -421,14 +650,12 @@
             connectWebSocket();
             loadInboxList();
         }
-        loadCategoriesForFilter(); // Load danh mục vào dropdown filter
+        loadCategoriesForFilter();
         loadItems();
         loadCollectionPoints();
 
-        // Tải thêm dữ liệu khi di chuyển bản đồ
         map.on('moveend', loadItems);
 
-        // --- MỚI: Lắng nghe sự kiện click để ẩn gợi ý ---
         document.addEventListener('click', function(e) {
             const suggestionList = document.getElementById('suggestionList');
             const itemAddress = document.getElementById('itemAddress');
@@ -436,25 +663,28 @@
                 suggestionList.classList.add('hidden');
             }
         });
-        // ------------------------------------------------
     });
 
     // --- 1. MAP & LOAD DATA ---
     const map = L.map('map').setView([10.7769, 106.7009], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: 'OSM' }).addTo(map);
 
-    // Hàm reload khi thay đổi filter
+    // --- MỚI: Toggle Filter Panel ---
+    function toggleFilterPanel() {
+        const panel = document.getElementById('filterPanel');
+        panel.classList.toggle('hidden');
+    }
+    // --------------------------------
+
     function reloadMapData() {
-        // Xóa các layer cũ
         itemLayers.forEach(layer => map.removeLayer(layer));
         itemLayers = [];
         loadedItemIds.clear();
-        itemDataCache = {}; // Clear cache
+        itemDataCache = {};
 
         pointLayers.forEach(layer => map.removeLayer(layer));
         pointLayers = [];
 
-        // Load lại dữ liệu mới
         loadItems();
         loadCollectionPoints();
     }
@@ -481,46 +711,53 @@
             items.forEach(item => {
                 if (item.location && !loadedItemIds.has(item.itemId)) {
                     loadedItemIds.add(item.itemId);
-                    itemDataCache[item.itemId] = item; // Lưu vào cache
+                    itemDataCache[item.itemId] = item;
 
-                    // --- SỬA ĐỔI: Logic hiển thị ảnh ---
                     let imgUrl;
                     if (item.imageUrl && item.imageUrl.startsWith('http')) {
-                        imgUrl = item.imageUrl; // Dùng trực tiếp nếu là link Cloudinary/Internet
+                        imgUrl = item.imageUrl;
                     } else if (item.imageUrl) {
-                        imgUrl = '${pageContext.request.contextPath}/images?path=' + encodeURIComponent(item.imageUrl); // Logic cũ
+                        imgUrl = '${pageContext.request.contextPath}/images?path=' + encodeURIComponent(item.imageUrl);
                     } else {
-                        imgUrl = 'https://placehold.co/200x150'; // Ảnh mặc định
+                        imgUrl = 'https://placehold.co/200x150';
                     }
-                    // -----------------------------------
 
                     let actionBtn = '';
 
                     if (currentUserId) {
                         if (item.giverId === currentUserId) {
-                            actionBtn = `<button onclick="openManageChat(\${item.itemId}, '\${item.title}')" class="w-full bg-slate-100 text-slate-700 text-xs font-bold py-1.5 rounded hover:bg-slate-200 border border-slate-300">Quản lý & Chốt đơn 📩</button>`;
+                            actionBtn = `<button onclick="openManageChat(\${item.itemId}, '\${item.title}')" class="w-full bg-slate-100 text-slate-700 text-xs font-bold py-2 rounded-lg hover:bg-slate-200 border border-slate-200 transition">Quản lý & Chốt đơn 📩</button>`;
                         } else {
-                            actionBtn = `<button onclick="requestItem(\${item.itemId}, \${item.giverId}, '\${item.giverName || 'Người tặng'}', '\${item.title}')" class="w-full bg-emerald-600 text-white text-xs font-bold py-1.5 rounded hover:bg-emerald-700 shadow-sm">Xin món này 🎁</button>`;
+                            actionBtn = `<button onclick="requestItem(\${item.itemId}, \${item.giverId}, '\${item.giverName || 'Người tặng'}', '\${item.title}')" class="w-full bg-primary text-white text-xs font-bold py-2 rounded-lg hover:bg-primary-hover shadow-md transition">Xin món này 🎁</button>`;
                         }
                     } else {
-                        actionBtn = `<a href="${pageContext.request.contextPath}/login" class="block w-full text-center bg-gray-100 text-gray-700 text-xs font-bold py-1.5 rounded hover:bg-gray-200">Đăng nhập để nhận</a>`;
+                        actionBtn = `<a href="${pageContext.request.contextPath}/login" class="block w-full text-center bg-slate-100 text-slate-700 text-xs font-bold py-2 rounded-lg hover:bg-slate-200 transition">Đăng nhập để nhận</a>`;
                     }
 
-                    // --- MỚI: Thêm nút chỉ đường ---
-                    const directionsBtn = `<a href="https://www.google.com/maps/search/?api=1&query=\${item.location.latitude},\${item.location.longitude}" target="_blank" class="block w-full bg-slate-100 text-slate-600 text-xs font-bold py-1.5 rounded hover:bg-slate-200 border border-slate-300 mt-2 text-center">🗺️ Chỉ đường</a>`;
-                    // -------------------------------
+                    const directionsBtn = `<a href="https://www.google.com/maps/search/?api=1&query=\${item.location.latitude},\${item.location.longitude}" target="_blank" class="block w-full bg-white text-slate-600 text-xs font-bold py-2 rounded-lg hover:bg-slate-50 border border-slate-200 mt-2 text-center transition">🗺️ Chỉ đường</a>`;
 
-                    // --- MỚI: Hiển thị địa chỉ nếu có ---
                     let addressHtml = '';
                     if (item.address) {
-                        addressHtml = `<p class="text-xs text-gray-500 mb-1">📍 \${item.address}</p>`;
+                        addressHtml = `<p class="text-xs text-slate-500 mb-2 flex items-center gap-1"><span class="text-[10px]">📍</span> \${item.address}</p>`;
                     }
-                    // ------------------------------------
 
-                    // --- MỚI: Thêm nút Xem chi tiết ---
-                    const detailBtn = `<button onclick="openItemDetail(\${item.itemId})" class="block w-full bg-white text-emerald-600 text-xs font-bold py-1.5 rounded border border-emerald-600 mb-2 hover:bg-emerald-50">🔍 Xem chi tiết</button>`;
+                    const detailBtn = `<button onclick="openItemDetail(\${item.itemId})" class="block w-full bg-white text-primary text-xs font-bold py-2 rounded-lg border border-primary mb-2 hover:bg-emerald-50 transition">🔍 Xem chi tiết</button>`;
 
-                    const content = `<div><img src="\${imgUrl}" class="custom-popup-img"><div class="custom-popup-body"><h3 class="font-bold text-sm">\${item.title}</h3><p class="text-xs text-gray-500 mb-2">Người tặng: \${item.giverName}</p>\${addressHtml}\${detailBtn}\${actionBtn}\${directionsBtn}</div></div>`;
+                    const content = `
+                        <div>
+                            <div class="relative">
+                                <img src="\${imgUrl}" class="custom-popup-img">
+                                <div class="absolute top-2 right-2 bg-white/90 backdrop-blur px-2 py-1 rounded text-[10px] font-bold text-primary shadow-sm">\${item.ecoPoints || 0} Points</div>
+                            </div>
+                            <div class="custom-popup-body">
+                                <h3 class="font-bold text-sm text-slate-800 mb-1 line-clamp-1">\${item.title}</h3>
+                                <p class="text-xs text-slate-500 mb-2">Người tặng: <span class="font-medium text-slate-700">\${item.giverName}</span></p>
+                                \${addressHtml}
+                                \${detailBtn}
+                                \${actionBtn}
+                                \${directionsBtn}
+                            </div>
+                        </div>`;
                     const marker = L.marker([item.location.latitude, item.location.longitude], {icon: blueIcon}).addTo(map).bindPopup(content);
                     itemLayers.push(marker);
                 }
@@ -528,12 +765,10 @@
         } catch (e) { console.error(e); }
     }
 
-    // --- MỚI: Hàm mở Modal Chi tiết ---
     function openItemDetail(itemId) {
         const item = itemDataCache[itemId];
         if (!item) return;
 
-        // Populate Data
         let imgUrl = item.imageUrl && item.imageUrl.startsWith('http') ? item.imageUrl : (item.imageUrl ? '${pageContext.request.contextPath}/images?path=' + encodeURIComponent(item.imageUrl) : 'https://placehold.co/400x300');
         document.getElementById('detailImg').src = imgUrl;
         document.getElementById('detailTitle').innerText = item.title;
@@ -541,11 +776,10 @@
         document.getElementById('detailAddress').innerText = item.address || "Chưa cập nhật địa chỉ";
         document.getElementById('detailGiver').innerText = item.giverName || "Ẩn danh";
         document.getElementById('detailAvatar').innerText = (item.giverName || "?").charAt(0).toUpperCase();
-        document.getElementById('detailGiverPoints').innerText = item.giverEcoPoints || "0"; // Giả sử API trả về giverEcoPoints
+        document.getElementById('detailGiverPoints').innerText = item.giverEcoPoints || "0";
 
-        // Format Date (dd/mm/yyyy)
         let dateStr = "Vừa xong";
-        if (item.postDate) { // SỬA ĐỔI: Dùng postDate thay vì postedDate
+        if (item.postDate) {
             const d = new Date(item.postDate);
             const day = String(d.getDate()).padStart(2, '0');
             const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -554,39 +788,35 @@
         }
         document.getElementById('detailDate').innerText = "Ngày đăng: " + dateStr;
 
-        // Action Button Logic
         const actionContainer = document.getElementById('detailActionContainer');
         if (currentUserId) {
             if (item.giverId === currentUserId) {
-                actionContainer.innerHTML = `<button onclick="openManageChat(\${item.itemId}, '\${item.title}'); document.getElementById('itemDetailModal').classList.add('hidden');" class="w-full bg-slate-100 text-slate-700 font-bold py-2 px-4 rounded-lg hover:bg-slate-200 border border-slate-300">Quản lý tin đăng</button>`;
+                actionContainer.innerHTML = `<button onclick="openManageChat(\${item.itemId}, '\${item.title}'); document.getElementById('itemDetailModal').classList.add('hidden');" class="w-full bg-slate-100 text-slate-700 font-bold py-3 px-6 rounded-xl hover:bg-slate-200 border border-slate-200 transition">Quản lý tin đăng</button>`;
             } else {
-                actionContainer.innerHTML = `<button onclick="requestItem(\${item.itemId}, \${item.giverId}, '\${item.giverName}', '\${item.title}'); document.getElementById('itemDetailModal').classList.add('hidden');" class="w-full bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-emerald-700 shadow-lg">Xin món này 🎁</button>`;
+                actionContainer.innerHTML = `<button onclick="requestItem(\${item.itemId}, \${item.giverId}, '\${item.giverName}', '\${item.title}'); document.getElementById('itemDetailModal').classList.add('hidden');" class="w-full bg-primary text-white font-bold py-3 px-6 rounded-xl hover:bg-primary-hover shadow-lg shadow-emerald-200 transition">Xin món này 🎁</button>`;
             }
         } else {
-            actionContainer.innerHTML = `<a href="${pageContext.request.contextPath}/login" class="block w-full text-center bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-emerald-700">Đăng nhập để xin</a>`;
+            actionContainer.innerHTML = `<a href="${pageContext.request.contextPath}/login" class="block w-full text-center bg-primary text-white font-bold py-3 px-6 rounded-xl hover:bg-primary-hover transition">Đăng nhập để xin</a>`;
         }
 
-        // Related Items Logic (Client-side filtering)
         const relatedContainer = document.getElementById('relatedItems');
         const relatedSection = document.getElementById('relatedSection');
         relatedContainer.innerHTML = '';
 
-        // Lọc các item cùng category, khác ID hiện tại
         const related = Object.values(itemDataCache).filter(i => i.categoryId == item.categoryId && i.itemId !== item.itemId);
 
         if (related.length > 0) {
-            // Shuffle và lấy tối đa 3 item
             const shuffled = related.sort(() => 0.5 - Math.random()).slice(0, 3);
 
             shuffled.forEach(r => {
                 let rImg = r.imageUrl && r.imageUrl.startsWith('http') ? r.imageUrl : (r.imageUrl ? '${pageContext.request.contextPath}/images?path=' + encodeURIComponent(r.imageUrl) : 'https://placehold.co/100x100');
                 relatedContainer.innerHTML += `
                     <div class="cursor-pointer group" onclick="openItemDetail(\${r.itemId})">
-                        <div class="h-20 bg-gray-100 rounded-lg overflow-hidden mb-1 border border-gray-200">
-                            <img src="\${rImg}" class="w-full h-full object-cover group-hover:scale-110 transition duration-300">
+                        <div class="h-24 bg-slate-100 rounded-xl overflow-hidden mb-2 border border-slate-200 relative">
+                            <img src="\${rImg}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                            <div class="absolute bottom-1 right-1 bg-black/50 text-white text-[9px] px-1.5 py-0.5 rounded backdrop-blur">\${r.ecoPoints || 0} pts</div>
                         </div>
-                        <div class="text-[10px] font-bold text-slate-700 truncate">\${r.title}</div>
-                        <div class="text-[9px] text-emerald-600">\${r.ecoPoints || 0} Points</div>
+                        <div class="text-xs font-bold text-slate-700 truncate group-hover:text-primary transition">\${r.title}</div>
                     </div>
                 `;
             });
@@ -597,20 +827,16 @@
 
         document.getElementById('itemDetailModal').classList.remove('hidden');
     }
-    // -------------------------------------
 
     async function loadCollectionPoints() {
         try {
             const showPublic = document.getElementById('filterPublicPoint').checked;
             const showCompany = document.getElementById('filterCompanyPoint').checked;
 
-            if (!showPublic && !showCompany) return; // Không hiển thị gì cả
+            if (!showPublic && !showCompany) return;
 
             const response = await fetch('${pageContext.request.contextPath}/api/collection-points');
             const points = await response.json();
-
-            // Xóa các layer cũ (nếu chưa xóa ở reloadMapData)
-            // map.eachLayer((layer) => { if (layer.options.icon === greenIcon || layer.options.icon === yellowIcon) map.removeLayer(layer); });
 
             points.forEach(p => {
                 let icon;
@@ -620,24 +846,24 @@
                 if (p.ownerRole === 'COLLECTOR_COMPANY') {
                     if (showCompany) {
                         icon = yellowIcon;
-                        popupHeader = `<div class="bg-yellow-100 text-yellow-800 text-xs font-bold px-2 py-1 rounded mb-2 inline-block">🏢 Điểm thu gom Doanh nghiệp</div>`;
+                        popupHeader = `<div class="bg-yellow-100 text-yellow-800 text-[10px] font-bold px-2 py-1 rounded mb-2 inline-block border border-yellow-200">🏢 Điểm thu gom Doanh nghiệp</div>`;
                         shouldShow = true;
                     }
                 } else {
                     if (showPublic) {
                         icon = greenIcon;
-                        popupHeader = `<div class="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded mb-2 inline-block">♻️ Điểm tập kết công cộng</div>`;
+                        popupHeader = `<div class="bg-green-100 text-green-800 text-[10px] font-bold px-2 py-1 rounded mb-2 inline-block border border-green-200">♻️ Điểm tập kết công cộng</div>`;
                         shouldShow = true;
                     }
                 }
 
                 if (shouldShow) {
                     const content = `
-                        <div class="text-center p-2">
+                        <div class="text-center p-4">
                             \${popupHeader}
                             <h3 class="font-bold text-slate-800 text-sm mb-1">\${p.name}</h3>
-                            <p class="text-xs text-gray-500 mb-2">📍 \${p.address}</p>
-                            <a href="https://www.google.com/maps/search/?api=1&query=\${p.latitude},\${p.longitude}" target="_blank" class="block w-full bg-slate-100 text-slate-600 text-xs font-bold py-1.5 rounded hover:bg-slate-200 border border-slate-300">🗺️ Chỉ đường</a>
+                            <p class="text-xs text-slate-500 mb-3">📍 \${p.address}</p>
+                            <a href="https://www.google.com/maps/search/?api=1&query=\${p.latitude},\${p.longitude}" target="_blank" class="block w-full bg-slate-50 text-slate-600 text-xs font-bold py-2 rounded-lg hover:bg-slate-100 border border-slate-200 transition">🗺️ Chỉ đường</a>
                         </div>`;
                     const marker = L.marker([p.latitude, p.longitude], {icon: icon}).addTo(map).bindPopup(content);
                     pointLayers.push(marker);
@@ -657,7 +883,7 @@
         } catch(e){}
         openChatWindow();
         await loadInboxList();
-        selectUserChat(giverId, giverName, itemId, itemTitle, giverId); // Truyền thêm tham số
+        selectUserChat(giverId, giverName, itemId, itemTitle, giverId);
         setTimeout(() => sendMessageAuto("Chào bạn, mình muốn xin món '" + itemTitle + "'. Nó còn không ạ?"), 500);
     }
 
@@ -668,7 +894,7 @@
         updateHeaderInfo(itemTitle);
         document.getElementById('chatTitle').innerText = 'Chọn người nhận';
         document.getElementById('chatHeaderAvatar').innerText = '?';
-        document.getElementById('chatMessages').innerHTML = '<div class="text-center text-xs text-gray-400 mt-20">⬅️ Chọn một người trong danh sách bên trái<br>để tặng món <b>' + itemTitle + '</b></div>';
+        document.getElementById('chatMessages').innerHTML = '<div class="flex flex-col items-center justify-center h-full text-slate-400 gap-2"><span class="material-symbols-outlined text-4xl opacity-50">arrow_back</span><p class="text-xs text-center">Chọn một người trong danh sách bên trái<br>để tặng món <b>' + itemTitle + '</b></p></div>';
         document.getElementById('chatInput').disabled = true;
         document.getElementById('btnSend').disabled = true;
         document.getElementById('btnGiverConfirm').classList.add('hidden');
@@ -701,69 +927,69 @@
             const users = await res.json();
             const listEl = document.getElementById('inboxList');
             listEl.innerHTML = '';
-            if (users.length === 0) { listEl.innerHTML = '<div class="text-center text-xs text-gray-400 mt-4">Chưa có tin nhắn</div>'; return; }
+            if (users.length === 0) { listEl.innerHTML = '<div class="text-center text-xs text-slate-400 mt-8">Chưa có tin nhắn</div>'; return; }
             users.forEach(u => {
-                const activeClass = (u.userId == currentReceiverId) ? 'bg-emerald-50 border-emerald-500' : 'border-transparent hover:bg-gray-50';
+                const activeClass = (u.userId == currentReceiverId) ? 'bg-emerald-50 border-primary' : 'border-transparent hover:bg-slate-50';
 
-                // SỬA ĐỔI: Lưu thông tin item vào data attributes
                 const itemId = u.itemId || '';
                 const itemName = u.itemName || '';
                 const giverId = u.giverId || '';
 
                 listEl.innerHTML += `
                     <div onclick="selectUserChat(\${u.userId}, '\${u.username}', '\${itemId}', '\${itemName}', '\${giverId}')"
-                         class="cursor-pointer p-3 border-l-4 \${activeClass} transition flex items-center gap-3 border-b border-gray-100">
-                        <div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-600">\${u.username.charAt(0).toUpperCase()}</div>
+                         class="cursor-pointer p-3 border-l-4 \${activeClass} transition flex items-center gap-3 border-b border-slate-100 last:border-0">
+                        <div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-600 overflow-hidden shrink-0">
+                             <img src="https://api.dicebear.com/9.x/notionists-neutral/svg?seed=\${u.username}" class="w-full h-full">
+                        </div>
                         <div class="flex-1 min-w-0">
-                            <div class="font-bold text-sm truncate">\${u.username}</div>
-                            <div class="text-xs text-gray-500 truncate">\${u.lastMsg || '...'}</div>
+                            <div class="flex justify-between items-center mb-0.5">
+                                <div class="font-bold text-sm text-slate-800 truncate">\${u.username}</div>
+                                <div class="text-[10px] text-slate-400">Vừa xong</div>
+                            </div>
+                            <div class="text-xs text-slate-500 truncate">\${u.lastMsg || '...'}</div>
                         </div>
                     </div>`;
             });
         } catch (e) {}
     }
 
-    // SỬA ĐỔI: Nhận thêm tham số itemId, itemName, giverId
     async function selectUserChat(userId, username, itemId, itemName, giverId) {
         currentReceiverId = userId;
         document.getElementById('chatTitle').innerText = username;
-        document.getElementById('chatHeaderAvatar').innerText = username.charAt(0).toUpperCase();
+        document.getElementById('chatHeaderAvatar').innerHTML = `<img src="https://api.dicebear.com/9.x/notionists-neutral/svg?seed=\${username}" class="w-full h-full rounded-full">`;
         const input = document.getElementById('chatInput');
-        input.disabled = false; input.classList.remove('bg-gray-50');
+        input.disabled = false; input.classList.remove('bg-slate-50'); input.classList.add('bg-white');
         document.getElementById('btnSend').disabled = false;
+
+        // Mobile Logic: Hide Inbox, Show Detail
         document.getElementById('inboxPanel').classList.add('hidden');
+        document.getElementById('inboxPanel').classList.remove('flex');
+
         const detailPanel = document.getElementById('chatDetailPanel');
         detailPanel.classList.remove('hidden');
         detailPanel.classList.add('flex');
 
-        // Ẩn các nút xác nhận trước khi load logic
         const btnGiver = document.getElementById('btnGiverConfirm');
         const btnReceiver = document.getElementById('btnReceiverConfirm');
         btnGiver.classList.add('hidden');
         btnReceiver.classList.add('hidden');
 
-        // MỚI: Hiển thị Quick Replies
         document.getElementById('quickReplies').classList.remove('hidden');
 
-        // Reset trạng thái Quick Replies về ẩn hết trước khi loadHistory quyết định
         document.getElementById('qrGiver').classList.add('hidden');
         document.getElementById('qrReceiver1').classList.add('hidden');
         document.getElementById('qrReceiver2').classList.add('hidden');
 
-        // Cập nhật thông tin item nếu có
         if (itemId && itemId !== 'undefined') {
             currentDiscussingItemId = itemId;
             updateHeaderInfo(itemName);
 
-            // Xác định vai trò
             if (giverId && giverId != 'undefined') {
                 isOwnerOfCurrentItem = (Number(giverId) === currentUserId);
             } else {
-                // Fallback nếu không có giverId (ít xảy ra nếu API đúng)
                 isOwnerOfCurrentItem = false;
             }
 
-            // Mặc định hiển thị trạng thái PENDING (sẽ bị override bởi loadHistory nếu có lịch sử)
             if (isOwnerOfCurrentItem) {
                 document.getElementById('qrGiver').classList.remove('hidden');
             } else {
@@ -771,7 +997,6 @@
             }
 
         } else {
-            // Nếu không có item info (chat thông thường), ẩn header item
             document.getElementById('chatItemInfo').classList.add('hidden');
             currentDiscussingItemId = null;
         }
@@ -783,7 +1008,9 @@
     function backToInbox() {
         document.getElementById('chatDetailPanel').classList.add('hidden');
         document.getElementById('chatDetailPanel').classList.remove('flex');
+
         document.getElementById('inboxPanel').classList.remove('hidden');
+        document.getElementById('inboxPanel').classList.add('flex');
     }
 
     // --- 4. LOGIC ĐÁNH GIÁ & HOÀN TẤT ---
@@ -817,19 +1044,16 @@
 
     async function loadHistory(userId) {
         const chatBox = document.getElementById('chatMessages');
-        chatBox.innerHTML = '<div class="text-center text-xs text-gray-400 mt-10">Đang tải...</div>';
+        chatBox.innerHTML = '<div class="text-center text-xs text-slate-400 mt-10">Đang tải...</div>';
         try {
             const res = await fetch('${pageContext.request.contextPath}/api/chat?action=history&partnerId=' + userId);
             const msgs = await res.json();
             chatBox.innerHTML = '';
 
-            // Logic check status từ tin nhắn hệ thống (tạm thời) hoặc cần API riêng lấy status transaction
-            // Để đơn giản, ta sẽ dựa vào tin nhắn hệ thống mới nhất
             let lastSystemMsg = "";
 
             msgs.forEach(m => {
                 if (m.content.startsWith("SYSTEM_GIFT:")) {
-                    // SỬA ĐỔI QUAN TRỌNG: Chỉ cập nhật trạng thái nếu tin nhắn thuộc về item đang thảo luận
                     if (currentDiscussingItemId && m.itemId == currentDiscussingItemId) {
                         lastSystemMsg = m.content;
                     }
@@ -840,41 +1064,32 @@
                 }
             });
 
-            // Cập nhật nút dựa trên tin nhắn hệ thống cuối cùng
             const btnGiver = document.getElementById('btnGiverConfirm');
             const btnReceiver = document.getElementById('btnReceiverConfirm');
 
-            // Quick Replies Elements
             const qrGiver = document.getElementById('qrGiver');
             const qrReceiver1 = document.getElementById('qrReceiver1');
             const qrReceiver2 = document.getElementById('qrReceiver2');
 
             if (currentDiscussingItemId) {
                 if (isOwnerOfCurrentItem) {
-                    // --- GIVER LOGIC ---
                     if (!lastSystemMsg.includes("CONFIRMED") && !lastSystemMsg.includes("COMPLETED")) {
-                        // PENDING: Hiện nút xác nhận cho
                         btnGiver.classList.remove('hidden');
                         qrGiver.classList.remove('hidden');
                     } else {
-                        // CONFIRMED/COMPLETED: Ẩn nút xác nhận cho
                         btnGiver.classList.add('hidden');
                         qrGiver.classList.add('hidden');
                     }
                 } else {
-                    // --- RECEIVER LOGIC ---
                     if (lastSystemMsg.includes("CONFIRMED") && !lastSystemMsg.includes("COMPLETED")) {
-                        // CONFIRMED: Hiện nút nhận, Ẩn nút hẹn
                         btnReceiver.classList.remove('hidden');
                         qrReceiver1.classList.remove('hidden');
                         qrReceiver2.classList.add('hidden');
                     } else if (!lastSystemMsg.includes("CONFIRMED") && !lastSystemMsg.includes("COMPLETED")) {
-                        // PENDING: Ẩn nút nhận, Hiện nút hẹn
                         btnReceiver.classList.add('hidden');
                         qrReceiver1.classList.add('hidden');
                         qrReceiver2.classList.remove('hidden');
                     } else {
-                        // COMPLETED: Ẩn hết
                         btnReceiver.classList.add('hidden');
                         qrReceiver1.classList.add('hidden');
                         qrReceiver2.classList.add('hidden');
@@ -899,9 +1114,6 @@
             const fd = new URLSearchParams();
             fd.append('itemId', currentDiscussingItemId);
 
-            // SỬA ĐỔI: Logic chọn receiverId
-            // Nếu tôi là Giver, receiverId là currentReceiverId (đối tác)
-            // Nếu tôi là Receiver, receiverId là currentUserId (chính tôi)
             let targetReceiverId;
             if (isOwnerOfCurrentItem) {
                 targetReceiverId = currentReceiverId;
@@ -910,7 +1122,7 @@
             }
             fd.append('receiverId', targetReceiverId);
 
-            fd.append('action', action); // giver_confirm hoặc receiver_confirm
+            fd.append('action', action);
 
             const res = await fetch('${pageContext.request.contextPath}/api/confirm-transaction', { method: 'POST', body: fd });
             const data = await res.json();
@@ -918,10 +1130,8 @@
             if (data.status === 'success') {
                 alert("✅ " + data.message);
 
-                // Gửi tin nhắn hệ thống
                 let sysMsg = "";
                 if (action === 'giver_confirm') {
-                    // SỬA ĐỔI: Trạng thái CONFIRMED
                     sysMsg = "SYSTEM_GIFT:Người tặng đã xác nhận giao đồ. Trạng thái: CONFIRMED. Bạn hãy xác nhận khi đã nhận được nhé!";
                     document.getElementById('btnGiverConfirm').classList.add('hidden');
                     document.getElementById('qrGiver').classList.add('hidden');
@@ -929,7 +1139,7 @@
                     sysMsg = "SYSTEM_GIFT:Người nhận đã xác nhận nhận đồ. Trạng thái: COMPLETED. Giao dịch hoàn tất!";
                     document.getElementById('btnReceiverConfirm').classList.add('hidden');
                     document.getElementById('qrReceiver1').classList.add('hidden');
-                    openRatingModal(); // Mở đánh giá ngay sau khi nhận
+                    openRatingModal();
                 }
 
                 if (chatSocket && currentReceiverId) {
@@ -945,11 +1155,9 @@
         } catch (e) { alert("❌ Lỗi kết nối"); }
     }
 
-    // --- MỚI: Hàm gửi tin nhắn nhanh ---
     function sendQuickReply(text) {
         sendMessageAuto(text);
     }
-    // ----------------------------------
 
     // --- UTILS & WS ---
     function updateHeaderInfo(title) {
@@ -967,8 +1175,6 @@
                 const msgText = data.content.replace("SYSTEM_GIFT:", "");
                 appendSystemMessage(msgText);
 
-                // Cập nhật nút khi nhận tin nhắn hệ thống
-                // SỬA ĐỔI: Kiểm tra CONFIRMED
                 if (data.content.includes("CONFIRMED") && !isOwnerOfCurrentItem) {
                     document.getElementById('btnReceiverConfirm').classList.remove('hidden');
                     document.getElementById('qrReceiver1').classList.remove('hidden');
@@ -997,13 +1203,13 @@
     }
     function appendMessage(txt, type) {
         const box = document.getElementById('chatMessages');
-        const cls = type === 'outgoing' ? 'bg-emerald-600 text-white ml-auto rounded-tr-none' : 'bg-white border text-gray-700 mr-auto rounded-tl-none';
-        box.innerHTML += `<div class="w-fit max-w-[80%] px-4 py-2 rounded-xl mb-2 text-sm shadow-sm \${cls}">\${txt}</div>`;
+        const cls = type === 'outgoing' ? 'bg-primary text-white ml-auto rounded-tr-none' : 'bg-white border border-slate-200 text-slate-700 mr-auto rounded-tl-none';
+        box.innerHTML += `<div class="w-fit max-w-[80%] px-4 py-2.5 rounded-2xl mb-2 text-sm shadow-sm \${cls}">\${txt}</div>`;
         box.scrollTop = box.scrollHeight;
     }
     function appendSystemMessage(txt) {
         const box = document.getElementById('chatMessages');
-        box.innerHTML += `<div class="text-center my-4"><span class="bg-yellow-100 text-yellow-800 text-xs font-bold px-3 py-1 rounded-full border border-yellow-200">🎁 \${txt}</span></div>`;
+        box.innerHTML += `<div class="text-center my-4"><span class="bg-yellow-50 text-yellow-800 text-xs font-bold px-3 py-1 rounded-full border border-yellow-100 shadow-sm">🎁 \${txt}</span></div>`;
         box.scrollTop = box.scrollHeight;
     }
     document.getElementById('chatInput').addEventListener('keypress', (e) => { if(e.key==='Enter') sendMessage(); });
@@ -1012,7 +1218,6 @@
     function toggleAiModal() { const modal = document.getElementById('aiModal'); modal.classList.toggle('hidden'); if(!modal.classList.contains('hidden')) { document.getElementById('aiInput').focus(); } }
     document.getElementById('aiInput').addEventListener('keypress', function(e) { if(e.key === 'Enter') sendAiQuestion(); });
 
-    // --- MỚI: Hàm xử lý Quick Action ---
     function quickAction(type) {
         const input = document.getElementById('aiInput');
         if (type === 'name') {
@@ -1027,12 +1232,11 @@
         } else if (type === 'guide') {
             input.value = "Làm thế nào để tích điểm EcoPoints?";
             sendAiQuestion();
-        } else if (type === 'recycle') { // MỚI
+        } else if (type === 'recycle') {
             input.value = "Hướng dẫn cách tái chế: ";
             input.focus();
         }
     }
-    // -----------------------------------
 
     async function sendAiQuestion() {
         const input = document.getElementById('aiInput');
@@ -1048,33 +1252,30 @@
             document.getElementById(loadingId).remove();
             appendAiMessage(data.answer, 'bot');
 
-            // --- SỬA ĐỔI: Hiển thị lại Quick Replies ---
             if (data.quickReplies && data.quickReplies.length > 0) {
                 let html = '<div class="grid grid-cols-1 gap-2 mt-2 px-2">';
 
-                // Map các text trả về thành action type tương ứng
                 data.quickReplies.forEach(text => {
                     let actionType = '';
                     if (text.includes("tên")) actionType = 'name';
                     else if (text.includes("danh mục")) actionType = 'category';
                     else if (text.includes("điểm thu gom")) actionType = 'point';
                     else if (text.includes("tích điểm")) actionType = 'guide';
-                    else if (text.includes("tái chế")) actionType = 'recycle'; // MỚI
+                    else if (text.includes("tái chế")) actionType = 'recycle';
 
                     if (actionType) {
-                        html += `<button onclick="quickAction('\${actionType}')" class="text-left text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 px-3 rounded-lg border border-blue-100 transition">\${text}</button>`;
+                        html += `<button onclick="quickAction('\${actionType}')" class="text-left text-xs bg-white hover:bg-blue-50 text-blue-600 py-2 px-3 rounded-xl border border-blue-100 shadow-sm transition">\${text}</button>`;
                     }
                 });
 
                 html += '</div>';
                 appendAiHtml(html);
             }
-            // -------------------------------------------
 
             if (data.suggestions && data.suggestions.length > 0) {
                 let html = '<div class="flex flex-col gap-2 mt-2">';
                 data.suggestions.forEach(s => {
-                    html += `<div class="bg-blue-50 p-2 rounded-lg border border-blue-100 cursor-pointer hover:bg-blue-100 transition flex items-center gap-2" onclick="flyToLocation(\${s.lat}, \${s.lng}, '\${s.name}')"><div class="text-xl">📍</div><div class="overflow-hidden"><div class="font-bold text-blue-800 text-xs truncate">\${s.name}</div><div class="text-[10px] text-slate-500 truncate">\${s.address}</div></div></div>`;
+                    html += `<div class="bg-blue-50 p-2 rounded-xl border border-blue-100 cursor-pointer hover:bg-blue-100 transition flex items-center gap-2" onclick="flyToLocation(\${s.lat}, \${s.lng}, '\${s.name}')"><div class="text-xl">📍</div><div class="overflow-hidden"><div class="font-bold text-blue-800 text-xs truncate">\${s.name}</div><div class="text-[10px] text-slate-500 truncate">\${s.address}</div></div></div>`;
                 });
                 html += '</div>';
                 appendAiHtml(html);
@@ -1085,8 +1286,8 @@
         const chatBox = document.getElementById('aiChatBody');
         const id = 'msg-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
         const align = type === 'user' ? 'justify-end' : 'justify-start';
-        const bg = type === 'user' ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-white border text-slate-700 rounded-tl-none';
-        const avatar = type === 'bot' ? '<div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs shrink-0">🤖</div>' : '';
+        const bg = type === 'user' ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-white border border-slate-200 text-slate-700 rounded-tl-none';
+        const avatar = type === 'bot' ? '<div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs shrink-0 border border-blue-200">🤖</div>' : '';
         const html = `<div id="\${id}" class="flex items-start gap-2 \${align}">\${avatar}<div class="\${bg} p-3 rounded-2xl shadow-sm max-w-[85%]">\${text}</div></div>`;
         chatBox.insertAdjacentHTML('beforeend', html);
         chatBox.scrollTop = chatBox.scrollHeight;
@@ -1140,22 +1341,20 @@
 
     // --- ĐĂNG TIN ---
     document.getElementById('btnPostItem').addEventListener('click', () => { document.getElementById('giveAwayModal').classList.remove('hidden'); document.getElementById('step1').classList.remove('hidden'); });
+    document.getElementById('btnPostItemMobile').addEventListener('click', () => { document.getElementById('giveAwayModal').classList.remove('hidden'); document.getElementById('step1').classList.remove('hidden'); });
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
     function nextStep(n) { document.querySelectorAll('.modal-step').forEach(e=>e.classList.add('hidden')); document.getElementById('step'+n).classList.remove('hidden'); if(n===3) setTimeout(()=>{ if(!miniMap) {miniMap=L.map('miniMap').setView([currentLatLng.lat, currentLatLng.lng], 15); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'OSM'}).addTo(miniMap); locationMarker=L.marker([currentLatLng.lat,currentLatLng.lng],{draggable:true}).addTo(miniMap); locationMarker.on('dragend',e=>currentLatLng=e.target.getLatLng()); } else miniMap.invalidateSize(); },200); }
 
-    // --- MỚI: Hàm cập nhật điểm EcoPoints khi chọn danh mục ---
     function updateEcoPoints() {
         const select = document.getElementById('itemCategory');
         const selectedOption = select.options[select.selectedIndex];
         const points = selectedOption.getAttribute('data-points');
         document.getElementById('itemEcoPoints').value = points ? points : '';
     }
-    // ---------------------------------------------------------
 
     async function loadCategories() { try { const r = await fetch('${pageContext.request.contextPath}/api/categories'); (await r.json()).forEach(c => document.getElementById('itemCategory').innerHTML += `<option value="\${c.categoryId}" data-points="\${c.fixedPoints}">\${c.name}</option>`); } catch(e){} }
     loadCategories();
 
-    // --- MỚI: Load danh mục cho bộ lọc ---
     async function loadCategoriesForFilter() {
         try {
             const r = await fetch('${pageContext.request.contextPath}/api/categories');
@@ -1166,9 +1365,7 @@
             });
         } catch(e){}
     }
-    // -------------------------------------
 
-    // --- MỚI: Tìm kiếm địa chỉ bằng MapTiler API ---
     async function searchAddress() {
         const address = document.getElementById('itemAddress').value;
         if (!address) return;
@@ -1181,7 +1378,6 @@
                 const [lng, lat] = data.features[0].center;
                 currentLatLng = { lat, lng };
 
-                // Cập nhật bản đồ mini
                 miniMap.setView([lat, lng], 15);
                 locationMarker.setLatLng([lat, lng]);
             } else {
@@ -1192,9 +1388,7 @@
             alert("Lỗi khi tìm kiếm địa chỉ.");
         }
     }
-    // -----------------------------------------------
 
-    // --- MỚI: Autocomplete Logic ---
     let debounceTimer;
     const addressInput = document.getElementById('itemAddress');
     const suggestionList = document.getElementById('suggestionList');
@@ -1210,7 +1404,6 @@
 
         debounceTimer = setTimeout(async () => {
             try {
-                // SỬA ĐỔI: Dùng cộng chuỗi thay vì template literal để tránh lỗi JSP
                 const url = 'https://api.maptiler.com/geocoding/' + encodeURIComponent(query) + '.json?key=' + MAPTILER_API_KEY + '&autocomplete=true&limit=5';
                 const response = await fetch(url);
                 const data = await response.json();
@@ -1219,13 +1412,11 @@
                 if (data.features && data.features.length > 0) {
                     data.features.forEach(feature => {
                         const li = document.createElement('li');
-                        li.className = 'px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm text-gray-700 border-b last:border-0';
+                        li.className = 'px-4 py-2 hover:bg-slate-100 cursor-pointer text-sm text-slate-700 border-b border-slate-100 last:border-0';
                         li.innerText = feature.place_name;
                         li.onclick = () => {
-                            // Tự động điền và sửa lỗi địa chỉ
                             addressInput.value = feature.place_name;
 
-                            // Cập nhật tọa độ
                             const [lng, lat] = feature.center;
                             currentLatLng = { lat, lng };
                             miniMap.setView([lat, lng], 15);
@@ -1242,9 +1433,8 @@
             } catch (e) {
                 console.error(e);
             }
-        }, 300); // Debounce 300ms
+        }, 300);
     });
-    // -------------------------------
 
     async function submitItem() {
         const fd = new FormData();
@@ -1255,7 +1445,7 @@
         fd.append("itemPhoto", document.getElementById('itemPhoto').files[0]);
         fd.append("latitude", currentLatLng.lat);
         fd.append("longitude", currentLatLng.lng);
-        fd.append("address", document.getElementById('itemAddress').value); // Gửi thêm địa chỉ
+        fd.append("address", document.getElementById('itemAddress').value);
 
         try {
             const res = await fetch('${pageContext.request.contextPath}/post-item', {method:'POST', body:fd});
