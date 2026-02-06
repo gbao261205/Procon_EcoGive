@@ -458,8 +458,37 @@
     </div>
 </div>
 
+<!-- 6. Leaderboard Modal -->
+<div id="leaderboardModal" class="fixed inset-0 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[90]">
+    <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl relative flex flex-col max-h-[80vh] overflow-hidden modal-animate">
+        <div class="bg-gradient-to-r from-yellow-400 to-orange-500 p-4 flex justify-between items-center text-white shadow-md shrink-0 h-16">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-xl backdrop-blur-sm">🏆</div>
+                <div>
+                    <h3 class="font-bold text-lg">Bảng Xếp Hạng</h3>
+                    <p class="text-[10px] opacity-90">Top thành viên tích cực nhất</p>
+                </div>
+            </div>
+            <button onclick="toggleLeaderboardModal()" class="text-white/80 hover:text-white transition p-2">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-4 bg-slate-50 custom-scrollbar" id="leaderboardList">
+            <!-- Leaderboard items will be injected here -->
+            <div class="text-center text-slate-500 py-4">Đang tải dữ liệu...</div>
+        </div>
+    </div>
+</div>
+
 <!-- Floating Buttons -->
 <div class="fixed bottom-6 right-4 md:right-6 flex flex-col gap-4 z-40">
+    <!-- Leaderboard Button -->
+    <button onclick="toggleLeaderboardModal()" class="w-12 h-12 md:w-14 md:h-14 bg-yellow-400 hover:bg-yellow-500 text-white rounded-full shadow-lg shadow-yellow-200 transition transform hover:scale-110 flex items-center justify-center border-2 border-white group relative">
+        <span class="text-xl md:text-2xl">🏆</span>
+        <span class="absolute right-full mr-3 bg-slate-800 text-white text-xs font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none hidden md:block">Bảng xếp hạng</span>
+    </button>
+
     <!-- AI Button -->
     <button onclick="toggleAiModal()" class="w-12 h-12 md:w-14 md:h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg shadow-blue-200 transition transform hover:scale-110 flex items-center justify-center border-2 border-white group relative">
         <span class="text-xl md:text-2xl">🤖</span>
@@ -1458,6 +1487,66 @@
             }
         } catch(e){
             alert("Lỗi kết nối khi đăng tin.");
+        }
+    }
+
+    // --- LEADERBOARD LOGIC ---
+    function toggleLeaderboardModal() {
+        const modal = document.getElementById('leaderboardModal');
+        modal.classList.toggle('hidden');
+        if (!modal.classList.contains('hidden')) {
+            loadLeaderboard();
+        }
+    }
+
+    async function loadLeaderboard() {
+        const listEl = document.getElementById('leaderboardList');
+        listEl.innerHTML = '<div class="text-center text-slate-500 py-4">Đang tải dữ liệu...</div>';
+
+        try {
+            const res = await fetch('${pageContext.request.contextPath}/api/leaderboard');
+            const users = await res.json();
+
+            listEl.innerHTML = '';
+            if (users.length === 0) {
+                listEl.innerHTML = '<div class="text-center text-slate-500 py-4">Chưa có dữ liệu</div>';
+                return;
+            }
+
+            users.forEach((u, index) => {
+                let rankClass = "bg-slate-100 text-slate-600";
+                let rankIcon = "";
+
+                if (index === 0) {
+                    rankClass = "bg-yellow-100 text-yellow-700 border border-yellow-200";
+                    rankIcon = "👑";
+                } else if (index === 1) {
+                    rankClass = "bg-slate-200 text-slate-700 border border-slate-300";
+                    rankIcon = "🥈";
+                } else if (index === 2) {
+                    rankClass = "bg-orange-100 text-orange-800 border border-orange-200";
+                    rankIcon = "🥉";
+                }
+
+                listEl.innerHTML += `
+                    <div class="flex items-center gap-3 p-3 mb-2 rounded-xl \${rankClass} transition hover:scale-[1.02]">
+                        <div class="font-bold text-lg w-8 text-center">\${rankIcon || (index + 1)}</div>
+                        <div class="w-10 h-10 rounded-full bg-white p-0.5 shadow-sm overflow-hidden shrink-0">
+                            <img src="https://api.dicebear.com/9.x/notionists-neutral/svg?seed=\${u.username}" class="w-full h-full rounded-full">
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="font-bold text-sm truncate">\${u.username}</div>
+                            <div class="text-[10px] opacity-80">Reputation: \${u.reputationScore}</div>
+                        </div>
+                        <div class="font-bold text-primary flex items-center gap-1 bg-white px-2 py-1 rounded-lg shadow-sm">
+                            <span class="material-symbols-outlined text-sm">eco</span>
+                            \${u.ecoPoints}
+                        </div>
+                    </div>
+                `;
+            });
+        } catch (e) {
+            listEl.innerHTML = '<div class="text-center text-red-500 py-4">Lỗi tải bảng xếp hạng</div>';
         }
     }
 </script>

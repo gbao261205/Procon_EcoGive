@@ -111,6 +111,23 @@ public class UserDAO {
         return list;
     }
 
+    public List<User> getTopUsers(int limit) throws SQLException {
+        List<User> list = new ArrayList<>();
+        String sql = "SELECT * FROM users WHERE role = 'USER' ORDER BY eco_points DESC LIMIT ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, limit);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
+            }
+        } catch (Exception e) {
+            throw new SQLException(e);
+        }
+        return list;
+    }
+
     public boolean insert(User user) throws SQLException {
         String sql = "INSERT INTO users (username, email, password_hash, role, eco_points, reputation_score, join_date, phone_number, address, is_verified, verification_token) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
