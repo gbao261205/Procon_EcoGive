@@ -175,6 +175,13 @@
         <span class="material-symbols-outlined group-hover:rotate-180 transition-transform duration-500 text-xl md:text-2xl">filter_alt</span>
     </button>
 
+    <!-- LOCATION BUTTON -->
+    <button onclick="map.locate({setView: true, maxZoom: 14})"
+            class="absolute top-16 right-4 md:top-20 md:right-6 z-20 w-10 h-10 md:w-12 md:h-12 bg-white text-slate-700 rounded-full shadow-lg hover:text-primary hover:scale-110 transition-all duration-300 flex items-center justify-center border border-slate-100 group"
+            title="Vị trí của tôi">
+        <span class="material-symbols-outlined text-xl md:text-2xl">my_location</span>
+    </button>
+
     <!-- FILTER PANEL (Right Aligned) -->
     <div id="filterPanel" class="absolute top-16 right-4 md:top-20 md:right-6 z-20 w-64 md:w-72 bg-white rounded-2xl shadow-2xl p-4 md:p-5 hidden border border-slate-100 origin-top-right animate-scale-in">
         <!-- Header -->
@@ -338,7 +345,7 @@
                         <input type="text" id="itemAddress" placeholder="Nhập địa chỉ (VD: 123 Lê Lợi...)" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary outline-none" autocomplete="off" />
                         <ul id="suggestionList" class="absolute left-0 right-0 top-full bg-white border border-slate-200 rounded-xl shadow-lg z-[9999] max-h-60 overflow-y-auto hidden mt-1"></ul>
                     </div>
-                    <button onclick="searchAddress()" class="bg-blue-600 text-white px-4 rounded-xl font-bold hover:bg-blue-700 transition">
+                    <button onclick="searchAddress('itemAddress', 'miniMap', 'locationMarker')" class="bg-blue-600 text-white px-4 rounded-xl font-bold hover:bg-blue-700 transition">
                         <span class="material-symbols-outlined">search</span>
                     </button>
                 </div>
@@ -357,7 +364,7 @@
         <button onclick="document.getElementById('addPointModal').classList.add('hidden')" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 transition">
             <span class="material-symbols-outlined">close</span>
         </button>
-        <h2 class="text-2xl font-bold mb-6 text-primary text-center">Thêm Điểm Tập Kết</h2>
+        <h2 id="addPointModalTitle" class="text-2xl font-bold mb-6 text-primary text-center">Thêm Điểm Tập Kết</h2>
         <div class="space-y-4">
             <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1">Tên điểm</label>
@@ -366,14 +373,22 @@
             <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1">Loại hình</label>
                 <select id="pointType" class="w-full p-3 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-primary outline-none">
-                    <option value="BATTERY">🔋 Thu gom Pin</option>
-                    <option value="E_WASTE">💻 Rác thải điện tử</option>
-                    <option value="TEXTILE">👕 Quần áo cũ</option>
+                    <c:forEach var="t" items="${pointTypes}">
+                        <option value="${t.typeCode}">${t.icon} ${t.displayName}</option>
+                    </c:forEach>
                 </select>
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1">Địa chỉ</label>
-                <input type="text" id="pointAddress" placeholder="Địa chỉ hiển thị..." class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary outline-none" required />
+                <div class="flex gap-2 relative">
+                    <div class="flex-1 relative">
+                        <input type="text" id="pointAddress" placeholder="Nhập địa chỉ..." class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary outline-none" autocomplete="off" />
+                        <ul id="pointSuggestionList" class="absolute left-0 right-0 top-full bg-white border border-slate-200 rounded-xl shadow-lg z-[9999] max-h-60 overflow-y-auto hidden mt-1"></ul>
+                    </div>
+                    <button onclick="searchAddress('pointAddress', 'pointMiniMap', 'pointMarker')" class="bg-blue-600 text-white px-4 rounded-xl font-bold hover:bg-blue-700 transition">
+                        <span class="material-symbols-outlined">search</span>
+                    </button>
+                </div>
             </div>
             <div>
                 <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Vị trí (Kéo để chỉnh)</label>
@@ -691,12 +706,50 @@
             if (suggestionList && !suggestionList.contains(e.target) && e.target !== itemAddress) {
                 suggestionList.classList.add('hidden');
             }
+
+            const pointSuggestionList = document.getElementById('pointSuggestionList');
+            const pointAddress = document.getElementById('pointAddress');
+            if (pointSuggestionList && !pointSuggestionList.contains(e.target) && e.target !== pointAddress) {
+                pointSuggestionList.classList.add('hidden');
+            }
         });
     });
 
     // --- 1. MAP & LOAD DATA ---
     const map = L.map('map').setView([10.7769, 106.7009], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: 'OSM' }).addTo(map);
+
+    // --- Geolocation ---
+    map.locate({setView: true, maxZoom: 14, enableHighAccuracy: true});
+
+    let userLocationMarker = null;
+    let userLocationCircle = null;
+
+    map.on('locationfound', function(e) {
+        // Update variables for modals
+        currentLatLng = e.latlng;
+        pointLatLng = e.latlng;
+
+        // Remove existing marker/circle if they exist
+        if (userLocationMarker) map.removeLayer(userLocationMarker);
+        if (userLocationCircle) map.removeLayer(userLocationCircle);
+
+        // Visual feedback
+        userLocationCircle = L.circle(e.latlng, {
+            color: '#05976a',
+            fillColor: '#05976a',
+            fillOpacity: 0.1,
+            radius: e.accuracy
+        }).addTo(map);
+
+        userLocationMarker = L.marker(e.latlng, {
+            icon: L.divIcon({
+                className: 'bg-primary w-4 h-4 rounded-full border-2 border-white shadow-md',
+                iconSize: [16, 16]
+            })
+        }).addTo(map).bindPopup("Vị trí của bạn");
+    });
+    // -------------------
 
     // --- MỚI: Toggle Filter Panel ---
     function toggleFilterPanel() {
@@ -1330,6 +1383,15 @@
     if (btnAddPoint) {
         btnAddPoint.addEventListener('click', () => {
             document.getElementById('addPointModal').classList.remove('hidden');
+
+            // --- MỚI: Đổi tiêu đề modal nếu là COMPANY ---
+            if (currentUserRole === 'COLLECTOR_COMPANY') {
+                document.getElementById('addPointModalTitle').innerText = "Thêm Điểm Thu Gom Doanh Nghiệp";
+            } else {
+                document.getElementById('addPointModalTitle').innerText = "Thêm Điểm Tập Kết";
+            }
+            // ---------------------------------------------
+
             setTimeout(() => {
                 const markerIcon = (currentUserRole === 'COLLECTOR_COMPANY') ? yellowIcon : greenIcon;
                 if (!pointMap) {
@@ -1395,8 +1457,9 @@
         } catch(e){}
     }
 
-    async function searchAddress() {
-        const address = document.getElementById('itemAddress').value;
+    // --- SỬA ĐỔI: Hàm tìm kiếm địa chỉ dùng chung ---
+    async function searchAddress(inputId, mapId, markerVarName) {
+        const address = document.getElementById(inputId).value;
         if (!address) return;
 
         try {
@@ -1405,10 +1468,17 @@
 
             if (data.features && data.features.length > 0) {
                 const [lng, lat] = data.features[0].center;
-                currentLatLng = { lat, lng };
 
-                miniMap.setView([lat, lng], 15);
-                locationMarker.setLatLng([lat, lng]);
+                // Cập nhật biến tọa độ tương ứng
+                if (markerVarName === 'locationMarker') {
+                    currentLatLng = { lat, lng };
+                    miniMap.setView([lat, lng], 15);
+                    locationMarker.setLatLng([lat, lng]);
+                } else if (markerVarName === 'pointMarker') {
+                    pointLatLng = { lat, lng };
+                    pointMap.setView([lat, lng], 15);
+                    pointMarker.setLatLng([lat, lng]);
+                }
             } else {
                 alert("Không tìm thấy địa chỉ này!");
             }
@@ -1418,52 +1488,64 @@
         }
     }
 
-    let debounceTimer;
-    const addressInput = document.getElementById('itemAddress');
-    const suggestionList = document.getElementById('suggestionList');
+    // --- SỬA ĐỔI: Autocomplete cho ô địa chỉ điểm tập kết ---
+    function setupAutocomplete(inputId, mapId, markerVarName) {
+        let debounceTimer;
+        const input = document.getElementById(inputId);
+        const listId = inputId === 'itemAddress' ? 'suggestionList' : 'pointSuggestionList';
+        const list = document.getElementById(listId);
 
-    addressInput.addEventListener('input', function() {
-        clearTimeout(debounceTimer);
-        const query = this.value.trim();
+        input.addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            const query = this.value.trim();
 
-        if (query.length < 3) {
-            suggestionList.classList.add('hidden');
-            return;
-        }
-
-        debounceTimer = setTimeout(async () => {
-            try {
-                const url = 'https://api.maptiler.com/geocoding/' + encodeURIComponent(query) + '.json?key=' + MAPTILER_API_KEY + '&autocomplete=true&limit=5';
-                const response = await fetch(url);
-                const data = await response.json();
-
-                suggestionList.innerHTML = '';
-                if (data.features && data.features.length > 0) {
-                    data.features.forEach(feature => {
-                        const li = document.createElement('li');
-                        li.className = 'px-4 py-2 hover:bg-slate-100 cursor-pointer text-sm text-slate-700 border-b border-slate-100 last:border-0';
-                        li.innerText = feature.place_name;
-                        li.onclick = () => {
-                            addressInput.value = feature.place_name;
-
-                            const [lng, lat] = feature.center;
-                            currentLatLng = { lat, lng };
-                            miniMap.setView([lat, lng], 15);
-                            locationMarker.setLatLng([lat, lng]);
-
-                            suggestionList.classList.add('hidden');
-                        };
-                        suggestionList.appendChild(li);
-                    });
-                    suggestionList.classList.remove('hidden');
-                } else {
-                    suggestionList.classList.add('hidden');
-                }
-            } catch (e) {
-                console.error(e);
+            if (query.length < 3) {
+                list.classList.add('hidden');
+                return;
             }
-        }, 300);
-    });
+
+            debounceTimer = setTimeout(async () => {
+                try {
+                    const url = 'https://api.maptiler.com/geocoding/' + encodeURIComponent(query) + '.json?key=' + MAPTILER_API_KEY + '&autocomplete=true&limit=5';
+                    const response = await fetch(url);
+                    const data = await response.json();
+
+                    list.innerHTML = '';
+                    if (data.features && data.features.length > 0) {
+                        data.features.forEach(feature => {
+                            const li = document.createElement('li');
+                            li.className = 'px-4 py-2 hover:bg-slate-100 cursor-pointer text-sm text-slate-700 border-b border-slate-100 last:border-0';
+                            li.innerText = feature.place_name;
+                            li.onclick = () => {
+                                input.value = feature.place_name;
+                                const [lng, lat] = feature.center;
+
+                                if (markerVarName === 'locationMarker') {
+                                    currentLatLng = { lat, lng };
+                                    miniMap.setView([lat, lng], 15);
+                                    locationMarker.setLatLng([lat, lng]);
+                                } else if (markerVarName === 'pointMarker') {
+                                    pointLatLng = { lat, lng };
+                                    pointMap.setView([lat, lng], 15);
+                                    pointMarker.setLatLng([lat, lng]);
+                                }
+
+                                list.classList.add('hidden');
+                            };
+                            list.appendChild(li);
+                        });
+                        list.classList.remove('hidden');
+                    } else {
+                        list.classList.add('hidden');
+                    }
+                } catch (e) { console.error(e); }
+            }, 300);
+        });
+    }
+
+    // Gọi setup cho cả 2 ô input
+    setupAutocomplete('itemAddress', 'miniMap', 'locationMarker');
+    setupAutocomplete('pointAddress', 'pointMiniMap', 'pointMarker');
 
     async function submitItem() {
         const fd = new FormData();

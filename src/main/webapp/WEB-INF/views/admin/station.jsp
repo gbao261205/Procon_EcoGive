@@ -139,8 +139,15 @@
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Địa chỉ <span class="text-red-500">*</span></label>
-                            <input type="text" id="address" name="address" required
-                                   class="w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-2.5 text-sm focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all placeholder:text-slate-400">
+                            <div class="relative">
+                                <input type="text" id="address" name="address" required
+                                       class="w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-2.5 text-sm focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all placeholder:text-slate-400"
+                                       autocomplete="off">
+                                <ul id="suggestionList" class="absolute left-0 right-0 top-full bg-white border border-slate-200 rounded-xl shadow-lg z-[9999] max-h-48 overflow-y-auto hidden mt-1"></ul>
+                                <button type="button" onclick="searchAddress()" class="absolute right-2 top-2 p-1 text-slate-400 hover:text-blue-600 transition">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -175,6 +182,7 @@
     let map, marker;
     const defaultLat = 10.7769;
     const defaultLng = 106.7009;
+    const MAPTILER_API_KEY = 'N9qb9p6GF8fszXu3BPWt'; // Dùng chung key
 
     function initMap() {
         if (map) {
@@ -232,6 +240,88 @@
     function closeModal() {
         document.getElementById('stationModal').classList.add('hidden');
     }
+
+    // --- TÌM KIẾM ĐỊA CHỈ ---
+    async function searchAddress() {
+        const address = document.getElementById('address').value;
+        if (!address) return;
+
+        try {
+            const response = await fetch(`https://api.maptiler.com/geocoding/\${encodeURIComponent(address)}.json?key=\${MAPTILER_API_KEY}`);
+            const data = await response.json();
+
+            if (data.features && data.features.length > 0) {
+                const [lng, lat] = data.features[0].center;
+
+                // Cập nhật map và marker
+                map.setView([lat, lng], 15);
+                marker.setLatLng([lat, lng]);
+
+                // Cập nhật input hidden
+                document.getElementById('lat').value = lat;
+                document.getElementById('lng').value = lng;
+            } else {
+                alert("Không tìm thấy địa chỉ này!");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Lỗi khi tìm kiếm địa chỉ.");
+        }
+    }
+
+    // --- AUTOCOMPLETE ---
+    let debounceTimer;
+    const addressInput = document.getElementById('address');
+    const suggestionList = document.getElementById('suggestionList');
+
+    addressInput.addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        const query = this.value.trim();
+
+        if (query.length < 3) {
+            suggestionList.classList.add('hidden');
+            return;
+        }
+
+        debounceTimer = setTimeout(async () => {
+            try {
+                const url = 'https://api.maptiler.com/geocoding/' + encodeURIComponent(query) + '.json?key=' + MAPTILER_API_KEY + '&autocomplete=true&limit=5';
+                const response = await fetch(url);
+                const data = await response.json();
+
+                suggestionList.innerHTML = '';
+                if (data.features && data.features.length > 0) {
+                    data.features.forEach(feature => {
+                        const li = document.createElement('li');
+                        li.className = 'px-4 py-2 hover:bg-slate-100 cursor-pointer text-sm text-slate-700 border-b border-slate-100 last:border-0';
+                        li.innerText = feature.place_name;
+                        li.onclick = () => {
+                            addressInput.value = feature.place_name;
+                            const [lng, lat] = feature.center;
+
+                            map.setView([lat, lng], 15);
+                            marker.setLatLng([lat, lng]);
+                            document.getElementById('lat').value = lat;
+                            document.getElementById('lng').value = lng;
+
+                            suggestionList.classList.add('hidden');
+                        };
+                        suggestionList.appendChild(li);
+                    });
+                    suggestionList.classList.remove('hidden');
+                } else {
+                    suggestionList.classList.add('hidden');
+                }
+            } catch (e) { console.error(e); }
+        }, 300);
+    });
+
+    // Ẩn suggestion khi click ra ngoài
+    document.addEventListener('click', function(e) {
+        if (!suggestionList.contains(e.target) && e.target !== addressInput) {
+            suggestionList.classList.add('hidden');
+        }
+    });
 </script>
 </body>
 </html>

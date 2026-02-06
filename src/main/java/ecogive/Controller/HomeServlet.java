@@ -1,7 +1,9 @@
 package ecogive.Controller;
 
+import ecogive.Model.CollectionPointType;
 import ecogive.Model.Item;
 import ecogive.Model.User;
+import ecogive.dao.CollectionPointTypeDAO;
 import ecogive.dao.ItemDAO;
 import ecogive.dao.UserDAO;
 import jakarta.servlet.ServletException;
@@ -19,11 +21,13 @@ import java.util.List;
 public class HomeServlet extends HttpServlet {
     private ItemDAO itemDAO;
     private UserDAO userDAO;
+    private CollectionPointTypeDAO collectionPointTypeDAO;
 
     @Override
     public void init() {
         itemDAO = new ItemDAO();
         userDAO = new UserDAO();
+        collectionPointTypeDAO = new CollectionPointTypeDAO();
     }
 
     @Override
@@ -56,6 +60,10 @@ public class HomeServlet extends HttpServlet {
             List<Item> items = itemDAO.findAll();
             // Set the items as a request attribute
             request.setAttribute("items", items);
+
+            // Fetch collection point types
+            List<CollectionPointType> pointTypes = collectionPointTypeDAO.findAll();
+            request.setAttribute("pointTypes", pointTypes);
         } catch (SQLException e) {
             // Handle database errors
             e.printStackTrace();
