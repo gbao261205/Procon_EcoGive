@@ -98,7 +98,7 @@
         }
     </style>
 </head>
-<body class="h-screen w-screen overflow-hidden select-none bg-slate-50 relative">
+<body class="h-screen w-screen overflow-hidden select-none bg-slate-50 relative text-base">
 
     <!-- 1. STATIC BACKGROUND (Ẩn mặc định - Dành cho chế độ tĩnh) -->
     <div id="static-bg" class="absolute inset-0 z-0 hidden bg-[#f1f5f9] transform scale-105 transition-opacity duration-500"></div>
@@ -125,8 +125,8 @@
         </div>
     </div>
 
-    <!-- 3. DYNAMIC GAME LAND (Lớp Game Tương tác) -->
-    <div id="dynamic-game" class="absolute inset-0 z-10 pointer-events-none overflow-hidden">
+    <!-- 3. DYNAMIC GAME LAND (Lớp Game Tương tác - Ẩn trên Mobile) -->
+    <div id="dynamic-game" class="hidden md:block absolute inset-0 z-10 pointer-events-none overflow-hidden">
 
         <!-- CÂY CỐI -->
         <div class="absolute bottom-[75px] left-0 w-[50%] h-[400px] pointer-events-none flex items-end">
@@ -226,126 +226,131 @@
         <span class="material-symbols-rounded group-hover:rotate-12 transition-transform duration-500 text-2xl">wallpaper</span>
     </button>
 
-    <!-- LOGIN FORM OVERLAY -->
-    <div class="absolute inset-0 z-40 flex items-center justify-center p-4 pointer-events-none">
+    <!-- LOGIN FORM OVERLAY (Scrollable on Mobile) -->
+    <div class="absolute inset-0 z-40 overflow-y-auto pointer-events-none">
+        <div class="min-h-full w-full flex flex-col items-center justify-center p-4 md:p-8">
 
-        <!-- Mobile Logo (Absolute) -->
-        <div class="lg:hidden absolute top-6 left-6 flex items-center gap-2 pointer-events-auto">
-            <span class="material-symbols-outlined text-primary" style="font-size: 32px;">spa</span>
-            <span class="text-xl font-bold tracking-tight text-[#111816]">EcoGive</span>
-        </div>
-
-        <div class="w-full max-w-5xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row pointer-events-auto">
-
-            <!-- Left Side: Image & Branding (Hidden on Mobile) -->
-            <div class="hidden md:flex md:w-1/2 bg-pattern flex-col justify-between p-12 text-white relative overflow-hidden">
-                <div class="relative z-10">
-                    <div class="flex items-center gap-2 font-bold text-2xl tracking-tight mb-2">
-                        <span class="material-symbols-outlined text-white" style="font-size: 36px;">spa</span>
-                        EcoGive
-                    </div>
-                    <p class="text-emerald-100 text-sm">Nền tảng chia sẻ & tái chế cộng đồng</p>
-                </div>
-
-                <div class="relative z-10">
-                    <h2 class="text-3xl font-bold mb-4 leading-tight">"Hành động nhỏ,<br>Thay đổi lớn."</h2>
-                    <p class="text-emerald-100 opacity-90">Tham gia cùng hàng ngàn người khác để biến rác thải thành tài nguyên và lan tỏa lối sống xanh.</p>
-                </div>
-
-                <!-- Decorative Circle -->
-                <div class="absolute -bottom-24 -right-24 w-64 h-64 bg-emerald-500 rounded-full opacity-20 blur-3xl"></div>
-                <div class="absolute top-12 right-12 w-32 h-32 bg-emerald-400 rounded-full opacity-10 blur-2xl"></div>
+            <!-- Mobile Logo (Visible only on mobile, in flow) -->
+            <div class="lg:hidden flex items-center gap-2 mb-6 pointer-events-auto animate-float-medium">
+                <span class="material-symbols-outlined text-primary drop-shadow-md" style="font-size: 40px;">spa</span>
+                <span class="text-2xl font-bold tracking-tight text-[#111816]">EcoGive</span>
             </div>
 
-            <!-- Right Side: Login Form -->
-            <div class="w-full md:w-1/2 p-8 md:p-12 lg:p-16 flex flex-col justify-center items-center md:items-start">
-                <div class="w-full max-w-[440px] flex flex-col gap-6">
+            <div class="w-full max-w-5xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row pointer-events-auto relative">
 
-                    <!-- Desktop Header Logo & Welcome -->
-                    <div class="flex flex-col gap-2 mb-2">
-                        <div class="hidden lg:flex items-center gap-2 mb-4">
-                            <span class="material-symbols-outlined text-primary" style="font-size: 40px;">spa</span>
-                            <span class="text-2xl font-bold tracking-tight text-[#111816]">EcoGive</span>
+                <!-- Left Side: Image & Branding (Hidden on Mobile) -->
+                <div class="hidden md:flex md:w-1/2 bg-pattern flex-col justify-between p-12 text-white relative overflow-hidden">
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-2 font-bold text-2xl tracking-tight mb-2">
+                            <span class="material-symbols-outlined text-white" style="font-size: 36px;">spa</span>
+                            EcoGive
                         </div>
-                        <h1 class="text-3xl font-bold text-slate-900">Chào mừng trở lại! 👋</h1>
-                        <p class="text-slate-500">Vui lòng nhập thông tin để đăng nhập.</p>
+                        <p class="text-emerald-100 text-sm">Nền tảng chia sẻ & tái chế cộng đồng</p>
                     </div>
 
-                    <!-- Alerts -->
-                    <c:if test="${param.success == 'true'}">
-                        <div class="p-4 rounded-lg bg-green-50 border-l-4 border-green-500 text-green-700 text-sm flex items-start gap-3">
-                            <span class="material-symbols-outlined text-lg">check_circle</span>
-                            <span>Đăng ký thành công! Vui lòng đăng nhập để tiếp tục.</span>
-                        </div>
-                    </c:if>
+                    <div class="relative z-10">
+                        <h2 class="text-3xl font-bold mb-4 leading-tight">"Hành động nhỏ,<br>Thay đổi lớn."</h2>
+                        <p class="text-emerald-100 opacity-90">Tham gia cùng hàng ngàn người khác để biến rác thải thành tài nguyên và lan tỏa lối sống xanh.</p>
+                    </div>
 
-                    <c:if test="${not empty message}">
-                        <div class="p-4 rounded-lg bg-blue-50 border-l-4 border-blue-500 text-blue-700 text-sm flex items-start gap-3">
-                            <span class="material-symbols-outlined text-lg">info</span>
-                            <span>${message}</span>
-                        </div>
-                    </c:if>
+                    <!-- Decorative Circle -->
+                    <div class="absolute -bottom-24 -right-24 w-64 h-64 bg-emerald-500 rounded-full opacity-20 blur-3xl"></div>
+                    <div class="absolute top-12 right-12 w-32 h-32 bg-emerald-400 rounded-full opacity-10 blur-2xl"></div>
+                </div>
 
-                    <c:if test="${not empty error}">
-                        <div class="p-4 rounded-lg bg-red-50 border-l-4 border-red-500 text-red-700 text-sm flex items-start gap-3">
-                            <span class="material-symbols-outlined text-lg">error</span>
-                            <span>${error}</span>
-                        </div>
-                    </c:if>
+                <!-- Right Side: Login Form -->
+                <div class="w-full md:w-1/2 p-6 md:p-12 lg:p-16 flex flex-col justify-center items-center md:items-start">
+                    <div class="w-full max-w-[440px] flex flex-col gap-6">
 
-                    <form id="loginForm" method="post" action="${pageContext.request.contextPath}/login" class="space-y-5">
-                        <div>
-                            <label for="username" class="block text-sm font-medium text-slate-700 mb-1.5">Tên đăng nhập</label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <span class="material-symbols-outlined text-slate-400 text-[20px]">person</span>
+                        <!-- Desktop Header Logo & Welcome -->
+                        <div class="flex flex-col gap-2 mb-2">
+                            <div class="hidden lg:flex items-center gap-2 mb-4">
+                                <span class="material-symbols-outlined text-primary" style="font-size: 40px;">spa</span>
+                                <span class="text-2xl font-bold tracking-tight text-[#111816]">EcoGive</span>
+                            </div>
+                            <h1 class="text-2xl md:text-3xl font-bold text-slate-900">Chào mừng trở lại! 👋</h1>
+                            <p class="text-slate-500 text-sm md:text-base">Vui lòng nhập thông tin để đăng nhập.</p>
+                        </div>
+
+                        <!-- Alerts -->
+                        <c:if test="${param.success == 'true'}">
+                            <div class="p-4 rounded-lg bg-green-50 border-l-4 border-green-500 text-green-700 text-sm flex items-start gap-3">
+                                <span class="material-symbols-outlined text-lg">check_circle</span>
+                                <span>Đăng ký thành công! Vui lòng đăng nhập để tiếp tục.</span>
+                            </div>
+                        </c:if>
+
+                        <c:if test="${not empty message}">
+                            <div class="p-4 rounded-lg bg-blue-50 border-l-4 border-blue-500 text-blue-700 text-sm flex items-start gap-3">
+                                <span class="material-symbols-outlined text-lg">info</span>
+                                <span>${message}</span>
+                            </div>
+                        </c:if>
+
+                        <c:if test="${not empty error}">
+                            <div class="p-4 rounded-lg bg-red-50 border-l-4 border-red-500 text-red-700 text-sm flex items-start gap-3">
+                                <span class="material-symbols-outlined text-lg">error</span>
+                                <span>${error}</span>
+                            </div>
+                        </c:if>
+
+                        <form id="loginForm" method="post" action="${pageContext.request.contextPath}/login" class="space-y-5">
+                            <div>
+                                <label for="username" class="block text-sm font-medium text-slate-700 mb-1.5">Tên đăng nhập</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="material-symbols-outlined text-slate-400 text-[20px]">person</span>
+                                    </div>
+                                    <input type="text" id="username" name="username" value="${username}"
+                                           class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base md:text-sm"
+                                           placeholder="Nhập tên đăng nhập" required>
                                 </div>
-                                <input type="text" id="username" name="username" value="${username}"
-                                       class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                                       placeholder="Nhập tên đăng nhập" required>
                             </div>
-                        </div>
 
-                        <div>
-                            <div class="flex items-center justify-between mb-1.5">
-                                <label for="password" class="block text-sm font-medium text-slate-700">Mật khẩu</label>
-                                <a href="${pageContext.request.contextPath}/forgot-password" class="text-sm font-medium text-primary hover:text-primary-hover hover:underline">Quên mật khẩu?</a>
-                            </div>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <span class="material-symbols-outlined text-slate-400 text-[20px]">lock</span>
+                            <div>
+                                <div class="flex items-center justify-between mb-1.5">
+                                    <label for="password" class="block text-sm font-medium text-slate-700">Mật khẩu</label>
+                                    <a href="${pageContext.request.contextPath}/forgot-password" class="text-sm font-medium text-primary hover:text-primary-hover hover:underline">Quên mật khẩu?</a>
                                 </div>
-                                <input type="password" id="password" name="password"
-                                       class="w-full pl-10 pr-12 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                                       placeholder="••••••••" required>
-                                <button type="button" id="togglePassword"
-                                        class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors focus:outline-none">
-                                    <span class="material-symbols-outlined text-[20px]">visibility</span>
-                                </button>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="material-symbols-outlined text-slate-400 text-[20px]">lock</span>
+                                    </div>
+                                    <input type="password" id="password" name="password"
+                                           class="w-full pl-10 pr-12 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base md:text-sm"
+                                           placeholder="••••••••" required>
+                                    <button type="button" id="togglePassword"
+                                            class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors focus:outline-none">
+                                        <span class="material-symbols-outlined text-[20px]">visibility</span>
+                                    </button>
+                                </div>
                             </div>
+
+                            <div class="flex items-center">
+                                <input id="remember-me" name="remember-me" type="checkbox" class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded cursor-pointer">
+                                <label for="remember-me" class="ml-2 block text-sm text-slate-600 cursor-pointer select-none">Ghi nhớ đăng nhập</label>
+                            </div>
+
+                            <button type="submit"
+                                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all transform hover:-translate-y-0.5 active:scale-95">
+                                Đăng nhập
+                            </button>
+                        </form>
+
+                        <div class="text-center">
+                            <p class="text-sm text-slate-600">
+                                Chưa có tài khoản?
+                                <a href="${pageContext.request.contextPath}/register" class="font-semibold text-primary hover:text-primary-hover hover:underline ml-1">
+                                    Đăng ký ngay
+                                </a>
+                            </p>
                         </div>
-
-                        <div class="flex items-center">
-                            <input id="remember-me" name="remember-me" type="checkbox" class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded cursor-pointer">
-                            <label for="remember-me" class="ml-2 block text-sm text-slate-600 cursor-pointer select-none">Ghi nhớ đăng nhập</label>
-                        </div>
-
-                        <button type="submit"
-                                class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all transform hover:-translate-y-0.5 active:scale-95">
-                            Đăng nhập
-                        </button>
-                    </form>
-
-                    <div class="text-center">
-                        <p class="text-sm text-slate-600">
-                            Chưa có tài khoản?
-                            <a href="${pageContext.request.contextPath}/register" class="font-semibold text-primary hover:text-primary-hover hover:underline ml-1">
-                                Đăng ký ngay
-                            </a>
-                        </p>
                     </div>
                 </div>
             </div>
+
+            <!-- Spacer for bottom scrolling -->
+            <div class="h-8 md:hidden"></div>
         </div>
     </div>
 
@@ -363,7 +368,10 @@
             if (isDynamicMode) {
                 staticBg.classList.add('hidden');
                 dynamicSky.classList.remove('hidden');
-                dynamicGame.classList.remove('hidden');
+                // Only show game on desktop
+                if (window.innerWidth >= 768) {
+                    dynamicGame.classList.remove('hidden');
+                }
                 btnIcon.innerText = 'wallpaper';
                 btnIcon.classList.remove('text-purple-600');
             } else {
@@ -374,6 +382,18 @@
                 btnIcon.classList.add('text-purple-600');
             }
         }
+
+        // Handle resize to show/hide game if in dynamic mode
+        window.addEventListener('resize', () => {
+            if (isDynamicMode) {
+                const dynamicGame = document.getElementById('dynamic-game');
+                if (window.innerWidth >= 768) {
+                    dynamicGame.classList.remove('hidden');
+                } else {
+                    dynamicGame.classList.add('hidden');
+                }
+            }
+        });
 
         // 2. Logic Game (Kéo thả rác)
         document.addEventListener('DOMContentLoaded', () => {
@@ -395,6 +415,9 @@
                 trash.addEventListener('touchstart', startDrag, {passive: false});
 
                 function startDrag(e) {
+                    // Only allow drag on desktop/larger screens where game is visible
+                    if (window.innerWidth < 768) return;
+
                     e.preventDefault();
 
                     if (tutorialArrow && tutorialArrow.style.opacity !== '0') {

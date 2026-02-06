@@ -92,7 +92,7 @@
         }
     </style>
 </head>
-<body class="h-screen w-screen overflow-hidden select-none bg-slate-50 relative">
+<body class="h-screen w-screen overflow-hidden select-none bg-slate-50 relative text-base">
 
     <!-- 1. STATIC BACKGROUND (Ẩn mặc định - Dành cho chế độ tĩnh) -->
     <div id="static-bg" class="absolute inset-0 z-0 hidden bg-[#f1f5f9] transform scale-105 transition-opacity duration-500"></div>
@@ -119,8 +119,8 @@
         </div>
     </div>
 
-    <!-- 3. DYNAMIC GAME LAND (Lớp Game Tương tác) -->
-    <div id="dynamic-game" class="absolute inset-0 z-10 pointer-events-none overflow-hidden">
+    <!-- 3. DYNAMIC GAME LAND (Lớp Game Tương tác - Ẩn trên Mobile) -->
+    <div id="dynamic-game" class="hidden md:block absolute inset-0 z-10 pointer-events-none overflow-hidden">
 
         <!-- CÂY CỐI -->
         <div class="absolute bottom-[75px] left-0 w-[50%] h-[400px] pointer-events-none flex items-end">
@@ -220,68 +220,73 @@
         <span class="material-symbols-rounded group-hover:rotate-12 transition-transform duration-500 text-2xl">wallpaper</span>
     </button>
 
-    <!-- FORGOT PASSWORD FORM OVERLAY -->
-    <div class="absolute inset-0 z-40 flex items-center justify-center p-4 pointer-events-none">
+    <!-- FORGOT PASSWORD FORM OVERLAY (Scrollable on Mobile) -->
+    <div class="absolute inset-0 z-40 overflow-y-auto pointer-events-none">
+        <div class="min-h-full w-full flex flex-col items-center justify-center p-4">
 
-        <!-- Mobile Logo (Absolute) -->
-        <div class="lg:hidden absolute top-6 left-6 flex items-center gap-2 pointer-events-auto">
-            <span class="material-symbols-outlined text-primary" style="font-size: 32px;">spa</span>
-            <span class="text-xl font-bold tracking-tight text-[#111816]">EcoGive</span>
-        </div>
-
-        <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 relative z-10 pointer-events-auto">
-            <div class="text-center mb-8">
-                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-50 mb-4">
-                    <span class="material-symbols-outlined text-primary" style="font-size: 32px;">lock_reset</span>
-                </div>
-                <h1 class="text-2xl font-bold text-slate-900 mb-2">Quên mật khẩu?</h1>
-                <p class="text-slate-500 text-sm px-4">Đừng lo lắng! Hãy nhập email đã đăng ký, chúng tôi sẽ gửi hướng dẫn đặt lại mật khẩu cho bạn.</p>
+            <!-- Mobile Logo (Visible only on mobile, in flow) -->
+            <div class="lg:hidden flex items-center gap-2 mb-6 pointer-events-auto animate-float-medium">
+                <span class="material-symbols-outlined text-primary drop-shadow-md" style="font-size: 40px;">spa</span>
+                <span class="text-2xl font-bold tracking-tight text-[#111816]">EcoGive</span>
             </div>
 
-            <!-- Alerts -->
-            <c:if test="${not empty message}">
-                <div class="mb-6 p-4 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm flex items-start gap-3">
-                    <span class="material-symbols-outlined text-lg mt-0.5">check_circle</span>
-                    <span>${message}</span>
-                </div>
-            </c:if>
-
-            <c:if test="${not empty error}">
-                <div class="mb-6 p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm flex items-start gap-3">
-                    <span class="material-symbols-outlined text-lg mt-0.5">error</span>
-                    <span>${error}</span>
-                </div>
-            </c:if>
-
-            <form id="forgotPasswordForm" method="post" action="${pageContext.request.contextPath}/forgot-password" class="space-y-6">
-                <div>
-                    <label for="email" class="block text-sm font-medium text-slate-700 mb-1.5">Email đăng ký</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <span class="material-symbols-outlined text-slate-400 text-[20px]">mail</span>
-                        </div>
-                        <input type="email" id="email" name="email"
-                               class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                               placeholder="nhapemail@example.com" required>
+            <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-6 md:p-8 relative z-10 pointer-events-auto">
+                <div class="text-center mb-6 md:mb-8">
+                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-50 mb-4">
+                        <span class="material-symbols-outlined text-primary" style="font-size: 32px;">lock_reset</span>
                     </div>
+                    <h1 class="text-xl md:text-2xl font-bold text-slate-900 mb-2">Quên mật khẩu?</h1>
+                    <p class="text-slate-500 text-sm px-2 md:px-4">Đừng lo lắng! Hãy nhập email đã đăng ký, chúng tôi sẽ gửi hướng dẫn đặt lại mật khẩu cho bạn.</p>
                 </div>
 
-                <button type="submit"
-                        class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all transform hover:-translate-y-0.5 active:scale-95">
-                    Gửi liên kết đặt lại mật khẩu
-                </button>
-            </form>
+                <!-- Alerts -->
+                <c:if test="${not empty message}">
+                    <div class="mb-6 p-4 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm flex items-start gap-3">
+                        <span class="material-symbols-outlined text-lg mt-0.5">check_circle</span>
+                        <span>${message}</span>
+                    </div>
+                </c:if>
 
-            <div class="mt-8 text-center">
-                <a href="${pageContext.request.contextPath}/login" class="inline-flex items-center text-sm font-medium text-slate-500 hover:text-primary transition-colors">
-                    <span class="material-symbols-outlined text-sm mr-2">arrow_back</span>
-                    Quay lại đăng nhập
-                </a>
+                <c:if test="${not empty error}">
+                    <div class="mb-6 p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm flex items-start gap-3">
+                        <span class="material-symbols-outlined text-lg mt-0.5">error</span>
+                        <span>${error}</span>
+                    </div>
+                </c:if>
+
+                <form id="forgotPasswordForm" method="post" action="${pageContext.request.contextPath}/forgot-password" class="space-y-6">
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-slate-700 mb-1.5">Email đăng ký</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="material-symbols-outlined text-slate-400 text-[20px]">mail</span>
+                            </div>
+                            <input type="email" id="email" name="email"
+                                   class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base md:text-sm"
+                                   placeholder="nhapemail@example.com" required>
+                        </div>
+                    </div>
+
+                    <button type="submit"
+                            class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all transform hover:-translate-y-0.5 active:scale-95">
+                        Gửi liên kết đặt lại mật khẩu
+                    </button>
+                </form>
+
+                <div class="mt-8 text-center">
+                    <a href="${pageContext.request.contextPath}/login" class="inline-flex items-center text-sm font-medium text-slate-500 hover:text-primary transition-colors">
+                        <span class="material-symbols-outlined text-sm mr-2">arrow_back</span>
+                        Quay lại đăng nhập
+                    </a>
+                </div>
             </div>
-        </div>
 
-        <div class="absolute bottom-4 text-center w-full text-slate-400 text-xs z-0 pointer-events-auto">
-            © <script>document.write(new Date().getFullYear())</script> EcoGive. All rights reserved.
+            <div class="mt-8 text-center w-full text-slate-400 text-xs z-0 pointer-events-auto">
+                © <script>document.write(new Date().getFullYear())</script> EcoGive. All rights reserved.
+            </div>
+
+            <!-- Spacer for bottom scrolling -->
+            <div class="h-8 md:hidden"></div>
         </div>
     </div>
 
@@ -299,7 +304,10 @@
             if (isDynamicMode) {
                 staticBg.classList.add('hidden');
                 dynamicSky.classList.remove('hidden');
-                dynamicGame.classList.remove('hidden');
+                // Only show game on desktop
+                if (window.innerWidth >= 768) {
+                    dynamicGame.classList.remove('hidden');
+                }
                 btnIcon.innerText = 'wallpaper';
                 btnIcon.classList.remove('text-purple-600');
             } else {
@@ -310,6 +318,18 @@
                 btnIcon.classList.add('text-purple-600');
             }
         }
+
+        // Handle resize to show/hide game if in dynamic mode
+        window.addEventListener('resize', () => {
+            if (isDynamicMode) {
+                const dynamicGame = document.getElementById('dynamic-game');
+                if (window.innerWidth >= 768) {
+                    dynamicGame.classList.remove('hidden');
+                } else {
+                    dynamicGame.classList.add('hidden');
+                }
+            }
+        });
 
         // 2. Logic Game (Kéo thả rác)
         document.addEventListener('DOMContentLoaded', () => {
@@ -331,6 +351,9 @@
                 trash.addEventListener('touchstart', startDrag, {passive: false});
 
                 function startDrag(e) {
+                    // Only allow drag on desktop/larger screens where game is visible
+                    if (window.innerWidth < 768) return;
+
                     e.preventDefault();
 
                     if (tutorialArrow && tutorialArrow.style.opacity !== '0') {

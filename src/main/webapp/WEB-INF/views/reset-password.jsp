@@ -92,7 +92,7 @@
         }
     </style>
 </head>
-<body class="h-screen w-screen overflow-hidden select-none bg-slate-50 relative">
+<body class="h-screen w-screen overflow-hidden select-none bg-slate-50 relative text-base">
 
     <!-- 1. STATIC BACKGROUND (Ẩn mặc định - Dành cho chế độ tĩnh) -->
     <div id="static-bg" class="absolute inset-0 z-0 hidden bg-[#f1f5f9] transform scale-105 transition-opacity duration-500"></div>
@@ -119,8 +119,8 @@
         </div>
     </div>
 
-    <!-- 3. DYNAMIC GAME LAND (Lớp Game Tương tác) -->
-    <div id="dynamic-game" class="absolute inset-0 z-10 pointer-events-none overflow-hidden">
+    <!-- 3. DYNAMIC GAME LAND (Lớp Game Tương tác - Ẩn trên Mobile) -->
+    <div id="dynamic-game" class="hidden md:block absolute inset-0 z-10 pointer-events-none overflow-hidden">
 
         <!-- CÂY CỐI -->
         <div class="absolute bottom-[75px] left-0 w-[50%] h-[400px] pointer-events-none flex items-end">
@@ -220,72 +220,77 @@
         <span class="material-symbols-rounded group-hover:rotate-12 transition-transform duration-500 text-2xl">wallpaper</span>
     </button>
 
-    <!-- RESET PASSWORD FORM OVERLAY -->
-    <div class="absolute inset-0 z-40 flex items-center justify-center p-4 pointer-events-none">
+    <!-- RESET PASSWORD FORM OVERLAY (Scrollable on Mobile) -->
+    <div class="absolute inset-0 z-40 overflow-y-auto pointer-events-none">
+        <div class="min-h-full w-full flex flex-col items-center justify-center p-4">
 
-        <!-- Mobile Logo (Absolute) -->
-        <div class="lg:hidden absolute top-6 left-6 flex items-center gap-2 pointer-events-auto">
-            <span class="material-symbols-outlined text-primary" style="font-size: 32px;">spa</span>
-            <span class="text-xl font-bold tracking-tight text-[#111816]">EcoGive</span>
-        </div>
-
-        <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 relative z-10 pointer-events-auto">
-            <div class="text-center mb-8">
-                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-50 mb-4">
-                    <span class="material-symbols-outlined text-primary" style="font-size: 32px;">key</span>
-                </div>
-                <h1 class="text-2xl font-bold text-slate-900 mb-2">Đặt lại mật khẩu</h1>
-                <p class="text-slate-500 text-sm px-4">Hãy tạo một mật khẩu mới mạnh mẽ và an toàn hơn.</p>
+            <!-- Mobile Logo (Visible only on mobile, in flow) -->
+            <div class="lg:hidden flex items-center gap-2 mb-6 pointer-events-auto animate-float-medium">
+                <span class="material-symbols-outlined text-primary drop-shadow-md" style="font-size: 40px;">spa</span>
+                <span class="text-2xl font-bold tracking-tight text-[#111816]">EcoGive</span>
             </div>
 
-            <!-- Thông báo lỗi -->
-            <c:if test="${not empty error}">
-                <div class="mb-6 p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm flex items-start gap-3">
-                    <span class="material-symbols-outlined text-lg mt-0.5">error</span>
-                    <span>${error}</span>
-                </div>
-            </c:if>
-
-            <form id="resetPasswordForm" method="post" action="${pageContext.request.contextPath}/reset-password" class="space-y-5">
-                <input type="hidden" name="token" value="${token}">
-
-                <div>
-                    <label for="password" class="block text-sm font-medium text-slate-700 mb-1.5">Mật khẩu mới</label>
-                    <div class="relative">
-                        <input type="password" id="password" name="password"
-                               class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all pr-10"
-                               placeholder="••••••••" required minlength="6">
-                        <button type="button" class="toggle-password absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none" data-target="password">
-                            <span class="material-symbols-outlined text-[20px]">visibility</span>
-                        </button>
+            <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-6 md:p-8 relative z-10 pointer-events-auto">
+                <div class="text-center mb-6 md:mb-8">
+                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-50 mb-4">
+                        <span class="material-symbols-outlined text-primary" style="font-size: 32px;">key</span>
                     </div>
+                    <h1 class="text-xl md:text-2xl font-bold text-slate-900 mb-2">Đặt lại mật khẩu</h1>
+                    <p class="text-slate-500 text-sm px-2 md:px-4">Hãy tạo một mật khẩu mới mạnh mẽ và an toàn hơn.</p>
                 </div>
 
-                <div>
-                    <label for="confirmPassword" class="block text-sm font-medium text-slate-700 mb-1.5">Xác nhận mật khẩu</label>
-                    <div class="relative">
-                        <input type="password" id="confirmPassword" name="confirmPassword"
-                               class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all pr-10"
-                               placeholder="••••••••" required minlength="6">
-                        <button type="button" class="toggle-password absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none" data-target="confirmPassword">
-                            <span class="material-symbols-outlined text-[20px]">visibility</span>
-                        </button>
+                <!-- Thông báo lỗi -->
+                <c:if test="${not empty error}">
+                    <div class="mb-6 p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm flex items-start gap-3">
+                        <span class="material-symbols-outlined text-lg mt-0.5">error</span>
+                        <span>${error}</span>
                     </div>
-                    <p id="passwordError" class="text-xs text-red-600 mt-1 hidden flex items-center gap-1">
-                        <span class="material-symbols-outlined text-sm">error</span>
-                        Mật khẩu xác nhận không khớp.
-                    </p>
-                </div>
+                </c:if>
 
-                <button type="submit" id="submitButton"
-                        class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all transform hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
-                    Đổi mật khẩu
-                </button>
-            </form>
-        </div>
+                <form id="resetPasswordForm" method="post" action="${pageContext.request.contextPath}/reset-password" class="space-y-5">
+                    <input type="hidden" name="token" value="${token}">
 
-        <div class="absolute bottom-4 text-center w-full text-slate-400 text-xs z-0 pointer-events-auto">
-            © <script>document.write(new Date().getFullYear())</script> EcoGive. All rights reserved.
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-slate-700 mb-1.5">Mật khẩu mới</label>
+                        <div class="relative">
+                            <input type="password" id="password" name="password"
+                                   class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all pr-10 text-base md:text-sm"
+                                   placeholder="••••••••" required minlength="6">
+                            <button type="button" class="toggle-password absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none" data-target="password">
+                                <span class="material-symbols-outlined text-[20px]">visibility</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="confirmPassword" class="block text-sm font-medium text-slate-700 mb-1.5">Xác nhận mật khẩu</label>
+                        <div class="relative">
+                            <input type="password" id="confirmPassword" name="confirmPassword"
+                                   class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all pr-10 text-base md:text-sm"
+                                   placeholder="••••••••" required minlength="6">
+                            <button type="button" class="toggle-password absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none" data-target="confirmPassword">
+                                <span class="material-symbols-outlined text-[20px]">visibility</span>
+                            </button>
+                        </div>
+                        <p id="passwordError" class="text-xs text-red-600 mt-1 hidden flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">error</span>
+                            Mật khẩu xác nhận không khớp.
+                        </p>
+                    </div>
+
+                    <button type="submit" id="submitButton"
+                            class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all transform hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                        Đổi mật khẩu
+                    </button>
+                </form>
+            </div>
+
+            <div class="mt-8 text-center w-full text-slate-400 text-xs z-0 pointer-events-auto">
+                © <script>document.write(new Date().getFullYear())</script> EcoGive. All rights reserved.
+            </div>
+
+            <!-- Spacer for bottom scrolling -->
+            <div class="h-8 md:hidden"></div>
         </div>
     </div>
 
@@ -303,7 +308,10 @@
             if (isDynamicMode) {
                 staticBg.classList.add('hidden');
                 dynamicSky.classList.remove('hidden');
-                dynamicGame.classList.remove('hidden');
+                // Only show game on desktop
+                if (window.innerWidth >= 768) {
+                    dynamicGame.classList.remove('hidden');
+                }
                 btnIcon.innerText = 'wallpaper';
                 btnIcon.classList.remove('text-purple-600');
             } else {
@@ -314,6 +322,18 @@
                 btnIcon.classList.add('text-purple-600');
             }
         }
+
+        // Handle resize to show/hide game if in dynamic mode
+        window.addEventListener('resize', () => {
+            if (isDynamicMode) {
+                const dynamicGame = document.getElementById('dynamic-game');
+                if (window.innerWidth >= 768) {
+                    dynamicGame.classList.remove('hidden');
+                } else {
+                    dynamicGame.classList.add('hidden');
+                }
+            }
+        });
 
         // 2. Logic Game (Kéo thả rác)
         document.addEventListener('DOMContentLoaded', () => {
@@ -335,6 +355,9 @@
                 trash.addEventListener('touchstart', startDrag, {passive: false});
 
                 function startDrag(e) {
+                    // Only allow drag on desktop/larger screens where game is visible
+                    if (window.innerWidth < 768) return;
+
                     e.preventDefault();
 
                     if (tutorialArrow && tutorialArrow.style.opacity !== '0') {
