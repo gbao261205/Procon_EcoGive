@@ -3,7 +3,6 @@ package ecogive.Controller;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import ecogive.Model.CollectionPoint;
-import ecogive.Model.CollectionPointType;
 import ecogive.Model.GeoPoint;
 import ecogive.Model.User;
 import ecogive.dao.CollectionPointDAO;
@@ -62,15 +61,8 @@ public class CompanyAddPointServlet extends HttpServlet {
             cp.setAddress(address);
             cp.setOwnerId(currentUser.getUserId()); // Gán ID của doanh nghiệp đang đăng nhập
             
-            try {
-                cp.setType(CollectionPointType.valueOf(typeStr));
-            } catch (IllegalArgumentException e) {
-                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                response.addProperty("status", "error");
-                response.addProperty("message", "Loại rác thải không hợp lệ.");
-                resp.getWriter().write(gson.toJson(response));
-                return;
-            }
+            // Đã sửa: Gán trực tiếp typeStr vào typeCode
+            cp.setTypeCode(typeStr);
 
             cp.setLocation(new GeoPoint(lng, lat));
 

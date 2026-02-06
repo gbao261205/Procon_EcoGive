@@ -27,6 +27,7 @@ public class AdminServlet extends HttpServlet {
     private final UserDAO userDAO = new UserDAO();
     private final ItemDAO itemDAO = new ItemDAO();
     private final CollectionPointDAO stationDAO = new CollectionPointDAO();
+    private final CollectionPointTypeDAO stationTypeDAO = new CollectionPointTypeDAO();
     private final GeminiService geminiService = new GeminiService();
 
     private boolean checkAdmin(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -76,6 +77,12 @@ public class AdminServlet extends HttpServlet {
                 case "stations":
                     listStations(req, resp);
                     break;
+                case "station-types":
+                    listStationTypes(req, resp);
+                    break;
+                case "delete-station-type":
+                    deleteStationType(req, resp);
+                    break;
                 default:
                     showDashboard(req, resp);
                     break;
@@ -112,6 +119,12 @@ public class AdminServlet extends HttpServlet {
             else if ("update-station".equals(action)) {
                 updateStation(req, resp);
             }
+            else if ("add-station-type".equals(action)) {
+                addStationType(req, resp);
+            }
+            else if ("update-station-type".equals(action)) {
+                updateStationType(req, resp);
+            }
             else if ("auto-approve".equals(action)) {
                 autoApproveItems(req, resp);
             }
@@ -129,16 +142,12 @@ public class AdminServlet extends HttpServlet {
         long itemId = Long.parseLong(req.getParameter("id"));
         int categoryId = Integer.parseInt(req.getParameter("category_id"));
         
-        // Xử lý ecoPoints: Nếu bị disable (null), giữ nguyên giá trị cũ hoặc lấy từ DB
-        // Tuy nhiên, để đơn giản, ta sẽ luôn gửi ecoPoints từ form (kể cả khi readonly)
-        // Hoặc nếu null thì lấy từ DB.
         String ecoPointsStr = req.getParameter("eco_points");
         BigDecimal ecoPoints;
         
         if (ecoPointsStr != null) {
              ecoPoints = new BigDecimal(ecoPointsStr);
         } else {
-             // Fallback: Lấy từ DB nếu không gửi lên
              Item item = itemDAO.findById(itemId);
              ecoPoints = item.getEcoPoints();
         }
@@ -148,7 +157,6 @@ public class AdminServlet extends HttpServlet {
     }
 
     private void autoApproveItems(HttpServletRequest req, HttpServletResponse resp) throws SQLException, IOException {
-        // 1. Lấy danh sách item PENDING (giới hạn 20 item mỗi lần để tránh timeout)
         List<Item> pendingItems = itemDAO.findAll(20, 0, "PENDING");
         List<Category> categories = categoryDAO.findAll();
         
@@ -156,19 +164,16 @@ public class AdminServlet extends HttpServlet {
         int processedCount = 0;
 
         for (Item item : pendingItems) {
-            // Bỏ qua nếu ảnh local (không phải http) vì Gemini không đọc được file local
             if (item.getImageUrl() == null || !item.getImageUrl().startsWith("http")) {
                 continue;
             }
 
-            // Tìm tên category
             String categoryName = categories.stream()
                     .filter(c -> c.getCategoryId() == item.getCategoryId())
                     .map(Category::getName)
                     .findFirst()
                     .orElse("Unknown");
 
-            // Gọi Gemini
             boolean isApproved = geminiService.checkImageCategory(item.getImageUrl(), categoryName);
             
             if (isApproved) {
@@ -178,7 +183,6 @@ public class AdminServlet extends HttpServlet {
             processedCount++;
         }
 
-        // Redirect kèm thông báo
         resp.sendRedirect(req.getContextPath() + "/admin?action=items&status=PENDING&msg=AutoApproved_" + approvedCount + "_of_" + processedCount);
     }
 
@@ -196,7 +200,7 @@ public class AdminServlet extends HttpServlet {
         try {
             u.setRole(Role.valueOf(roleStr.toUpperCase()));
         } catch (IllegalArgumentException | NullPointerException e) {
-            u.setRole(Role.USER); // Default to USER if role is invalid
+            u.setRole(Role.USER);
         }
 
         userDAO.insert(u);
@@ -218,7 +222,6 @@ public class AdminServlet extends HttpServlet {
             try {
                 oldUser.setRole(Role.valueOf(roleStr.toUpperCase()));
             } catch (IllegalArgumentException | NullPointerException e) {
-                // Keep the old role if the new one is invalid
             }
 
             if (password != null && !password.trim().isEmpty()) {
@@ -238,18 +241,16 @@ public class AdminServlet extends HttpServlet {
     
     private void addStation(HttpServletRequest req, HttpServletResponse resp) throws IOException, SQLException {
         String name = req.getParameter("name");
-        String typeStr = req.getParameter("type");
+        String typeCode = req.getParameter("type");
         String address = req.getParameter("address");
         double lat = Double.parseDouble(req.getParameter("latitude"));
         double lng = Double.parseDouble(req.getParameter("longitude"));
 
-        CollectionPointType type = CollectionPointType.valueOf(typeStr);
         CollectionPoint p = new CollectionPoint();
         p.setName(name);
-        p.setType(type);
+        p.setTypeCode(typeCode);
         p.setAddress(address);
         p.setLocation(new GeoPoint(lng, lat));
-        // Note: owner_id is not set here, so it will be NULL (or default), indicating an admin-created point.
 
         stationDAO.insert(p);
         resp.sendRedirect(req.getContextPath() + "/admin?action=stations");
@@ -258,16 +259,15 @@ public class AdminServlet extends HttpServlet {
     private void updateStation(HttpServletRequest req, HttpServletResponse resp) throws IOException, SQLException {
         long id = Long.parseLong(req.getParameter("id"));
         String name = req.getParameter("name");
-        String typeStr = req.getParameter("type");
+        String typeCode = req.getParameter("type");
         String address = req.getParameter("address");
         double lat = Double.parseDouble(req.getParameter("latitude"));
         double lng = Double.parseDouble(req.getParameter("longitude"));
 
-        CollectionPointType type = CollectionPointType.valueOf(typeStr);
         CollectionPoint p = new CollectionPoint();
         p.setPointId(id);
         p.setName(name);
-        p.setType(type);
+        p.setTypeCode(typeCode);
         p.setAddress(address);
         p.setLocation(new GeoPoint(lng, lat));
 
@@ -282,14 +282,12 @@ public class AdminServlet extends HttpServlet {
         req.setAttribute("totalEcoPoints", dashboardDAO.sumTotalEcoPoints());
         req.setAttribute("totalStations", dashboardDAO.countCollectionPoints());
 
-        // Prepare category chart data as JSON arrays for the JSP
         try {
             java.util.LinkedHashMap<String, Integer> counts = dashboardDAO.getCategoryCounts();
             StringJoiner labels = new StringJoiner(",", "[", "]");
             StringJoiner data = new StringJoiner(",", "[", "]");
             for (java.util.Map.Entry<String, Integer> e : counts.entrySet()) {
                 String name = e.getKey() == null ? "Unknown" : e.getKey();
-                // escape quotes and backslashes for safe embedding
                 String safe = name.replace("\\", "\\\\").replace("\"", "\\\"");
                 labels.add("\"" + safe + "\"");
                 data.add(String.valueOf(e.getValue()));
@@ -297,7 +295,6 @@ public class AdminServlet extends HttpServlet {
             req.setAttribute("categoryLabelsJson", labels.toString());
             req.setAttribute("categoryDataJson", data.toString());
         } catch (Exception ex) {
-            // If anything fails, set empty arrays to avoid JS errors
             req.setAttribute("categoryLabelsJson", "[]");
             req.setAttribute("categoryDataJson", "[]");
         }
@@ -343,7 +340,9 @@ public class AdminServlet extends HttpServlet {
     
     private void listStations(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, SQLException {
         List<CollectionPoint> list = stationDAO.findAll();
+        List<CollectionPointType> types = stationTypeDAO.findAll();
         req.setAttribute("stations", list);
+        req.setAttribute("types", types);
         req.getRequestDispatcher("/WEB-INF/views/admin/station.jsp").forward(req, resp);
     }
 
@@ -364,7 +363,7 @@ public class AdminServlet extends HttpServlet {
         String pageStr = req.getParameter("page");
         
         int page = 1;
-        int limit = 10; // 10 items per page
+        int limit = 10;
         
         if (pageStr != null && !pageStr.isEmpty()) {
             try {
@@ -377,7 +376,6 @@ public class AdminServlet extends HttpServlet {
         
         int offset = (page - 1) * limit;
         
-        // Nếu status rỗng thì coi như null để DAO xử lý
         if (statusStr != null && statusStr.trim().isEmpty()) {
             statusStr = null;
         }
@@ -386,20 +384,18 @@ public class AdminServlet extends HttpServlet {
         int totalItems = itemDAO.countAll(statusStr);
         int totalPages = (int) Math.ceil((double) totalItems / limit);
 
-        // --- MỚI: Lấy danh sách Category và tạo Map ---
         List<Category> categories = categoryDAO.findAll();
         Map<Integer, String> categoryMap = new HashMap<>();
         for (Category c : categories) {
             categoryMap.put(c.getCategoryId(), c.getName());
         }
         req.setAttribute("categoryMap", categoryMap);
-        req.setAttribute("categories", categories); // Truyền thêm list để dùng trong dropdown
-        // ----------------------------------------------
+        req.setAttribute("categories", categories);
 
         req.setAttribute("items", items);
         req.setAttribute("currentPage", page);
         req.setAttribute("totalPages", totalPages);
-        req.setAttribute("currentStatus", statusStr); // Để giữ trạng thái filter khi chuyển trang
+        req.setAttribute("currentStatus", statusStr);
 
         req.getRequestDispatcher("/WEB-INF/views/admin/items.jsp").forward(req, resp);
     }
@@ -408,5 +404,44 @@ public class AdminServlet extends HttpServlet {
         long id = Long.parseLong(req.getParameter("id"));
         itemDAO.updateStatus(id, status);
         resp.sendRedirect(req.getContextPath() + "/admin?action=items");
+    }
+
+    // --- Station Types Management ---
+
+    private void listStationTypes(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, SQLException {
+        req.setAttribute("types", stationTypeDAO.findAll());
+        req.getRequestDispatcher("/WEB-INF/views/admin/station-types.jsp").forward(req, resp);
+    }
+
+    private void addStationType(HttpServletRequest req, HttpServletResponse resp) throws SQLException, IOException {
+        String code = req.getParameter("code");
+        String name = req.getParameter("name");
+        String desc = req.getParameter("description");
+        String icon = req.getParameter("icon");
+
+        CollectionPointType type = new CollectionPointType(code, name, icon);
+        type.setDescription(desc);
+
+        stationTypeDAO.insert(type);
+        resp.sendRedirect(req.getContextPath() + "/admin?action=station-types");
+    }
+
+    private void updateStationType(HttpServletRequest req, HttpServletResponse resp) throws SQLException, IOException {
+        String code = req.getParameter("code");
+        String name = req.getParameter("name");
+        String desc = req.getParameter("description");
+        String icon = req.getParameter("icon");
+
+        CollectionPointType type = new CollectionPointType(code, name, icon);
+        type.setDescription(desc);
+
+        stationTypeDAO.update(type);
+        resp.sendRedirect(req.getContextPath() + "/admin?action=station-types");
+    }
+
+    private void deleteStationType(HttpServletRequest req, HttpServletResponse resp) throws SQLException, IOException {
+        String code = req.getParameter("code");
+        stationTypeDAO.delete(code);
+        resp.sendRedirect(req.getContextPath() + "/admin?action=station-types");
     }
 }

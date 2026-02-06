@@ -1,7 +1,6 @@
 package ecogive.dao;
 
 import ecogive.Model.CollectionPoint;
-import ecogive.Model.CollectionPointType;
 import ecogive.Model.GeoPoint;
 import ecogive.util.DatabaseConnection;
 
@@ -25,10 +24,13 @@ public class CollectionPointDAO {
     }
 
     public List<CollectionPoint> findAll() throws SQLException {
-        // Sửa SQL: LEFT JOIN với bảng users để lấy owner_name và owner_role
-        String sql = "SELECT cp.*, ST_X(cp.location) AS longitude, ST_Y(cp.location) AS latitude, u.username AS owner_name, u.role AS owner_role " +
+        // JOIN với bảng collection_point_types để lấy tên hiển thị và icon
+        String sql = "SELECT cp.*, ST_X(cp.location) AS longitude, ST_Y(cp.location) AS latitude, " +
+                     "u.username AS owner_name, u.role AS owner_role, " +
+                     "cpt.display_name AS type_name, cpt.icon AS type_icon " +
                      "FROM collection_points cp " +
                      "LEFT JOIN users u ON cp.owner_id = u.user_id " +
+                     "LEFT JOIN collection_point_types cpt ON cp.type = cpt.type_code " +
                      "ORDER BY cp.point_id DESC";
         List<CollectionPoint> list = new ArrayList<>();
         try (Connection conn = getConnection();
@@ -44,8 +46,11 @@ public class CollectionPointDAO {
     }
 
     public List<CollectionPoint> findByOwnerId(long ownerId) throws SQLException {
-        String sql = "SELECT *, ST_X(location) AS longitude, ST_Y(location) AS latitude " +
-                     "FROM collection_points WHERE owner_id = ? ORDER BY point_id DESC";
+        String sql = "SELECT cp.*, ST_X(cp.location) AS longitude, ST_Y(cp.location) AS latitude, " +
+                     "cpt.display_name AS type_name, cpt.icon AS type_icon " +
+                     "FROM collection_points cp " +
+                     "LEFT JOIN collection_point_types cpt ON cp.type = cpt.type_code " +
+                     "WHERE cp.owner_id = ? ORDER BY cp.point_id DESC";
         List<CollectionPoint> list = new ArrayList<>();
         try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -67,7 +72,7 @@ public class CollectionPointDAO {
         try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setString(1, p.getName());
-            stmt.setString(2, p.getType().name());
+            stmt.setString(2, p.getTypeCode());
             stmt.setString(3, p.getAddress());
             stmt.setString(4, toWKT(p.getLocation()));
             if (p.getOwnerId() == 0) {
@@ -96,7 +101,7 @@ public class CollectionPointDAO {
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, p.getName());
-            ps.setString(2, p.getType().name());
+            ps.setString(2, p.getTypeCode());
             ps.setString(3, p.getAddress());
             ps.setString(4, toWKT(p.getLocation()));
             ps.setLong(5, p.getPointId());
@@ -129,15 +134,18 @@ public class CollectionPointDAO {
         }
     }
     
-    public List<CollectionPoint> findByType(CollectionPointType type) throws SQLException {
-        String sql = "SELECT cp.*, ST_X(cp.location) AS longitude, ST_Y(cp.location) AS latitude, u.username AS owner_name, u.role AS owner_role " +
+    public List<CollectionPoint> findByType(String typeCode) throws SQLException {
+        String sql = "SELECT cp.*, ST_X(cp.location) AS longitude, ST_Y(cp.location) AS latitude, " +
+                     "u.username AS owner_name, u.role AS owner_role, " +
+                     "cpt.display_name AS type_name, cpt.icon AS type_icon " +
                      "FROM collection_points cp " +
                      "LEFT JOIN users u ON cp.owner_id = u.user_id " +
+                     "LEFT JOIN collection_point_types cpt ON cp.type = cpt.type_code " +
                      "WHERE cp.type = ? ORDER BY cp.point_id DESC";
         List<CollectionPoint> list = new ArrayList<>();
         try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, type.name());
+            stmt.setString(1, typeCode);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     list.add(mapRow(rs));
@@ -166,16 +174,15 @@ public class CollectionPointDAO {
             if ("owner_role".equalsIgnoreCase(columnLabel)) {
                 cp.setOwnerRole(rs.getString("owner_role"));
             }
-        }
-
-        String typeStr = rs.getString("type");
-        if (typeStr != null) {
-            try {
-                cp.setType(CollectionPointType.valueOf(typeStr));
-            } catch (IllegalArgumentException e) {
-                System.err.println("Unknown type in DB: " + typeStr);
+            if ("type_name".equalsIgnoreCase(columnLabel)) {
+                cp.setTypeName(rs.getString("type_name"));
+            }
+            if ("type_icon".equalsIgnoreCase(columnLabel)) {
+                cp.setTypeIcon(rs.getString("type_icon"));
             }
         }
+
+        cp.setTypeCode(rs.getString("type"));
         cp.setAddress(rs.getString("address"));
         cp.setLocation(fromResultSet(rs));
         return cp;

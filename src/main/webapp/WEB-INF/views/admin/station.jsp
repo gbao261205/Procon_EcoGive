@@ -47,16 +47,9 @@
                                 <div class="text-xs text-slate-400 font-mono mt-0.5">#${st.pointId}</div>
                             </td>
                             <td class="px-6 py-4">
-                                <c:choose>
-                                    <c:when test="${st.type == 'BATTERY'}"><span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-yellow-50 text-yellow-700 border border-yellow-100">🔋 Pin cũ</span></c:when>
-                                    <c:when test="${st.type == 'E_WASTE'}"><span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100">💻 Điện tử</span></c:when>
-                                    <c:when test="${st.type == 'TEXTILE'}"><span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-purple-50 text-purple-700 border border-purple-100">👕 Quần áo</span></c:when>
-                                    <c:when test="${st.type == 'MEDICAL'}"><span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-red-50 text-red-700 border border-red-100">💊 Y tế</span></c:when>
-                                    <c:when test="${st.type == 'CHEMICAL'}"><span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-orange-50 text-orange-700 border border-orange-100">🧪 Hóa chất</span></c:when>
-                                    <c:when test="${st.type == 'DEALER'}"><span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">🏪 Đại lý</span></c:when>
-                                    <c:when test="${st.type == 'INDIVIDUAL'}"><span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-teal-50 text-teal-700 border border-teal-100">👤 Cá nhân</span></c:when>
-                                    <c:otherwise><span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200">❓ Khác</span></c:otherwise>
-                                </c:choose>
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                                    <span class="text-base">${st.typeIcon}</span> ${st.typeName}
+                                </span>
                             </td>
                             <td class="px-6 py-4">
                                 <div class="max-w-xs truncate text-slate-600" title="${st.address}">
@@ -80,7 +73,7 @@
                             </td>
                             <td class="px-6 py-4 text-right">
                                 <div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onclick="openModal('${st.pointId}', '${st.name}', '${st.type}', '${st.address}', ${st.location.latitude}, ${st.location.longitude})"
+                                    <button onclick="openModal('${st.pointId}', '${st.name}', '${st.typeCode}', '${st.address}', ${st.location.latitude}, ${st.location.longitude})"
                                             class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Sửa">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                                     </button>
@@ -135,13 +128,9 @@
                             <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Loại hình</label>
                             <div class="relative">
                                 <select id="type" name="type" class="w-full appearance-none rounded-xl border-slate-200 bg-slate-50 px-4 py-2.5 text-sm focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all cursor-pointer">
-                                    <option value="BATTERY">🔋 Pin cũ</option>
-                                    <option value="E_WASTE">💻 Rác điện tử</option>
-                                    <option value="TEXTILE">👕 Quần áo</option>
-                                    <option value="MEDICAL">💊 Y tế</option>
-                                    <option value="CHEMICAL">🧪 Hóa chất</option>
-                                    <option value="DEALER">🏪 Đại lý ve chai</option>
-                                    <option value="INDIVIDUAL">👤 Cá nhân</option>
+                                    <c:forEach var="t" items="${types}">
+                                        <option value="${t.typeCode}">${t.icon} ${t.displayName}</option>
+                                    </c:forEach>
                                 </select>
                                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">
                                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>

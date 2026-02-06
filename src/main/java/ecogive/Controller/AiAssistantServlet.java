@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import ecogive.Model.CollectionPoint;
-import ecogive.Model.CollectionPointType;
 import ecogive.Model.Item;
 import ecogive.dao.CollectionPointDAO;
 import ecogive.dao.ItemDAO;
@@ -66,7 +65,7 @@ public class AiAssistantServlet extends HttpServlet {
 
         String lowerQuestion = question.toLowerCase().trim();
         String answer = "";
-        CollectionPointType typeToSearch = null;
+        String typeToSearch = null;
 
         try {
             // --- 1. TÌM SẢN PHẨM THEO TÊN ---
@@ -132,31 +131,31 @@ public class AiAssistantServlet extends HttpServlet {
             else {
                 if (lowerQuestion.contains("pin") || lowerQuestion.contains("ắc quy")) {
                     answer = "Pin cũ chứa kim loại nặng độc hại, tuyệt đối không bỏ thùng rác thường. Bạn có thể mang đến các điểm thu gom Pin dưới đây:";
-                    typeToSearch = CollectionPointType.BATTERY;
+                    typeToSearch = "BATTERY";
                 }
                 else if (lowerQuestion.contains("thuốc") || lowerQuestion.contains("y tế") || lowerQuestion.contains("kim tiêm")) {
                     answer = "Rác thải y tế cần xử lý chuyên biệt để tránh lây nhiễm. Hãy liên hệ các trạm y tế hoặc điểm thu gom sau:";
-                    typeToSearch = CollectionPointType.MEDICAL;
+                    typeToSearch = "MEDICAL";
                 }
                 else if (lowerQuestion.contains("hóa chất") || lowerQuestion.contains("tẩy rửa") || lowerQuestion.contains("sơn")) {
                     answer = "Hóa chất thừa cần được xử lý tại các cơ sở chuyên dụng. Dưới đây là gợi ý cho bạn:";
-                    typeToSearch = CollectionPointType.CHEMICAL;
+                    typeToSearch = "CHEMICAL";
                 }
                 else if (lowerQuestion.contains("điện tử") || lowerQuestion.contains("máy tính") || lowerQuestion.contains("điện thoại") || lowerQuestion.contains("tivi")) {
                     answer = "Đồ điện tử cũ (E-Waste) có thể tái chế được các linh kiện quý. Bạn có thể mang đến các điểm này:";
-                    typeToSearch = CollectionPointType.E_WASTE;
+                    typeToSearch = "E_WASTE";
                 }
                 else if (lowerQuestion.contains("quần áo") || lowerQuestion.contains("vải")) {
                     answer = "Quần áo cũ có thể quyên góp từ thiện hoặc tái chế. Xem các điểm nhận đồ vải tại đây:";
-                    typeToSearch = CollectionPointType.TEXTILE;
+                    typeToSearch = "TEXTILE";
                 }
                 else if (lowerQuestion.contains("bán") || lowerQuestion.contains("ve chai") || lowerQuestion.contains("đồng nát")) {
                     answer = "Nếu bạn muốn bán phế liệu, hãy liên hệ các đại lý hoặc cá nhân thu mua uy tín gần đây:";
-                    typeToSearch = CollectionPointType.DEALER;
+                    typeToSearch = "DEALER";
                 }
                 else if (lowerQuestion.contains("điểm thu gom") || lowerQuestion.contains("trạm")) {
                      answer = "Dưới đây là một số điểm thu gom gần đây:";
-                     typeToSearch = CollectionPointType.BATTERY; 
+                     typeToSearch = "BATTERY"; // Mặc định
                 }
                 else {
                     answer = "Xin lỗi, tôi chưa hiểu rõ yêu cầu. Bạn có thể hỏi về: 'tìm sản phẩm', 'điểm thu gom pin', 'cách tích điểm', hoặc 'hướng dẫn cách tái chế: [tên vật phẩm]'...";

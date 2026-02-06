@@ -55,15 +55,24 @@ CREATE TABLE items (
 );
 CREATE SPATIAL INDEX sp_index_location ON items (location);
 
+-- Bảng MỚI: Loại hình điểm thu gom (Collection Point Types)
+CREATE TABLE collection_point_types (
+    type_code VARCHAR(50) PRIMARY KEY,
+    display_name VARCHAR(100) NOT NULL,
+    description TEXT,
+    icon VARCHAR(50) DEFAULT '♻️' -- Icon hiển thị
+);
+
 -- Bảng 4: Điểm Thu gom (Collection Points)
 CREATE TABLE collection_points (
     point_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    type ENUM('E_WASTE', 'BATTERY', 'TEXTILE', 'MEDICAL', 'CHEMICAL', 'DEALER', 'INDIVIDUAL') NOT NULL,
+    type VARCHAR(50) NOT NULL, -- Thay đổi từ ENUM sang VARCHAR để tham chiếu
     address TEXT,
     location POINT NOT NULL,
     owner_id BIGINT NULL,
-    FOREIGN KEY (owner_id) REFERENCES users(user_id) ON DELETE SET NULL
+    FOREIGN KEY (owner_id) REFERENCES users(user_id) ON DELETE SET NULL,
+    FOREIGN KEY (type) REFERENCES collection_point_types(type_code) ON UPDATE CASCADE
 );
 CREATE SPATIAL INDEX sp_index_cp_location ON collection_points (location);
 

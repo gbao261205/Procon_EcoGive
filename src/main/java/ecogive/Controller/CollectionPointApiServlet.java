@@ -51,7 +51,7 @@ public class CollectionPointApiServlet extends HttpServlet {
         public StationDTO(CollectionPoint p) {
             this.pointId = p.getPointId();
             this.name = p.getName();
-            this.type = p.getType().name();
+            this.type = p.getTypeCode(); // Đã sửa: dùng getTypeCode() thay vì getType().name()
             this.address = p.getAddress();
             this.ownerRole = p.getOwnerRole(); // Lấy dữ liệu từ model
             if (p.getLocation() != null) {

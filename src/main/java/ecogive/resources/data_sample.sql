@@ -1,3 +1,13 @@
+-- Chèn dữ liệu mặc định cho loại hình
+INSERT INTO collection_point_types (type_code, display_name, icon) VALUES
+('E_WASTE', 'Rác thải điện tử', '💻'),
+('BATTERY', 'Pin cũ', '🔋'),
+('TEXTILE', 'Quần áo', '👕'),
+('MEDICAL', 'Y tế', '💊'),
+('CHEMICAL', 'Hóa chất', '🧪'),
+('DEALER', 'Đại lý', '🏪'),
+('INDIVIDUAL', 'Cá nhân', '👤');
+
 -- 3.1 Users
 INSERT INTO users (username, email, password_hash, role, phone_number, address, eco_points, reputation_score, is_verified) VALUES
 ('admin', 'admin@ecogive.com', '$2a$10$1NLA.hCR59G19C4zWfVx5.IZQ1KO77LmNrKJzk.GuvmuAmR6Jbzxm', 'ADMIN', '0900000001', 'HQ EcoGive, TP.HCM', 1000.00, 5.00, 1),

@@ -62,6 +62,15 @@
             </span>
             Điểm tập kết
         </a>
+
+        <a href="${pageContext.request.contextPath}/admin?action=station-types"
+           class="group flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200
+           ${param.action == 'station-types' ? 'bg-emerald-50 text-emerald-700 shadow-sm' : 'text-slate-600 hover:bg-slate-50 hover:text-emerald-600'}">
+            <span class="${param.action == 'station-types' ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-500'} transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+            </span>
+            Loại hình trạm
+        </a>
     </nav>
 
     <!-- Footer -->

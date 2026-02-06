@@ -3,7 +3,6 @@ package ecogive.Controller;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import ecogive.Model.CollectionPoint;
-import ecogive.Model.CollectionPointType;
 import ecogive.Model.GeoPoint;
 import ecogive.Model.User;
 import ecogive.Model.Role;
@@ -55,10 +54,11 @@ public class CreateCollectionPointServlet extends HttpServlet {
             cp.setAddress(address);
             cp.setOwnerId(currentUser.getUserId()); // Set owner
             
-            try {
-                cp.setType(CollectionPointType.valueOf(typeStr));
-            } catch (IllegalArgumentException e) {
-                cp.setType(CollectionPointType.E_WASTE); // Default
+            // Đã sửa: Gán trực tiếp typeStr vào typeCode, nếu null thì gán mặc định
+            if (typeStr == null || typeStr.isEmpty()) {
+                cp.setTypeCode("E_WASTE"); // Default
+            } else {
+                cp.setTypeCode(typeStr);
             }
 
             cp.setLocation(new GeoPoint(lng, lat));
