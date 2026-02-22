@@ -113,6 +113,59 @@ public class ItemDAO {
     }
     // --------------------------------------------------
     
+    // --- MỚI: Tìm kiếm theo khoảng cách và phân trang ---
+    public List<Item> findAvailableSortedByDistance(double lat, double lng, int limit, int offset, Integer categoryId) throws SQLException {
+        // Sử dụng ST_Distance_Sphere để tính khoảng cách (đơn vị mét)
+        // Sắp xếp tăng dần theo khoảng cách
+        StringBuilder sql = new StringBuilder(
+            "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude, u.username, " +
+            "ST_Distance_Sphere(i.location, ST_GeomFromText(?)) AS distance " +
+            "FROM items i " +
+            "JOIN users u ON i.giver_id = u.user_id " +
+            "WHERE i.status = 'AVAILABLE' "
+        );
+        
+        if (categoryId != null) {
+            sql.append(" AND i.category_id = ? ");
+        }
+        
+        sql.append("ORDER BY distance ASC LIMIT ? OFFSET ?");
+
+        String pointWKT = "POINT(" + lng + " " + lat + ")";
+        List<Item> list = new ArrayList<>();
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
+
+            int paramIndex = 1;
+            stmt.setString(paramIndex++, pointWKT);
+            
+            if (categoryId != null) {
+                stmt.setInt(paramIndex++, categoryId);
+            }
+            
+            stmt.setInt(paramIndex++, limit);
+            stmt.setInt(paramIndex++, offset);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Item item = mapRow(rs);
+                    item.setGiverName(rs.getString("username"));
+                    list.add(item);
+                }
+            }
+        } catch (Exception e) {
+            throw new SQLException(e);
+        }
+        return list;
+    }
+    
+    // Overload cho tương thích cũ
+    public List<Item> findAvailableSortedByDistance(double lat, double lng, int limit, int offset) throws SQLException {
+        return findAvailableSortedByDistance(lat, lng, limit, offset, null);
+    }
+    // ----------------------------------------------------
+
     public List<Item> findAll() throws SQLException {
         return findAll(1000, 0, null); // Default fallback
     }

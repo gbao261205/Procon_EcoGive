@@ -103,6 +103,18 @@
     <div class="flex items-center gap-2 md:gap-4">
         <!-- Action Buttons Group (Desktop) -->
         <div class="hidden md:flex items-center gap-3 pr-4 border-r border-slate-200">
+            <!-- NEW BUTTONS: Show All Items & Points -->
+            <button onclick="openAllItemsList()" class="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-slate-600 bg-slate-50 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-all" title="Danh sách vật phẩm">
+                <span class="material-symbols-outlined text-[20px]">inventory_2</span>
+                <span>Vật phẩm</span>
+            </button>
+            <button onclick="openAllPointsList()" class="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-slate-600 bg-slate-50 hover:bg-green-50 hover:text-green-600 rounded-lg transition-all" title="Danh sách điểm tập kết">
+                <span class="material-symbols-outlined text-[20px]">recycling</span>
+                <span>Điểm tập kết</span>
+            </button>
+            <div class="w-px h-6 bg-slate-200 mx-1"></div>
+            <!-- End New Buttons -->
+
             <c:if test="${sessionScope.currentUser.role == 'ADMIN'}">
                 <a href="${pageContext.request.contextPath}/admin?action=dashboard"
                    class="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-slate-600 bg-slate-50 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-all" title="Trang quản trị">
@@ -239,7 +251,72 @@
 
 <!-- MODALS -->
 
-<!-- 1. Congrats Modal -->
+<!-- 1. All Items List Modal -->
+<div id="allItemsModal" class="fixed inset-0 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[80]">
+    <div class="bg-white rounded-2xl w-full max-w-2xl shadow-2xl relative flex flex-col max-h-[85vh] overflow-hidden modal-animate">
+        <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-white shrink-0">
+            <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">inventory_2</span>
+                Tất cả vật phẩm
+            </h3>
+            <button onclick="document.getElementById('allItemsModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="p-3 bg-slate-50 border-b border-slate-100 shrink-0 space-y-2">
+            <input type="text" id="searchItemInput" onkeyup="filterList('searchItemInput', 'allItemsList')" placeholder="Tìm kiếm vật phẩm..." class="w-full px-4 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-primary outline-none">
+
+            <!-- NEW: Filter Dropdown -->
+            <select id="filterItemCategory" onchange="openAllItemsList()" class="w-full px-4 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-primary outline-none bg-white">
+                <option value="">Tất cả danh mục</option>
+                <!-- Categories will be loaded here -->
+            </select>
+        </div>
+        <div id="allItemsList" class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar bg-slate-50">
+            <!-- Items will be injected here -->
+            <div class="text-center text-slate-500 py-8">Đang tải...</div>
+        </div>
+    </div>
+</div>
+
+<!-- 2. All Points List Modal -->
+<div id="allPointsModal" class="fixed inset-0 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[80]">
+    <div class="bg-white rounded-2xl w-full max-w-2xl shadow-2xl relative flex flex-col max-h-[85vh] overflow-hidden modal-animate">
+        <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-white shrink-0">
+            <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+                <span class="material-symbols-outlined text-green-600">recycling</span>
+                Tất cả điểm tập kết
+            </h3>
+            <button onclick="document.getElementById('allPointsModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="p-3 bg-slate-50 border-b border-slate-100 shrink-0 space-y-2">
+            <input type="text" id="searchPointInput" onkeyup="filterList('searchPointInput', 'allPointsList')" placeholder="Tìm kiếm điểm tập kết..." class="w-full px-4 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-primary outline-none">
+
+            <!-- NEW: Filter Dropdowns -->
+            <div class="flex gap-2">
+                <select id="filterPointType" onchange="openAllPointsList()" class="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-primary outline-none bg-white">
+                    <option value="">Tất cả loại rác</option>
+                    <c:forEach var="t" items="${pointTypes}">
+                        <option value="${t.typeCode}">${t.displayName}</option>
+                    </c:forEach>
+                </select>
+                <select id="filterPointOwner" onchange="openAllPointsList()" class="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-primary outline-none bg-white">
+                    <option value="">Tất cả nguồn gốc</option>
+                    <option value="PUBLIC">♻️ Công cộng</option>
+                    <option value="COMPANY">🏢 Doanh nghiệp</option>
+                </select>
+            </div>
+        </div>
+        <div id="allPointsList" class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar bg-slate-50">
+            <!-- Points will be injected here -->
+            <div class="text-center text-slate-500 py-8">Đang tải...</div>
+        </div>
+    </div>
+</div>
+
+<!-- 3. Congrats Modal -->
 <div id="congratsModal" class="fixed inset-0 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
     <div class="bg-white p-8 rounded-2xl w-full max-w-sm shadow-2xl text-center modal-animate relative">
         <button onclick="document.getElementById('congratsModal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition">
@@ -258,7 +335,7 @@
     </div>
 </div>
 
-<!-- 2. Rating Modal -->
+<!-- 4. Rating Modal -->
 <div id="ratingModal" class="fixed inset-0 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[70]">
     <div class="bg-white p-6 rounded-2xl w-full max-w-sm shadow-2xl relative modal-animate">
         <h2 class="text-xl font-bold text-slate-800 text-center mb-2">Đánh giá người tặng</h2>
@@ -287,7 +364,7 @@
     </div>
 </div>
 
-<!-- 3. Give Away Modal (Post Item) -->
+<!-- 5. Give Away Modal (Post Item) -->
 <div id="giveAwayModal" class="fixed inset-0 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
     <div class="bg-white p-6 md:p-8 rounded-2xl w-full max-w-lg shadow-2xl relative modal-animate max-h-[90vh] overflow-y-auto">
         <button onclick="closeModal('giveAwayModal')" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 transition">
@@ -358,7 +435,7 @@
     </div>
 </div>
 
-<!-- 4. Add Point Modal -->
+<!-- 6. Add Point Modal -->
 <div id="addPointModal" class="fixed inset-0 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
     <div class="bg-white p-6 md:p-8 rounded-2xl w-full max-w-lg shadow-2xl relative modal-animate max-h-[90vh] overflow-y-auto">
         <button onclick="document.getElementById('addPointModal').classList.add('hidden')" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 transition">
@@ -401,7 +478,7 @@
     </div>
 </div>
 
-<!-- 5. Item Detail Modal -->
+<!-- 7. Item Detail Modal -->
 <div id="itemDetailModal" class="fixed inset-0 hidden bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 z-[80]">
     <div class="bg-white rounded-2xl w-full max-w-2xl shadow-2xl relative flex flex-col max-h-[90vh] overflow-hidden modal-animate">
         <button onclick="document.getElementById('itemDetailModal').classList.add('hidden')" class="absolute top-4 right-4 z-10 bg-white/80 backdrop-blur rounded-full p-2 text-slate-500 hover:text-slate-800 hover:bg-white transition shadow-sm">
@@ -473,7 +550,7 @@
     </div>
 </div>
 
-<!-- 6. Leaderboard Modal -->
+<!-- 8. Leaderboard Modal -->
 <div id="leaderboardModal" class="fixed inset-0 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[90]">
     <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl relative flex flex-col max-h-[80vh] overflow-hidden modal-animate">
         <div class="bg-gradient-to-r from-yellow-400 to-orange-500 p-4 flex justify-between items-center text-white shadow-md shrink-0 h-16">
@@ -670,6 +747,16 @@
     let pointLayers = [];
     let itemDataCache = {};
 
+    // --- INFINITE SCROLL VARS ---
+    let currentPageItems = 1;
+    let isLoadingItems = false;
+    let hasMoreItems = true;
+    let currentPagePoints = 1;
+    let isLoadingPoints = false;
+    let hasMorePoints = true;
+    const ITEMS_PER_PAGE = 10;
+    // ----------------------------
+
     // --- ICONS ---
     var greenIcon = new L.Icon({
         iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
@@ -711,6 +798,19 @@
             const pointAddress = document.getElementById('pointAddress');
             if (pointSuggestionList && !pointSuggestionList.contains(e.target) && e.target !== pointAddress) {
                 pointSuggestionList.classList.add('hidden');
+            }
+        });
+
+        // --- INFINITE SCROLL EVENTS ---
+        document.getElementById('allItemsList').addEventListener('scroll', function() {
+            if (this.scrollTop + this.clientHeight >= this.scrollHeight - 50) {
+                loadMoreItems();
+            }
+        });
+
+        document.getElementById('allPointsList').addEventListener('scroll', function() {
+            if (this.scrollTop + this.clientHeight >= this.scrollHeight - 50) {
+                loadMorePoints();
             }
         });
     });
@@ -1456,8 +1556,12 @@
             const r = await fetch('${pageContext.request.contextPath}/api/categories');
             const categories = await r.json();
             const filterSelect = document.getElementById('filterCategory');
+            const filterItemCategory = document.getElementById('filterItemCategory'); // NEW
+
             categories.forEach(c => {
-                filterSelect.innerHTML += `<option value="\${c.categoryId}">\${c.name}</option>`;
+                const option = `<option value="\${c.categoryId}">\${c.name}</option>`;
+                filterSelect.innerHTML += option;
+                if(filterItemCategory) filterItemCategory.innerHTML += option; // NEW
             });
         } catch(e){}
     }
@@ -1634,6 +1738,211 @@
             });
         } catch (e) {
             listEl.innerHTML = '<div class="text-center text-red-500 py-4">Lỗi tải bảng xếp hạng</div>';
+        }
+    }
+
+    // --- NEW: ALL ITEMS & POINTS LIST LOGIC (INFINITE SCROLL) ---
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371; // km
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+    }
+
+    function formatDistance(d) {
+        if (d < 1) return Math.round(d * 1000) + " m";
+        return d.toFixed(1) + " km";
+    }
+
+    async function openAllItemsList() {
+        document.getElementById('allItemsModal').classList.remove('hidden');
+        const listEl = document.getElementById('allItemsList');
+        listEl.innerHTML = ''; // Clear old data
+        currentPageItems = 1;
+        hasMoreItems = true;
+        loadMoreItems();
+    }
+
+    async function loadMoreItems() {
+        if (isLoadingItems || !hasMoreItems) return;
+        isLoadingItems = true;
+
+        const listEl = document.getElementById('allItemsList');
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'text-center text-slate-500 py-4 text-xs';
+        loadingDiv.innerText = 'Đang tải thêm...';
+        listEl.appendChild(loadingDiv);
+
+        try {
+            const categoryId = document.getElementById('filterItemCategory').value; // NEW
+
+            const params = new URLSearchParams({
+                lat: currentLatLng.lat,
+                lng: currentLatLng.lng,
+                page: currentPageItems,
+                limit: ITEMS_PER_PAGE
+            });
+
+            if (categoryId) params.append('categoryId', categoryId); // NEW
+
+            const res = await fetch('${pageContext.request.contextPath}/api/items?' + params.toString());
+            const items = await res.json();
+
+            loadingDiv.remove();
+
+            if (items.length < ITEMS_PER_PAGE) {
+                hasMoreItems = false;
+            }
+
+            if (items.length === 0 && currentPageItems === 1) {
+                listEl.innerHTML = '<div class="text-center text-slate-500 py-8">Không có vật phẩm nào phù hợp.</div>';
+                return;
+            }
+
+            items.forEach(item => {
+                let imgUrl = item.imageUrl && item.imageUrl.startsWith('http') ? item.imageUrl : (item.imageUrl ? '${pageContext.request.contextPath}/images?path=' + encodeURIComponent(item.imageUrl) : 'https://placehold.co/100x100');
+
+                // Calculate distance client-side for display (backend already sorted)
+                const dist = calculateDistance(currentLatLng.lat, currentLatLng.lng, item.location.latitude, item.location.longitude);
+                const distStr = formatDistance(dist);
+
+                const itemHtml = `
+                    <div class="flex gap-3 p-3 bg-white rounded-xl border border-slate-100 hover:shadow-md transition cursor-pointer group" onclick="flyToLocation(\${item.location.latitude}, \${item.location.longitude}, '\${item.title}'); document.getElementById('allItemsModal').classList.add('hidden');">
+                        <div class="w-20 h-20 rounded-lg bg-slate-100 overflow-hidden shrink-0">
+                            <img src="\${imgUrl}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex justify-between items-start">
+                                <h4 class="font-bold text-slate-800 text-sm truncate mb-1 group-hover:text-primary transition">\${item.title}</h4>
+                                <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded whitespace-nowrap">\${distStr}</span>
+                            </div>
+                            <div class="text-xs text-slate-500 mb-2 flex items-center gap-1">
+                                <span class="material-symbols-outlined text-[14px]">person</span> \${item.giverName}
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="bg-emerald-50 text-primary text-[10px] font-bold px-2 py-1 rounded border border-emerald-100">\${item.ecoPoints} pts</span>
+                                <span class="text-[10px] text-slate-400 truncate">\${item.address || 'Chưa có địa chỉ'}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                listEl.insertAdjacentHTML('beforeend', itemHtml);
+            });
+
+            currentPageItems++;
+        } catch (e) {
+            loadingDiv.remove();
+            console.error(e);
+        } finally {
+            isLoadingItems = false;
+        }
+    }
+
+    async function openAllPointsList() {
+        document.getElementById('allPointsModal').classList.remove('hidden');
+        const listEl = document.getElementById('allPointsList');
+        listEl.innerHTML = '';
+        currentPagePoints = 1;
+        hasMorePoints = true;
+        loadMorePoints();
+    }
+
+    async function loadMorePoints() {
+        if (isLoadingPoints || !hasMorePoints) return;
+        isLoadingPoints = true;
+
+        const listEl = document.getElementById('allPointsList');
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'text-center text-slate-500 py-4 text-xs';
+        loadingDiv.innerText = 'Đang tải thêm...';
+        listEl.appendChild(loadingDiv);
+
+        try {
+            const typeCode = document.getElementById('filterPointType').value; // NEW
+            const ownerRole = document.getElementById('filterPointOwner').value; // NEW
+
+            const params = new URLSearchParams({
+                lat: currentLatLng.lat,
+                lng: currentLatLng.lng,
+                page: currentPagePoints,
+                limit: ITEMS_PER_PAGE
+            });
+
+            if (typeCode) params.append('type', typeCode); // NEW
+            if (ownerRole) params.append('ownerRole', ownerRole); // NEW
+
+            const res = await fetch('${pageContext.request.contextPath}/api/collection-points?' + params.toString());
+            const points = await res.json();
+
+            loadingDiv.remove();
+
+            if (points.length < ITEMS_PER_PAGE) {
+                hasMorePoints = false;
+            }
+
+            if (points.length === 0 && currentPagePoints === 1) {
+                listEl.innerHTML = '<div class="text-center text-slate-500 py-8">Không có điểm tập kết nào phù hợp.</div>';
+                return;
+            }
+
+            points.forEach(p => {
+                let typeBadge = '';
+                if (p.ownerRole === 'COLLECTOR_COMPANY') {
+                    typeBadge = '<span class="bg-yellow-50 text-yellow-700 text-[10px] font-bold px-2 py-1 rounded border border-yellow-100">Doanh nghiệp</span>';
+                } else {
+                    typeBadge = '<span class="bg-green-50 text-green-700 text-[10px] font-bold px-2 py-1 rounded border border-green-100">Công cộng</span>';
+                }
+
+                const dist = calculateDistance(currentLatLng.lat, currentLatLng.lng, p.latitude, p.longitude);
+                const distStr = formatDistance(dist);
+
+                const pointHtml = `
+                    <div class="p-4 bg-white rounded-xl border border-slate-100 hover:shadow-md transition cursor-pointer group" onclick="flyToLocation(\${p.latitude}, \${p.longitude}, '\${p.name}'); document.getElementById('allPointsModal').classList.add('hidden');">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold text-slate-800 text-sm group-hover:text-primary transition">\${p.name}</h4>
+                            <div class="flex flex-col items-end gap-1">
+                                \${typeBadge}
+                                <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">\${distStr}</span>
+                            </div>
+                        </div>
+                        <div class="text-xs text-slate-500 flex items-start gap-1.5">
+                            <span class="material-symbols-outlined text-[14px] mt-0.5">location_on</span>
+                            <span>\${p.address}</span>
+                        </div>
+                    </div>
+                `;
+                listEl.insertAdjacentHTML('beforeend', pointHtml);
+            });
+
+            currentPagePoints++;
+        } catch (e) {
+            loadingDiv.remove();
+            console.error(e);
+        } finally {
+            isLoadingPoints = false;
+        }
+    }
+
+    function filterList(inputId, listId) {
+        const filter = document.getElementById(inputId).value.toUpperCase();
+        const list = document.getElementById(listId);
+        // Note: This simple filter only works on currently loaded items.
+        // For full search, we would need a backend search API.
+        // But for UX, filtering loaded items is acceptable for now.
+        for (let i = 0; i < list.children.length; i++) {
+            const item = list.children[i];
+            if (item.tagName === 'DIV') { // Skip loading text if any
+                const txtValue = item.textContent || item.innerText;
+                if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                    item.style.display = "";
+                } else {
+                    item.style.display = "none";
+                }
+            }
         }
     }
 </script>

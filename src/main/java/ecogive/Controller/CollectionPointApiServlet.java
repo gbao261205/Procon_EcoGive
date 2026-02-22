@@ -24,7 +24,35 @@ public class CollectionPointApiServlet extends HttpServlet {
         resp.setCharacterEncoding("UTF-8");
 
         try {
-            List<CollectionPoint> points = stationDAO.findAll();
+            // --- MỚI: Tham số cho phân trang và sắp xếp theo khoảng cách ---
+            String latStr = req.getParameter("lat");
+            String lngStr = req.getParameter("lng");
+            String pageStr = req.getParameter("page");
+            String limitStr = req.getParameter("limit");
+            
+            // --- MỚI: Tham số lọc ---
+            String typeCode = req.getParameter("type");
+            String ownerRole = req.getParameter("ownerRole");
+            // ---------------------------------------------------------------
+
+            List<CollectionPoint> points;
+
+            if (latStr != null && lngStr != null) {
+                double lat = Double.parseDouble(latStr);
+                double lng = Double.parseDouble(lngStr);
+                int page = (pageStr != null) ? Integer.parseInt(pageStr) : 1;
+                int limit = (limitStr != null) ? Integer.parseInt(limitStr) : 10;
+                int offset = (page - 1) * limit;
+
+                points = stationDAO.findAllSortedByDistance(lat, lng, limit, offset, typeCode, ownerRole);
+            } else {
+                // Fallback: Lấy tất cả (có thể thêm lọc ở đây nếu cần, nhưng hiện tại ưu tiên geo-search)
+                if (typeCode != null) {
+                    points = stationDAO.findByType(typeCode);
+                } else {
+                    points = stationDAO.findAll();
+                }
+            }
 
             List<StationDTO> dtos = new ArrayList<>();
             for (CollectionPoint p : points) {

@@ -43,8 +43,16 @@ public class ItemApiServlet extends HttpServlet {
             String minLngStr = req.getParameter("minLng");
             String maxLngStr = req.getParameter("maxLng");
             String categoryIdStr = req.getParameter("categoryId");
+            
+            // --- MỚI: Tham số cho phân trang và sắp xếp theo khoảng cách ---
+            String latStr = req.getParameter("lat");
+            String lngStr = req.getParameter("lng");
+            String pageStr = req.getParameter("page");
+            String limitStr = req.getParameter("limit");
+            // ---------------------------------------------------------------
 
             if (minLatStr != null && maxLatStr != null && minLngStr != null && maxLngStr != null) {
+                // Case 1: Lấy theo Viewport (Bản đồ)
                 double minLat = Double.parseDouble(minLatStr);
                 double maxLat = Double.parseDouble(maxLatStr);
                 double minLng = Double.parseDouble(minLngStr);
@@ -54,14 +62,28 @@ public class ItemApiServlet extends HttpServlet {
                 if (categoryIdStr != null && !categoryIdStr.isEmpty()) {
                     try {
                         categoryId = Integer.parseInt(categoryIdStr);
-                    } catch (NumberFormatException e) {
-                        // Ignore invalid categoryId
-                    }
+                    } catch (NumberFormatException e) {}
                 }
 
                 items = itemDAO.findAvailableInBounds(minLat, minLng, maxLat, maxLng, categoryId);
+            } else if (latStr != null && lngStr != null) {
+                // Case 2: Lấy theo khoảng cách và phân trang (Danh sách cuộn)
+                double lat = Double.parseDouble(latStr);
+                double lng = Double.parseDouble(lngStr);
+                int page = (pageStr != null) ? Integer.parseInt(pageStr) : 1;
+                int limit = (limitStr != null) ? Integer.parseInt(limitStr) : 10;
+                int offset = (page - 1) * limit;
+                
+                Integer categoryId = null;
+                if (categoryIdStr != null && !categoryIdStr.isEmpty()) {
+                    try {
+                        categoryId = Integer.parseInt(categoryIdStr);
+                    } catch (NumberFormatException e) {}
+                }
+                
+                items = itemDAO.findAvailableSortedByDistance(lat, lng, limit, offset, categoryId);
             } else {
-                // Fallback: Lấy tất cả (hoặc giới hạn số lượng nếu cần)
+                // Case 3: Fallback (Lấy tất cả - không khuyến khích nếu dữ liệu lớn)
                 items = itemDAO.findAllAvailable();
             }
 
@@ -74,7 +96,7 @@ public class ItemApiServlet extends HttpServlet {
             resp.getWriter().write("{\"error\": \"Lỗi kết nối cơ sở dữ liệu\"}");
         } catch (NumberFormatException e) {
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            resp.getWriter().write("{\"error\": \"Tham số toạ độ không hợp lệ\"}");
+            resp.getWriter().write("{\"error\": \"Tham số không hợp lệ\"}");
         }
     }
 }

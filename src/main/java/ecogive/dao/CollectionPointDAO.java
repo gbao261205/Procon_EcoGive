@@ -44,6 +44,66 @@ public class CollectionPointDAO {
         }
         return list;
     }
+    
+    // --- MỚI: Tìm kiếm theo khoảng cách và phân trang ---
+    public List<CollectionPoint> findAllSortedByDistance(double lat, double lng, int limit, int offset, String typeCode, String ownerRole) throws SQLException {
+        StringBuilder sql = new StringBuilder(
+            "SELECT cp.*, ST_X(cp.location) AS longitude, ST_Y(cp.location) AS latitude, " +
+            "u.username AS owner_name, u.role AS owner_role, " +
+            "cpt.display_name AS type_name, cpt.icon AS type_icon, " +
+            "ST_Distance_Sphere(cp.location, ST_GeomFromText(?)) AS distance " +
+            "FROM collection_points cp " +
+            "LEFT JOIN users u ON cp.owner_id = u.user_id " +
+            "LEFT JOIN collection_point_types cpt ON cp.type = cpt.type_code " +
+            "WHERE 1=1 "
+        );
+        
+        if (typeCode != null && !typeCode.isEmpty()) {
+            sql.append(" AND cp.type = ? ");
+        }
+        
+        if (ownerRole != null && !ownerRole.isEmpty()) {
+            if ("COMPANY".equals(ownerRole)) {
+                sql.append(" AND u.role = 'COLLECTOR_COMPANY' ");
+            } else if ("PUBLIC".equals(ownerRole)) {
+                sql.append(" AND (u.role IS NULL OR u.role != 'COLLECTOR_COMPANY') ");
+            }
+        }
+        
+        sql.append("ORDER BY distance ASC LIMIT ? OFFSET ?");
+        
+        String pointWKT = "POINT(" + lng + " " + lat + ")";
+        List<CollectionPoint> list = new ArrayList<>();
+        
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
+            
+            int paramIndex = 1;
+            stmt.setString(paramIndex++, pointWKT);
+            
+            if (typeCode != null && !typeCode.isEmpty()) {
+                stmt.setString(paramIndex++, typeCode);
+            }
+            
+            stmt.setInt(paramIndex++, limit);
+            stmt.setInt(paramIndex++, offset);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
+            }
+        } catch (Exception e) {
+            throw new SQLException(e);
+        }
+        return list;
+    }
+    
+    // Overload cho tương thích cũ
+    public List<CollectionPoint> findAllSortedByDistance(double lat, double lng, int limit, int offset) throws SQLException {
+        return findAllSortedByDistance(lat, lng, limit, offset, null, null);
+    }
+    // ----------------------------------------------------
 
     public List<CollectionPoint> findByOwnerId(long ownerId) throws SQLException {
         String sql = "SELECT cp.*, ST_X(cp.location) AS longitude, ST_Y(cp.location) AS latitude, " +
