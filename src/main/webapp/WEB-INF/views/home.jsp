@@ -655,7 +655,7 @@
                 <button id="btnReceiverConfirm" onclick="confirmTransaction('receiver_confirm')" class="hidden bg-blue-600 text-white text-[10px] md:text-xs font-bold px-2 py-1.5 md:px-3 rounded-lg hover:bg-blue-700 shadow-md animate-bounce flex items-center gap-1">
                     <span>✅</span> <span class="hidden md:inline">Xác nhận đã nhận</span><span class="md:hidden">Đã nhận</span>
                 </button>
-                <button onclick="backToInbox()" class="hidden md:block text-slate-400 hover:text-slate-600 ml-2">
+                <button onclick="toggleChatModal(true)" class="hidden md:block text-slate-400 hover:text-slate-600 ml-2">
                     <span class="material-symbols-outlined">close</span>
                 </button>
             </div>
