@@ -133,10 +133,10 @@
         <!-- Tab Navigation -->
         <div class="flex border-b border-slate-100 overflow-x-auto scrollbar-hide">
             <button onclick="switchTab('given')" id="tab-given" class="flex-1 min-w-[120px] py-5 text-sm font-bold text-primary border-b-2 border-primary bg-primary-light/30 transition-all duration-200 hover:bg-primary-light/50">
-                🎁 Đồ đã tặng <span class="ml-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs">${givenItems.size()}</span>
+                🎁 Vật phẩm đã đăng tặng <span class="ml-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs">${givenItems.size()}</span>
             </button>
             <button onclick="switchTab('received')" id="tab-received" class="flex-1 min-w-[120px] py-5 text-sm font-bold text-slate-500 border-b-2 border-transparent hover:text-primary hover:bg-slate-50 transition-all duration-200">
-                📥 Đồ đã nhận <span class="ml-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs">${receivedItems.size()}</span>
+                📥 Vật phẩm đã nhận <span class="ml-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs">${receivedItems.size()}</span>
             </button>
             <button onclick="switchTab('reviews')" id="tab-reviews" class="flex-1 min-w-[120px] py-5 text-sm font-bold text-slate-500 border-b-2 border-transparent hover:text-primary hover:bg-slate-50 transition-all duration-200">
                 ⭐ Đánh giá <span class="ml-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs">${reviews.size()}</span>
