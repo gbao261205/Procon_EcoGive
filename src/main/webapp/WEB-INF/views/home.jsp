@@ -257,8 +257,7 @@
         <!-- Header -->
         <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-white shrink-0">
             <div class="flex items-end gap-2">
-                <h3 class="font-bold text-2xl text-slate-900">Available Items</h3>
-                <span id="itemsCount" class="text-emerald-600 font-bold text-sm mb-1">... items nearby</span>
+                <h3 class="font-bold text-2xl text-slate-900">Vật phẩm gần bạn</h3>
             </div>
             <button onclick="document.getElementById('allItemsModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition">
                 <span class="material-symbols-outlined">close</span>
@@ -272,14 +271,14 @@
                 <span class="absolute left-4 top-3.5 text-slate-400">
                     <span class="material-symbols-outlined">search</span>
                 </span>
-                <input type="text" id="searchItemInput" onkeyup="filterList('searchItemInput', 'allItemsList')" placeholder="Search items by name, category..." class="w-full pl-12 pr-4 py-3 rounded-full bg-slate-50 border-none text-sm font-medium focus:ring-0 outline-none text-slate-700 placeholder-slate-400">
+                <input type="text" id="searchItemInput" onkeyup="filterList('searchItemInput', 'allItemsList')" placeholder="Tìm vật phẩm gần bạn..." class="w-full pl-12 pr-4 py-3 rounded-full bg-slate-50 border-none text-sm font-medium focus:ring-0 outline-none text-slate-700 placeholder-slate-400">
             </div>
 
             <!-- Filters -->
             <input type="hidden" id="filterItemCategory" value="">
             <div id="itemCategoryChips" class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
                 <button onclick="selectItemCategory('', this)" class="item-chip-btn whitespace-nowrap px-4 py-2 rounded-full bg-primary text-white text-xs font-bold border border-primary transition shadow-sm">
-                    All Categories
+                    Tất cả
                 </button>
                 <!-- Category chips will be loaded here by JS -->
             </div>
@@ -299,8 +298,7 @@
         <!-- Header -->
         <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-white shrink-0">
             <div class="flex items-end gap-2">
-                <h3 class="font-bold text-2xl text-slate-900">Collection Points</h3>
-                <span class="text-emerald-600 font-bold text-sm mb-1">12 nearby</span>
+                <h3 class="font-bold text-2xl text-slate-900">Điểm tập kết gần bạn</h3>
             </div>
             <button onclick="document.getElementById('allPointsModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition">
                 <span class="material-symbols-outlined">close</span>
@@ -314,7 +312,7 @@
                 <span class="absolute left-4 top-3.5 text-slate-400">
                     <span class="material-symbols-outlined">search</span>
                 </span>
-                <input type="text" id="searchPointInput" onkeyup="filterList('searchPointInput', 'allPointsList')" placeholder="Search points..." class="w-full pl-12 pr-4 py-3 rounded-full bg-slate-50 border-none text-sm font-medium focus:ring-0 outline-none text-slate-700 placeholder-slate-400">
+                <input type="text" id="searchPointInput" onkeyup="filterList('searchPointInput', 'allPointsList')" placeholder="Tìm điểm tập kết..." class="w-full pl-12 pr-4 py-3 rounded-full bg-slate-50 border-none text-sm font-medium focus:ring-0 outline-none text-slate-700 placeholder-slate-400">
             </div>
 
             <!-- Filters -->
@@ -323,7 +321,7 @@
 
             <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
                 <button onclick="selectPointType('', this)" class="chip-btn whitespace-nowrap px-4 py-2 rounded-full bg-primary text-white text-xs font-bold border border-primary transition shadow-sm active-chip">
-                    All Types
+                    Tất cả
                 </button>
                 <c:forEach var="t" items="${pointTypes}">
                     <button onclick="selectPointType('${t.typeCode}', this)" class="chip-btn whitespace-nowrap px-4 py-2 rounded-full bg-slate-50 text-slate-600 text-xs font-bold border border-slate-200 hover:bg-slate-100 transition flex items-center gap-1">
@@ -756,6 +754,13 @@
     const currentUserRole = "${sessionScope.currentUser != null ? sessionScope.currentUser.role : ''}";
     const currentUserId = currentUserIdStr ? Number(currentUserIdStr) : null;
     const MAPTILER_API_KEY = 'N9qb9p6GF8fszXu3BPWt';
+
+    // Global Maps for Display
+    let categoryMap = {};
+    let pointTypeMap = {};
+    <c:forEach var="t" items="${pointTypes}">
+        pointTypeMap['${t.typeCode}'] = { name: '${t.displayName}', icon: '${t.icon}' };
+    </c:forEach>
 
     let chatSocket = null;
     let currentReceiverId = null;
@@ -1584,6 +1589,8 @@
 
             let chipsHtml = '';
             categories.forEach(c => {
+                categoryMap[c.categoryId] = c.name; // Populate Map
+
                 // For map filter panel
                 const option = `<option value="\${c.categoryId}">\${c.name}</option>`;
                 if(filterSelect) filterSelect.innerHTML += option;
@@ -1799,16 +1806,16 @@
         const seconds = Math.floor((now - date) / 1000);
 
         let interval = seconds / 31536000;
-        if (interval > 1) return Math.floor(interval) + " years ago";
+        if (interval > 1) return Math.floor(interval) + " năm trước";
         interval = seconds / 2592000;
-        if (interval > 1) return Math.floor(interval) + " months ago";
+        if (interval > 1) return Math.floor(interval) + " tháng trước";
         interval = seconds / 86400;
-        if (interval > 1) return Math.floor(interval) + " days ago";
+        if (interval > 1) return Math.floor(interval) + " ngày trước";
         interval = seconds / 3600;
-        if (interval > 1) return Math.floor(interval) + " hours ago";
+        if (interval > 1) return Math.floor(interval) + " giờ trước";
         interval = seconds / 60;
-        if (interval > 1) return Math.floor(interval) + " minutes ago";
-        return "Just now";
+        if (interval > 1) return Math.floor(interval) + " phút trước";
+        return "vừa xong";
     }
 
     async function openAllItemsList() {
@@ -1897,13 +1904,14 @@
                 const giverName = item.giverName || 'Anonymous';
                 const itemTitle = item.title.replace(/'/g, "\\'");
                 const giverNameEscaped = giverName.replace(/'/g, "\\'");
+                const catName = item.categoryName || categoryMap[item.categoryId] || 'GENERAL';
 
                 let requestBtn = '';
                 if (currentUserId && item.giverId === currentUserId) {
                     // Owner: No request button
-                    requestBtn = '<span class="text-xs font-bold text-slate-400 px-4 py-2">Your Item</span>';
+                    requestBtn = '<span class="text-xs font-bold text-slate-400 px-4 py-2">Vật phẩm của bạn</span>';
                 } else {
-                    requestBtn = `<button onclick="event.stopPropagation(); requestItem(\${item.itemId}, \${item.giverId}, '\${giverNameEscaped}', '\${itemTitle}');" class="bg-primary text-white text-xs font-bold px-4 py-2 rounded-full hover:bg-primary-hover transition shadow-sm">Request</button>`;
+                    requestBtn = `<button onclick="event.stopPropagation(); requestItem(\${item.itemId}, \${item.giverId}, '\${giverNameEscaped}', '\${itemTitle}');" class="bg-primary text-white text-xs font-bold px-4 py-2 rounded-full hover:bg-primary-hover transition shadow-sm">Xin vật phẩm</button>`;
                 }
 
                 const itemHtml = `
@@ -1922,7 +1930,7 @@
                                 \${giverName}
                             </p>
                             <div class="flex flex-wrap gap-2 pt-1">
-                                 <span class="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase text-slate-600">\${item.categoryName || 'GENERAL'}</span>
+                                 <span class="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase text-slate-600">\${catName}</span>
                                  <span class="bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase text-emerald-700 flex items-center gap-1">
                                     <span class="material-symbols-outlined text-[12px]">eco</span> \${item.ecoPoints || 0} PTS
                                  </span>
@@ -1932,10 +1940,10 @@
                     <div class="border-t border-slate-100 pt-3 flex justify-between items-center">
                         <div class="flex items-center gap-1 text-xs text-slate-500">
                             <span class="material-symbols-outlined text-[14px]">schedule</span>
-                            <span>Posted \${postedAgo}</span>
+                            <span>Đăng \${postedAgo}</span>
                         </div>
                         <div class="flex items-center gap-2">
-                            <button onclick="flyToLocation(\${item.location.latitude}, \${item.location.longitude}, '\${itemTitle}'); document.getElementById('allItemsModal').classList.add('hidden');" class="text-primary text-xs font-bold hover:underline">View on map</button>
+                            <button onclick="flyToLocation(\${item.location.latitude}, \${item.location.longitude}, '\${itemTitle}'); document.getElementById('allItemsModal').classList.add('hidden');" class="text-primary text-xs font-bold hover:underline">Xem trên bản đồ</button>
                             \${requestBtn}
                         </div>
                     </div>
@@ -2021,22 +2029,23 @@
                 // Action Button
                 let actionHtml;
                 if (isCompany) {
-                    actionHtml = `<button onclick="flyToLocation(\${p.latitude}, \${p.longitude}, '\${p.name}'); document.getElementById('allPointsModal').classList.add('hidden');" class="bg-primary text-white text-xs font-bold px-4 py-2 rounded-full hover:bg-primary-hover transition shadow-sm">Directions</button>`;
+                    actionHtml = `<button onclick="flyToLocation(\${p.latitude}, \${p.longitude}, '\${p.name}'); document.getElementById('allPointsModal').classList.add('hidden');" class="bg-primary text-white text-xs font-bold px-4 py-2 rounded-full hover:bg-primary-hover transition shadow-sm">Xem vị trí</button>`;
                 } else {
-                    actionHtml = `<button onclick="flyToLocation(\${p.latitude}, \${p.longitude}, '\${p.name}'); document.getElementById('allPointsModal').classList.add('hidden');" class="text-primary text-xs font-bold hover:underline">View details</button>`;
+                    actionHtml = `<button onclick="flyToLocation(\${p.latitude}, \${p.longitude}, '\${p.name}'); document.getElementById('allPointsModal').classList.add('hidden');" class="text-primary text-xs font-bold hover:underline">Xem chi tiết</button>`;
                 }
 
-                // Tags (Mocked/Derived)
+                // Tags
                 let tagsHtml = '';
-                if (p.type) {
+                if (p.type && pointTypeMap[p.type]) {
+                     const pt = pointTypeMap[p.type];
                      tagsHtml = `
                      <span class="bg-slate-50 border border-slate-100 px-2 py-1 rounded text-[10px] font-bold uppercase text-slate-600 flex items-center gap-1">
-                        <span class="w-2 h-2 rounded-full bg-blue-500"></span> \${p.type}
+                        <span>\${pt.icon}</span> \${pt.name}
                      </span>`;
                 } else {
                      tagsHtml = `
                      <span class="bg-slate-50 border border-slate-100 px-2 py-1 rounded text-[10px] font-bold uppercase text-slate-600 flex items-center gap-1">
-                        <span class="w-2 h-2 rounded-full bg-green-500"></span> RECYCLING
+                        <span class="w-2 h-2 rounded-full bg-green-500"></span> \${p.type || 'RECYCLING'}
                      </span>`;
                 }
 
@@ -2059,8 +2068,7 @@
                         <!-- Row 4: Footer -->
                         <div class="border-t border-slate-50 pt-3 flex justify-between items-center">
                             <div class="flex items-center gap-1 text-xs text-slate-500">
-                                <span class="material-symbols-outlined text-[14px]">schedule</span>
-                                <span>Open until 7 PM</span>
+
                             </div>
                             \${actionHtml}
                         </div>
