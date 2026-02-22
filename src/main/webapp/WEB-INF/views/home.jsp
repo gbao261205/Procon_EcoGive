@@ -719,15 +719,6 @@
 
         <!-- Quick Actions -->
         <div class="grid grid-cols-1 gap-2 mt-2 px-2">
-            <button onclick="quickAction('name')" class="text-left text-xs bg-white hover:bg-blue-50 text-blue-600 py-2.5 px-3 rounded-xl border border-blue-100 shadow-sm transition flex items-center gap-2">
-                <span class="material-symbols-outlined text-sm">search</span> Tìm sản phẩm theo tên...
-            </button>
-            <button onclick="quickAction('category')" class="text-left text-xs bg-white hover:bg-blue-50 text-blue-600 py-2.5 px-3 rounded-xl border border-blue-100 shadow-sm transition flex items-center gap-2">
-                <span class="material-symbols-outlined text-sm">category</span> Tìm sản phẩm theo danh mục...
-            </button>
-            <button onclick="quickAction('point')" class="text-left text-xs bg-white hover:bg-blue-50 text-blue-600 py-2.5 px-3 rounded-xl border border-blue-100 shadow-sm transition flex items-center gap-2">
-                <span class="material-symbols-outlined text-sm">location_on</span> Tìm điểm thu gom gần đây
-            </button>
             <button onclick="quickAction('guide')" class="text-left text-xs bg-white hover:bg-blue-50 text-blue-600 py-2.5 px-3 rounded-xl border border-blue-100 shadow-sm transition flex items-center gap-2">
                 <span class="material-symbols-outlined text-sm">help</span> Cách tích điểm EcoPoints?
             </button>
@@ -1436,16 +1427,7 @@
 
     function quickAction(type) {
         const input = document.getElementById('aiInput');
-        if (type === 'name') {
-            input.value = "Tìm sản phẩm tên: ";
-            input.focus();
-        } else if (type === 'category') {
-            input.value = "Tìm sản phẩm thuộc danh mục: ";
-            input.focus();
-        } else if (type === 'point') {
-            input.value = "Tìm điểm thu gom gần đây";
-            sendAiQuestion();
-        } else if (type === 'guide') {
+        if (type === 'guide') {
             input.value = "Làm thế nào để tích điểm EcoPoints?";
             sendAiQuestion();
         } else if (type === 'recycle') {
@@ -1504,7 +1486,14 @@
         const align = type === 'user' ? 'justify-end' : 'justify-start';
         const bg = type === 'user' ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-white border border-slate-200 text-slate-700 rounded-tl-none';
         const avatar = type === 'bot' ? '<div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs shrink-0 border border-blue-200">🤖</div>' : '';
-        const html = `<div id="\${id}" class="flex items-start gap-2 \${align}">\${avatar}<div class="\${bg} p-3 rounded-2xl shadow-sm max-w-[85%]">\${text}</div></div>`;
+
+        // --- NEW: Parse Markdown-like formatting ---
+        let formattedText = text
+            .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>') // Bold: **text** -> <b>text</b>
+            .replace(/\n/g, '<br>'); // Newline: \n -> <br>
+        // -------------------------------------------
+
+        const html = `<div id="\${id}" class="flex items-start gap-2 \${align}">\${avatar}<div class="\${bg} p-3 rounded-2xl shadow-sm max-w-[85%]">\${formattedText}</div></div>`;
         chatBox.insertAdjacentHTML('beforeend', html);
         chatBox.scrollTop = chatBox.scrollHeight;
         return id;

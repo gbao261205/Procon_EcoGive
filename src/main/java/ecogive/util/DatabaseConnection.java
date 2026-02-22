@@ -60,6 +60,19 @@ public class DatabaseConnection {
                 throw new Exception("Missing database configuration.");
             }
 
+            // Append useful connection properties if not present
+            if (url.contains("mysql")) {
+                if (!url.contains("?")) {
+                    url += "?autoReconnect=true&useSSL=false&allowPublicKeyRetrieval=true&connectTimeout=10000&socketTimeout=10000";
+                } else {
+                    if (!url.contains("autoReconnect")) url += "&autoReconnect=true";
+                    if (!url.contains("useSSL")) url += "&useSSL=false";
+                    if (!url.contains("allowPublicKeyRetrieval")) url += "&allowPublicKeyRetrieval=true";
+                    if (!url.contains("connectTimeout")) url += "&connectTimeout=10000";
+                    if (!url.contains("socketTimeout")) url += "&socketTimeout=10000";
+                }
+            }
+
             Class.forName(driver);
             System.out.println("Database driver loaded successfully.");
 

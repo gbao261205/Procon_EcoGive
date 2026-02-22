@@ -49,9 +49,9 @@ public class AiAssistantServlet extends HttpServlet {
         JsonArray quickReplies = new JsonArray();
 
         // Luôn thêm các câu hỏi nhanh vào response
-        quickReplies.add("🔍 Tìm sản phẩm theo tên...");
-        quickReplies.add("📂 Tìm sản phẩm theo danh mục...");
-        quickReplies.add("📍 Tìm điểm thu gom gần đây");
+        // quickReplies.add("🔍 Tìm sản phẩm theo tên...");
+        // quickReplies.add("📂 Tìm sản phẩm theo danh mục...");
+        // quickReplies.add("📍 Tìm điểm thu gom gần đây");
         quickReplies.add("❓ Cách tích điểm EcoPoints?");
         quickReplies.add("♻️ Hướng dẫn cách tái chế: ..."); // Thêm nút mới
 
@@ -119,67 +119,93 @@ public class AiAssistantServlet extends HttpServlet {
                          "Điểm này có thể dùng để đổi quà hoặc vinh danh trên bảng xếp hạng!";
             }
             // --- 4. HƯỚNG DẪN TÁI CHẾ (GỌI GROQ API) ---
-            else if (lowerQuestion.startsWith("hướng dẫn cách tái chế:")) {
-                String itemToRecycle = question.substring("hướng dẫn cách tái chế:".length()).trim();
+            else if (lowerQuestion.startsWith("hướng dẫn cách tái chế:") || lowerQuestion.contains("tái chế")) {
+                String itemToRecycle = "";
+                if (lowerQuestion.startsWith("hướng dẫn cách tái chế:")) {
+                    itemToRecycle = question.substring("hướng dẫn cách tái chế:".length()).trim();
+                } else {
+                    itemToRecycle = question;
+                }
+
                 if (itemToRecycle.isEmpty()) {
                     answer = "Vui lòng nhập tên vật phẩm bạn muốn tái chế.";
                 } else {
-                    answer = callGroqApi(itemToRecycle);
+                    // 4.1. Kiểm tra xem có điểm thu gom nào trên web phù hợp không
+                    String localSuggestion = "";
+                    String type = detectWasteType(itemToRecycle);
+                    
+                    if (type != null) {
+                        try {
+                            List<CollectionPoint> points = pointDAO.findByType(type);
+                            if (!points.isEmpty()) {
+                                localSuggestion = "💡 **Gợi ý từ EcoGive:** Chúng tôi tìm thấy " + points.size() + " điểm thu gom phù hợp trên hệ thống:\n";
+                                int count = 0;
+                                for (CollectionPoint p : points) {
+                                    if (count >= 3) break;
+                                    JsonObject pJson = new JsonObject();
+                                    pJson.addProperty("name", "📍 " + p.getName());
+                                    pJson.addProperty("address", p.getAddress());
+                                    pJson.addProperty("lat", p.getLatitude());
+                                    pJson.addProperty("lng", p.getLongitude());
+                                    suggestions.add(pJson);
+                                    count++;
+                                }
+                            }
+                        } catch (Exception e) {
+                            System.err.println("Database error when finding points: " + e.getMessage());
+                            // Ignore DB error and proceed to AI
+                        }
+                    }
+
+                    // 4.2. Gọi AI để lấy hướng dẫn chi tiết
+                    String aiAdvice = callGroqApi(itemToRecycle);
+                    
+                    if (!localSuggestion.isEmpty()) {
+                        answer = localSuggestion + "\n\n" + aiAdvice;
+                    } else {
+                        answer = aiAdvice;
+                    }
                 }
             }
             // --- 5. TÌM ĐIỂM THU GOM (LOGIC CŨ) ---
             else {
-                if (lowerQuestion.contains("pin") || lowerQuestion.contains("ắc quy")) {
-                    answer = "Pin cũ chứa kim loại nặng độc hại, tuyệt đối không bỏ thùng rác thường. Bạn có thể mang đến các điểm thu gom Pin dưới đây:";
-                    typeToSearch = "BATTERY";
-                }
-                else if (lowerQuestion.contains("thuốc") || lowerQuestion.contains("y tế") || lowerQuestion.contains("kim tiêm")) {
-                    answer = "Rác thải y tế cần xử lý chuyên biệt để tránh lây nhiễm. Hãy liên hệ các trạm y tế hoặc điểm thu gom sau:";
-                    typeToSearch = "MEDICAL";
-                }
-                else if (lowerQuestion.contains("hóa chất") || lowerQuestion.contains("tẩy rửa") || lowerQuestion.contains("sơn")) {
-                    answer = "Hóa chất thừa cần được xử lý tại các cơ sở chuyên dụng. Dưới đây là gợi ý cho bạn:";
-                    typeToSearch = "CHEMICAL";
-                }
-                else if (lowerQuestion.contains("điện tử") || lowerQuestion.contains("máy tính") || lowerQuestion.contains("điện thoại") || lowerQuestion.contains("tivi")) {
-                    answer = "Đồ điện tử cũ (E-Waste) có thể tái chế được các linh kiện quý. Bạn có thể mang đến các điểm này:";
-                    typeToSearch = "E_WASTE";
-                }
-                else if (lowerQuestion.contains("quần áo") || lowerQuestion.contains("vải")) {
-                    answer = "Quần áo cũ có thể quyên góp từ thiện hoặc tái chế. Xem các điểm nhận đồ vải tại đây:";
-                    typeToSearch = "TEXTILE";
-                }
-                else if (lowerQuestion.contains("bán") || lowerQuestion.contains("ve chai") || lowerQuestion.contains("đồng nát")) {
-                    answer = "Nếu bạn muốn bán phế liệu, hãy liên hệ các đại lý hoặc cá nhân thu mua uy tín gần đây:";
-                    typeToSearch = "DEALER";
-                }
-                else if (lowerQuestion.contains("điểm thu gom") || lowerQuestion.contains("trạm")) {
+                typeToSearch = detectWasteType(lowerQuestion);
+                
+                if (typeToSearch != null) {
+                    answer = "Dưới đây là các điểm thu gom phù hợp với yêu cầu của bạn:";
+                } else if (lowerQuestion.contains("điểm thu gom") || lowerQuestion.contains("trạm")) {
                      answer = "Dưới đây là một số điểm thu gom gần đây:";
                      typeToSearch = "BATTERY"; // Mặc định
-                }
-                else {
-                    answer = "Xin lỗi, tôi chưa hiểu rõ yêu cầu. Bạn có thể hỏi về: 'tìm sản phẩm', 'điểm thu gom pin', 'cách tích điểm', hoặc 'hướng dẫn cách tái chế: [tên vật phẩm]'...";
+                } else {
+                    // Nếu không khớp các lệnh trên, coi như là câu hỏi chung và gửi cho AI xử lý
+                    // Nhưng AI sẽ có rule chặn các câu hỏi không liên quan
+                    answer = callGroqApi(question);
                 }
 
                 if (typeToSearch != null) {
-                    List<CollectionPoint> points = pointDAO.findByType(typeToSearch);
-                    int count = 0;
-                    for (CollectionPoint p : points) {
-                        if (count >= 3) break;
-                        JsonObject pJson = new JsonObject();
-                        pJson.addProperty("name", "📍 " + p.getName());
-                        pJson.addProperty("address", p.getAddress());
-                        pJson.addProperty("lat", p.getLatitude());
-                        pJson.addProperty("lng", p.getLongitude());
-                        suggestions.add(pJson);
-                        count++;
+                    try {
+                        List<CollectionPoint> points = pointDAO.findByType(typeToSearch);
+                        int count = 0;
+                        for (CollectionPoint p : points) {
+                            if (count >= 3) break;
+                            JsonObject pJson = new JsonObject();
+                            pJson.addProperty("name", "📍 " + p.getName());
+                            pJson.addProperty("address", p.getAddress());
+                            pJson.addProperty("lat", p.getLatitude());
+                            pJson.addProperty("lng", p.getLongitude());
+                            suggestions.add(pJson);
+                            count++;
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Database error when finding points: " + e.getMessage());
+                        answer += "\n(Hiện tại không thể tải danh sách điểm thu gom do lỗi kết nối)";
                     }
                 }
             }
 
         } catch (Exception e) {
             e.printStackTrace();
-            answer = "Đã xảy ra lỗi khi xử lý yêu cầu của bạn.";
+            answer = "Đã xảy ra lỗi khi xử lý yêu cầu của bạn. Vui lòng thử lại sau.";
         }
 
         response.addProperty("answer", answer);
@@ -187,6 +213,17 @@ public class AiAssistantServlet extends HttpServlet {
         response.add("quickReplies", quickReplies);
 
         resp.getWriter().write(new Gson().toJson(response));
+    }
+
+    private String detectWasteType(String text) {
+        String lower = text.toLowerCase();
+        if (lower.contains("pin") || lower.contains("ắc quy")) return "BATTERY";
+        if (lower.contains("thuốc") || lower.contains("y tế") || lower.contains("kim tiêm")) return "MEDICAL";
+        if (lower.contains("hóa chất") || lower.contains("tẩy rửa") || lower.contains("sơn")) return "CHEMICAL";
+        if (lower.contains("điện tử") || lower.contains("máy tính") || lower.contains("điện thoại") || lower.contains("tivi")) return "E_WASTE";
+        if (lower.contains("quần áo") || lower.contains("vải")) return "TEXTILE";
+        if (lower.contains("bán") || lower.contains("ve chai") || lower.contains("đồng nát")) return "DEALER";
+        return null;
     }
 
     private String callGroqApi(String item) {
@@ -206,12 +243,17 @@ public class AiAssistantServlet extends HttpServlet {
         JsonArray messages = new JsonArray();
         JsonObject systemMsg = new JsonObject();
         systemMsg.addProperty("role", "system");
-        systemMsg.addProperty("content", "Bạn là một trợ lý AI chuyên về tái chế và bảo vệ môi trường. Hãy hướng dẫn người dùng cách tái chế hoặc xử lý loại rác thải họ hỏi một cách ngắn gọn, súc tích và an toàn. Nếu vật phẩm không thể tái chế, hãy hướng dẫn cách vứt bỏ đúng quy định. Chỉ trả lời bằng tiếng Việt.");
+        // Cập nhật Rule: Chỉ trả lời về tái chế/môi trường
+        systemMsg.addProperty("content", "Bạn là một trợ lý AI chuyên về tái chế và bảo vệ môi trường của EcoGive. " +
+                "QUY TẮC QUAN TRỌNG: Bạn CHỈ được phép trả lời các câu hỏi liên quan đến tái chế, phân loại rác, bảo vệ môi trường, sống xanh. " +
+                "Nếu người dùng hỏi về các chủ đề khác (chính trị, giải trí, code, toán học, đời sống cá nhân...), hãy từ chối lịch sự và yêu cầu họ hỏi về chủ đề tái chế. " +
+                "Hãy hướng dẫn người dùng cách tái chế hoặc xử lý loại rác thải họ hỏi một cách ngắn gọn, súc tích và an toàn. " +
+                "Chỉ trả lời bằng tiếng Việt.");
         messages.add(systemMsg);
 
         JsonObject userMsg = new JsonObject();
         userMsg.addProperty("role", "user");
-        userMsg.addProperty("content", "Hướng dẫn tôi cách tái chế hoặc xử lý: " + item);
+        userMsg.addProperty("content", item); // Gửi trực tiếp nội dung người dùng nhập
         messages.add(userMsg);
 
         jsonBody.add("messages", messages);
