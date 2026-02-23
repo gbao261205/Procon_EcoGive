@@ -150,24 +150,47 @@
 
         <!-- User Profile -->
         <c:if test="${sessionScope.currentUser != null}">
-            <a href="${pageContext.request.contextPath}/profile" class="flex items-center gap-3 group cursor-pointer">
-                <div class="text-right hidden md:block">
-                    <div class="text-sm font-bold text-slate-700 group-hover:text-primary transition">
-                        ${sessionScope.currentUser.username}
+            <div class="relative" id="user-menu-container">
+                <button id="user-menu-button" class="flex items-center gap-3 group cursor-pointer">
+                    <div class="text-right hidden md:block">
+                        <div class="text-sm font-bold text-slate-700 group-hover:text-primary transition">
+                            ${sessionScope.currentUser.username}
+                        </div>
+                        <div class="text-xs text-primary font-medium flex items-center justify-end gap-1">
+                            <span class="material-symbols-outlined text-[14px]">eco</span>
+                            ${sessionScope.currentUser.ecoPoints} EcoPoints
+                        </div>
                     </div>
-                    <div class="text-xs text-primary font-medium flex items-center justify-end gap-1">
-                        <span class="material-symbols-outlined text-[14px]">eco</span>
-                        ${sessionScope.currentUser.ecoPoints} EcoPoints
+                    <img src="https://api.dicebear.com/9.x/notionists-neutral/svg?seed=${sessionScope.currentUser.username}"
+                         alt="Avatar"
+                         class="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-slate-100 bg-slate-50 shadow-sm group-hover:border-primary transition-colors">
+                </button>
+                <!-- Dropdown Menu -->
+                <div id="user-menu" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-slate-100 py-2 z-50 origin-top-right animate-scale-in">
+                    <div class="px-4 py-2 border-b border-slate-100 mb-2">
+                        <div class="font-bold text-slate-800">${sessionScope.currentUser.username}</div>
+                        <div class="text-xs text-slate-500">${sessionScope.currentUser.email}</div>
                     </div>
+                    <a href="javascript:void(0);" onclick="openAllItemsList()" class="flex md:hidden items-center gap-3 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors">
+                        <span class="material-symbols-outlined text-slate-400">inventory_2</span>
+                        <span>Tất cả vật phẩm</span>
+                    </a>
+                    <a href="javascript:void(0);" onclick="openAllPointsList()" class="flex md:hidden items-center gap-3 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors">
+                        <span class="material-symbols-outlined text-slate-400">recycling</span>
+                        <span>Tất cả điểm tập kết</span>
+                    </a>
+                    <div class="h-px bg-slate-100 my-1 md:hidden"></div>
+                    <a href="${pageContext.request.contextPath}/profile" class="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors">
+                        <span class="material-symbols-outlined text-slate-400">person</span>
+                        <span>Hồ sơ của tôi</span>
+                    </a>
+                    <div class="h-px bg-slate-100 my-1"></div>
+                    <a href="${pageContext.request.contextPath}/logout" class="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors">
+                        <span class="material-symbols-outlined">logout</span>
+                        <span>Đăng xuất</span>
+                    </a>
                 </div>
-                <img src="https://api.dicebear.com/9.x/notionists-neutral/svg?seed=${sessionScope.currentUser.username}"
-                     alt="Avatar"
-                     class="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-slate-100 bg-slate-50 shadow-sm group-hover:border-primary transition-colors">
-            </a>
-            <a href="${pageContext.request.contextPath}/logout"
-               class="md:flex hidden items-center justify-center w-9 h-9 rounded-full text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all" title="Đăng xuất">
-                <span class="material-symbols-outlined text-[20px]">logout</span>
-            </a>
+            </div>
         </c:if>
 
         <c:if test="${sessionScope.currentUser == null}">
@@ -252,8 +275,8 @@
 <!-- MODALS -->
 
 <!-- 1. All Items List Modal -->
-<div id="allItemsModal" class="fixed inset-0 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[80]">
-    <div class="bg-white rounded-2xl w-full max-w-2xl shadow-2xl relative flex flex-col max-h-[85vh] overflow-hidden modal-animate">
+<div id="allItemsModal" class="fixed inset-0 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-0 md:p-4 z-[80]">
+    <div class="bg-white rounded-none md:rounded-2xl w-full h-full md:w-full md:max-w-2xl md:h-auto shadow-2xl relative flex flex-col md:max-h-[85vh] overflow-hidden modal-animate">
         <!-- Header -->
         <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-white shrink-0">
             <div class="flex items-end gap-2">
@@ -285,7 +308,7 @@
         </div>
 
         <!-- List -->
-        <div id="allItemsList" class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar bg-slate-50">
+        <div id="allItemsList" class="flex-1 overflow-y-auto p-2 md:p-4 space-y-2 md:space-y-4 custom-scrollbar bg-slate-50">
             <!-- Items will be injected here -->
             <div class="text-center text-slate-500 py-8">Đang tải...</div>
         </div>
@@ -293,8 +316,8 @@
 </div>
 
 <!-- 2. All Points List Modal -->
-<div id="allPointsModal" class="fixed inset-0 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[80]">
-    <div class="bg-white rounded-2xl w-full max-w-2xl shadow-2xl relative flex flex-col max-h-[85vh] overflow-hidden modal-animate">
+<div id="allPointsModal" class="fixed inset-0 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-0 md:p-4 z-[80]">
+    <div class="bg-white rounded-none md:rounded-2xl w-full h-full md:w-full md:max-w-2xl md:h-auto shadow-2xl relative flex flex-col md:max-h-[85vh] overflow-hidden modal-animate">
         <!-- Header -->
         <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-white shrink-0">
             <div class="flex items-end gap-2">
@@ -332,7 +355,7 @@
         </div>
 
         <!-- List -->
-        <div id="allPointsList" class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar bg-slate-50">
+        <div id="allPointsList" class="flex-1 overflow-y-auto p-2 md:p-4 space-y-2 md:space-y-4 custom-scrollbar bg-slate-50">
             <div class="text-center text-slate-500 py-8">Đang tải...</div>
         </div>
     </div>
@@ -501,7 +524,7 @@
 </div>
 
 <!-- 7. Item Detail Modal -->
-<div id="itemDetailModal" class="fixed inset-0 hidden bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 z-[80]">
+<div id="itemDetailModal" class="fixed inset-0 hidden bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 z-[85]">
     <div class="bg-white rounded-2xl w-full max-w-2xl shadow-2xl relative flex flex-col max-h-[90vh] overflow-hidden modal-animate">
         <button onclick="document.getElementById('itemDetailModal').classList.add('hidden')" class="absolute top-4 right-4 z-10 bg-white/80 backdrop-blur rounded-full p-2 text-slate-500 hover:text-slate-800 hover:bg-white transition shadow-sm">
             <span class="material-symbols-outlined text-xl">close</span>
@@ -807,6 +830,25 @@
 
         map.on('moveend', loadItems);
 
+        // User menu dropdown
+        const userMenuButton = document.getElementById('user-menu-button');
+        const userMenu = document.getElementById('user-menu');
+        const userMenuContainer = document.getElementById('user-menu-container');
+
+        if (userMenuButton) {
+            userMenuButton.addEventListener('click', (event) => {
+                event.stopPropagation();
+                userMenu.classList.toggle('hidden');
+            });
+
+            window.addEventListener('click', (e) => {
+                if (userMenuContainer && !userMenuContainer.contains(e.target)) {
+                    userMenu.classList.add('hidden');
+                }
+            });
+        }
+
+
         document.addEventListener('click', function(e) {
             const suggestionList = document.getElementById('suggestionList');
             const itemAddress = document.getElementById('itemAddress');
@@ -967,6 +1009,14 @@
         } catch (e) { console.error(e); }
     }
 
+    function showRelatedItem(itemId) {
+        const modal = document.getElementById('itemDetailModal');
+        modal.classList.add('hidden');
+        setTimeout(() => {
+            openItemDetail(itemId);
+        }, 150); // Delay to allow closing animation
+    }
+
     function openItemDetail(itemId) {
         const item = itemDataCache[itemId];
         if (!item) return;
@@ -1021,7 +1071,7 @@
             shuffled.forEach(r => {
                 let rImg = r.imageUrl && r.imageUrl.startsWith('http') ? r.imageUrl : (r.imageUrl ? '${pageContext.request.contextPath}/images?path=' + encodeURIComponent(r.imageUrl) : 'https://placehold.co/100x100');
                 relatedContainer.innerHTML += `
-                    <div class="cursor-pointer group" onclick="openItemDetail(\${r.itemId})">
+                    <div class="cursor-pointer group" onclick="showRelatedItem(\${r.itemId})">
                         <div class="h-24 bg-slate-100 rounded-xl overflow-hidden mb-2 border border-slate-200 relative">
                             <img src="\${rImg}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
                             <div class="absolute bottom-1 right-1 bg-black/50 text-white text-[9px] px-1.5 py-0.5 rounded backdrop-blur">\${r.ecoPoints || 0} pts</div>
@@ -1912,14 +1962,14 @@
                 }
 
                 const itemHtml = `
-                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3 hover:shadow-lg transition-shadow duration-300">
-                    <div class="flex gap-4">
-                        <div class="w-24 h-24 rounded-xl bg-slate-100 overflow-hidden shrink-0">
+                <div onclick="openItemDetail(\${item.itemId})" class="bg-white rounded-xl p-3 md:p-4 shadow-sm border border-slate-100 hover:shadow-lg transition-shadow duration-300 cursor-pointer">
+                    <div class="flex gap-3 md:gap-4">
+                        <div class="w-20 h-20 md:w-24 md:h-24 rounded-lg md:rounded-xl bg-slate-100 overflow-hidden shrink-0">
                             <img src="\${imgUrl}" class="w-full h-full object-cover">
                         </div>
                         <div class="flex-1 min-w-0 space-y-1.5">
                             <div class="flex justify-between items-start gap-2">
-                                <h4 class="font-bold text-lg text-slate-800 leading-tight">\${item.title}</h4>
+                                <h4 class="font-bold text-base md:text-lg text-slate-800 leading-tight line-clamp-2">\${item.title}</h4>
                                 <span class="bg-emerald-50 text-emerald-700 rounded-lg px-2 py-1 text-xs font-bold whitespace-nowrap">\${distStr}</span>
                             </div>
                             <p class="text-slate-500 text-sm flex items-center gap-1.5">
@@ -1934,14 +1984,13 @@
                             </div>
                         </div>
                     </div>
-                    <div class="border-t border-slate-100 pt-3 flex justify-between items-center">
+                    <div class="border-t border-slate-100 pt-3 mt-3 flex justify-between items-center">
                         <div class="flex items-center gap-1 text-xs text-slate-500">
                             <span class="material-symbols-outlined text-[14px]">schedule</span>
                             <span>Đăng \${postedAgo}</span>
                         </div>
                         <div class="flex items-center gap-2">
-                            <button onclick="flyToLocation(\${item.location.latitude}, \${item.location.longitude}, '\${itemTitle}'); document.getElementById('allItemsModal').classList.add('hidden');" class="text-primary text-xs font-bold hover:underline">Xem trên bản đồ</button>
-                            \${requestBtn}
+                             \${requestBtn}
                         </div>
                     </div>
                 </div>
@@ -2047,26 +2096,23 @@
                 }
 
                 const pointHtml = `
-                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-4 hover:shadow-md transition-shadow">
+                    <div class="bg-white rounded-xl p-3 md:p-4 shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
                         <!-- Row 1 -->
                         <div class="flex justify-between items-start">
-                            <h4 class="font-bold text-lg text-slate-800">\${p.name}</h4>
+                            <h4 class="font-bold text-base md:text-lg text-slate-800">\${p.name}</h4>
                             <span class="bg-emerald-50 text-emerald-700 rounded-lg px-2 py-1 text-xs font-bold whitespace-nowrap">\${distStr}</span>
                         </div>
 
                         <!-- Row 2 -->
-                        <p class="text-slate-500 text-sm">\${p.address}</p>
+                        <p class="text-slate-500 text-sm mt-2">\${p.address}</p>
 
                         <!-- Row 3: Tags -->
-                        <div class="flex flex-wrap gap-2">
+                        <div class="flex flex-wrap gap-2 mt-3">
                              \${tagsHtml}
                         </div>
 
                         <!-- Row 4: Footer -->
-                        <div class="border-t border-slate-50 pt-3 flex justify-between items-center">
-                            <div class="flex items-center gap-1 text-xs text-slate-500">
-
-                            </div>
+                        <div class="border-t border-slate-50 pt-3 mt-3 flex justify-end items-center">
                             \${actionHtml}
                         </div>
                     </div>
