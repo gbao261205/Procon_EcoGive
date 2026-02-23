@@ -16,6 +16,7 @@ import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.List;
 
 @WebServlet("/profile")
@@ -35,29 +36,55 @@ public class ProfileServlet extends HttpServlet {
             return;
         }
 
-        // --- MỚI: Refresh User Session ---
+        String userIdParam = req.getParameter("userId");
+        long profileUserId;
+        boolean isMyProfile = true;
+
+        User profileUser = null;
+
         try {
-            User updatedUser = userDAO.findById(currentUser.getUserId());
-            if (updatedUser != null) {
-                session.setAttribute("currentUser", updatedUser);
-                currentUser = updatedUser; // Cập nhật biến local để dùng bên dưới
+            if (userIdParam != null && !userIdParam.isEmpty()) {
+                profileUserId = Long.parseLong(userIdParam);
+                if (profileUserId != currentUser.getUserId()) {
+                    isMyProfile = false;
+                    profileUser = userDAO.findById(profileUserId);
+                } else {
+                    profileUser = currentUser;
+                }
+            } else {
+                profileUserId = currentUser.getUserId();
+                profileUser = currentUser;
             }
-        } catch (SQLException e) {
+
+            if (profileUser == null) {
+                // User không tồn tại hoặc có lỗi, chuyển hướng về trang chủ hoặc trang lỗi
+                resp.sendRedirect(req.getContextPath() + "/home");
+                return;
+            }
+
+            // Refresh thông tin người dùng hiện tại nếu xem profile của chính mình
+            if (isMyProfile) {
+                User updatedUser = userDAO.findById(currentUser.getUserId());
+                if (updatedUser != null) {
+                    session.setAttribute("currentUser", updatedUser);
+                    profileUser = updatedUser; // Dùng thông tin mới nhất
+                }
+            }
+
+        } catch (NumberFormatException | SQLException e) {
             e.printStackTrace();
+            resp.sendRedirect(req.getContextPath() + "/home"); // Lỗi thì về home
+            return;
         }
-        // ---------------------------------
 
-        long userId = currentUser.getUserId();
+        // Lấy dữ liệu dựa trên profileUser
+        List<Item> givenItems = itemDAO.findItemsByGiverId(profileUser.getUserId());
+        List<Review> reviews = reviewDAO.findReviewsByTargetUser(profileUser.getUserId());
+        List<Item> receivedItems = isMyProfile ? itemDAO.findItemsByReceiverId(profileUser.getUserId()) : Collections.emptyList();
 
-        // 1. Lấy danh sách đồ đã tặng
-        List<Item> givenItems = itemDAO.findItemsByGiverId(userId);
 
-        // 2. Lấy danh sách đồ đã nhận
-        List<Item> receivedItems = itemDAO.findItemsByReceiverId(userId);
-
-        // 3. Lấy danh sách đánh giá
-        List<Review> reviews = reviewDAO.findReviewsByTargetUser(userId);
-
+        req.setAttribute("profileUser", profileUser);
+        req.setAttribute("isMyProfile", isMyProfile);
         req.setAttribute("givenItems", givenItems);
         req.setAttribute("receivedItems", receivedItems);
         req.setAttribute("reviews", reviews);

@@ -526,7 +526,7 @@
                         <span id="detailAvatar">?</span>
                     </div>
                     <div>
-                        <div class="font-bold text-slate-800" id="detailGiver">Người đăng</div>
+                        <a href="#" id="detailGiver" class="font-bold text-slate-800 hover:underline hover:text-primary transition-colors">Người đăng</a>
                         <div class="text-sm text-primary font-medium flex items-center gap-1">
                             <span class="material-symbols-outlined text-sm">eco</span>
                             <span id="detailGiverPoints">0</span> EcoPoints
@@ -976,7 +976,15 @@
         document.getElementById('detailTitle').innerText = item.title;
         document.getElementById('detailDesc').innerText = item.description || "Không có mô tả";
         document.getElementById('detailAddress').innerText = item.address || "Chưa cập nhật địa chỉ";
-        document.getElementById('detailGiver').innerText = item.giverName || "Ẩn danh";
+
+        const giverEl = document.getElementById('detailGiver');
+        giverEl.innerText = item.giverName || "Ẩn danh";
+        if (item.giverId) {
+            giverEl.href = '${pageContext.request.contextPath}/profile?userId=' + item.giverId;
+        } else {
+            giverEl.href = '#';
+        }
+
         document.getElementById('detailAvatar').innerText = (item.giverName || "?").charAt(0).toUpperCase();
         document.getElementById('detailGiverPoints').innerText = item.giverEcoPoints || "0";
 
