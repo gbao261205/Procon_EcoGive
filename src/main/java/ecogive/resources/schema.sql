@@ -105,14 +105,15 @@ CREATE TABLE reviews (
 
 -- Bảng 7: Tin nhắn (Messages)
 CREATE TABLE messages (
-    message_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    sender_id BIGINT NOT NULL,
-    receiver_id BIGINT NOT NULL,
-    content TEXT CHARACTER SET utf8mb4 NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    is_read BOOLEAN DEFAULT FALSE,
-    FOREIGN KEY (sender_id) REFERENCES users(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (receiver_id) REFERENCES users(user_id) ON DELETE CASCADE
+      message_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+      sender_id BIGINT NOT NULL,
+      receiver_id BIGINT NOT NULL,
+      content TEXT CHARACTER SET utf8mb4 NOT NULL,
+      image_url VARCHAR(255) NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      is_read BOOLEAN DEFAULT FALSE,
+      FOREIGN KEY (sender_id) REFERENCES users(user_id) ON DELETE CASCADE,
+      FOREIGN KEY (receiver_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
 -- Bảng 8: Yêu cầu Thu gom (Collection Requests)
@@ -126,3 +127,4 @@ CREATE TABLE collection_requests (
     location POINT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
+

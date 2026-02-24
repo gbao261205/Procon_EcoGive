@@ -380,35 +380,6 @@
     </div>
 </div>
 
-<!-- 4. Rating Modal -->
-<div id="ratingModal" class="fixed inset-0 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[70]">
-    <div class="bg-white p-6 rounded-2xl w-full max-w-sm shadow-2xl relative modal-animate">
-        <h2 class="text-xl font-bold text-slate-800 text-center mb-2">Đánh giá người tặng</h2>
-        <p class="text-sm text-slate-500 text-center mb-6">Xác nhận bạn đã nhận được món đồ và đánh giá trải nghiệm.</p>
-
-        <div class="mb-4">
-            <label class="block text-xs font-bold text-slate-700 uppercase mb-2">Mức độ hài lòng</label>
-            <select id="ratingValue" class="w-full p-3 border border-slate-200 rounded-xl bg-yellow-50 text-yellow-700 font-bold focus:ring-2 focus:ring-yellow-400 outline-none">
-                <option value="5">⭐⭐⭐⭐⭐ (Tuyệt vời)</option>
-                <option value="4">⭐⭐⭐⭐ (Tốt)</option>
-                <option value="3">⭐⭐⭐ (Bình thường)</option>
-                <option value="2">⭐⭐ (Tệ)</option>
-                <option value="1">⭐ (Rất tệ)</option>
-            </select>
-        </div>
-
-        <div class="mb-6">
-            <label class="block text-xs font-bold text-slate-700 uppercase mb-2">Lời nhắn</label>
-            <textarea id="ratingComment" rows="3" class="w-full p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary outline-none resize-none" placeholder="Viết lời cảm ơn hoặc nhận xét..."></textarea>
-        </div>
-
-        <div class="flex gap-3">
-            <button onclick="document.getElementById('ratingModal').classList.add('hidden')" class="flex-1 bg-slate-100 text-slate-700 py-2.5 rounded-xl font-bold hover:bg-slate-200 transition">Hủy</button>
-            <button onclick="submitRating()" class="flex-1 bg-primary text-white py-2.5 rounded-xl font-bold hover:bg-primary-hover transition shadow-md">Gửi đánh giá</button>
-        </div>
-    </div>
-</div>
-
 <!-- 5. Give Away Modal (Post Item) -->
 <div id="giveAwayModal" class="fixed inset-0 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
     <div class="bg-white p-6 md:p-8 rounded-2xl w-full max-w-lg shadow-2xl relative modal-animate max-h-[90vh] overflow-y-auto">
@@ -633,89 +604,11 @@
     </button>
 
     <!-- Chat Button -->
-    <button id="btnOpenInbox" onclick="toggleChatModal(false)" class="w-12 h-12 md:w-14 md:h-14 bg-primary hover:bg-primary-hover text-white rounded-full shadow-lg shadow-emerald-200 transition transform hover:scale-110 flex items-center justify-center border-2 border-white relative group">
+    <a href="${pageContext.request.contextPath}/chat" class="w-12 h-12 md:w-14 md:h-14 bg-primary hover:bg-primary-hover text-white rounded-full shadow-lg shadow-emerald-200 transition transform hover:scale-110 flex items-center justify-center border-2 border-white relative group">
         <span class="material-symbols-outlined text-xl md:text-2xl">chat</span>
         <span id="msgBadge" class="absolute top-0 right-0 w-4 h-4 bg-red-500 border-2 border-white rounded-full hidden"></span>
         <span class="absolute right-full mr-3 bg-slate-800 text-white text-xs font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none hidden md:block">Tin nhắn</span>
-    </button>
-</div>
-
-<!-- CHAT MODAL (RESPONSIVE) -->
-<div id="chatModal" class="fixed inset-0 md:inset-auto md:bottom-24 md:right-6 md:w-[850px] md:h-[550px] bg-white md:rounded-2xl shadow-2xl border-0 md:border border-slate-200 hidden z-50 flex overflow-hidden modal-animate flex-col md:flex-row">
-
-    <!-- Inbox List -->
-    <div id="inboxPanel" class="w-full md:w-1/3 bg-slate-50 border-r border-slate-200 flex flex-col h-full">
-        <div class="p-4 bg-white border-b border-slate-100 font-bold text-slate-700 flex justify-between items-center h-16 shrink-0">
-            <span class="flex items-center gap-2"><span class="material-symbols-outlined">inbox</span> Hộp thư</span>
-            <button onclick="toggleChatModal(true)" class="text-slate-400 hover:text-slate-600 p-2">
-                <span class="material-symbols-outlined">close</span>
-            </button>
-        </div>
-        <div id="inboxList" class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar"></div>
-    </div>
-
-    <!-- Chat Detail -->
-    <div id="chatDetailPanel" class="w-full md:w-2/3 flex-col bg-white hidden md:flex relative h-full absolute inset-0 md:static z-10">
-        <!-- Chat Header -->
-        <div class="p-3 border-b border-slate-100 flex justify-between items-center bg-white shadow-sm z-10 h-16 shrink-0">
-            <div class="flex items-center gap-3 overflow-hidden">
-                <button onclick="backToInbox()" class="md:hidden text-slate-500 hover:text-primary p-1 -ml-1">
-                    <span class="material-symbols-outlined">arrow_back</span>
-                </button>
-                <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-primary font-bold text-lg shadow-inner shrink-0" id="chatHeaderAvatar">?</div>
-                <div class="min-w-0">
-                    <div id="chatTitle" class="font-bold text-slate-800 text-sm truncate">Chọn người chat</div>
-                    <div id="chatItemInfo" class="hidden text-[11px] text-slate-500 flex items-center gap-1 bg-slate-100 px-2 py-0.5 rounded mt-0.5 truncate">
-                        <span>📦</span> <span id="chatItemName" class="font-bold text-primary truncate max-w-[120px]">...</span>
-                    </div>
-                </div>
-            </div>
-            <div class="flex items-center gap-1 md:gap-2 shrink-0">
-                <!-- Action Buttons -->
-                <button id="btnGiverConfirm" onclick="confirmTransaction('giver_confirm')" class="hidden bg-primary text-white text-[10px] md:text-xs font-bold px-2 py-1.5 md:px-3 rounded-lg hover:bg-primary-hover shadow-md animate-pulse flex items-center gap-1">
-                    <span>🎁</span> <span class="hidden md:inline">Xác nhận đã cho</span><span class="md:hidden">Đã cho</span>
-                </button>
-                <button id="btnReceiverConfirm" onclick="confirmTransaction('receiver_confirm')" class="hidden bg-blue-600 text-white text-[10px] md:text-xs font-bold px-2 py-1.5 md:px-3 rounded-lg hover:bg-blue-700 shadow-md animate-bounce flex items-center gap-1">
-                    <span>✅</span> <span class="hidden md:inline">Xác nhận đã nhận</span><span class="md:hidden">Đã nhận</span>
-                </button>
-                <button onclick="toggleChatModal(true)" class="hidden md:block text-slate-400 hover:text-slate-600 ml-2">
-                    <span class="material-symbols-outlined">close</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- Messages Area -->
-        <div id="chatMessages" class="flex-1 p-4 overflow-y-auto bg-slate-50 text-sm space-y-3 custom-scrollbar pb-20 md:pb-4">
-            <div class="flex flex-col items-center justify-center h-full text-slate-400 gap-2">
-                <span class="material-symbols-outlined text-4xl opacity-50">chat_bubble_outline</span>
-                <p class="text-xs">Chọn hội thoại hoặc bấm Nhận trên bản đồ</p>
-            </div>
-        </div>
-
-        <!-- Quick Replies -->
-        <div id="quickReplies" class="px-4 py-2 bg-white flex gap-2 overflow-x-auto border-t border-slate-100 hidden no-scrollbar shrink-0">
-            <button id="qrGiver" onclick="confirmTransaction('giver_confirm')"
-                    class="hidden whitespace-nowrap bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-medium px-3 py-1.5 rounded-full hover:bg-emerald-100 transition">
-                🎁 Xác nhận đã cho
-            </button>
-            <button id="qrReceiver1" onclick="confirmTransaction('receiver_confirm')"
-                    class="hidden whitespace-nowrap bg-blue-50 border border-blue-200 text-blue-700 text-xs font-medium px-3 py-1.5 rounded-full hover:bg-blue-100 transition">
-                ✅ Xác nhận đã nhận
-            </button>
-            <button id="qrReceiver2" onclick="sendQuickReply('Bạn ơi, khi nào mình có thể qua lấy đồ được ạ?')"
-                    class="hidden whitespace-nowrap bg-slate-50 border border-slate-200 text-slate-600 text-xs font-medium px-3 py-1.5 rounded-full hover:bg-slate-100 transition">
-                🕒 Hẹn lịch nhận
-            </button>
-        </div>
-
-        <!-- Input Area -->
-        <div class="p-3 border-t border-slate-100 bg-white flex gap-2 shrink-0 pb-safe md:pb-3">
-            <input type="text" id="chatInput" disabled class="flex-1 border border-slate-200 rounded-full px-4 py-2.5 text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-primary outline-none transition" placeholder="Nhập tin nhắn...">
-            <button onclick="sendMessage()" id="btnSend" disabled class="bg-primary text-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-primary-hover transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed shrink-0">
-                <span class="material-symbols-outlined text-[20px]">send</span>
-            </button>
-        </div>
-    </div>
+    </a>
 </div>
 
 <!-- AI MODAL (RESPONSIVE) -->
@@ -776,10 +669,6 @@
         pointTypeMap['${t.typeCode}'] = { name: '${t.displayName}', icon: '${t.icon}' };
     </c:forEach>
 
-    let chatSocket = null;
-    let currentReceiverId = null;
-    let currentDiscussingItemId = null;
-    let isOwnerOfCurrentItem = false;
     let miniMap, locationMarker;
     let pointMap, pointMarker;
     let pointLatLng = { lat: 10.7769, lng: 106.7009 };
@@ -820,10 +709,6 @@
     });
 
     document.addEventListener("DOMContentLoaded", function() {
-        if (currentUserId) {
-            connectWebSocket();
-            loadInboxList();
-        }
         loadCategoriesForFilter();
         loadItems();
         loadCollectionPoints();
@@ -1135,349 +1020,22 @@
     // --- 2. LOGIC NÚT BẤM (User Items) ---
     async function requestItem(itemId, giverId, giverName, itemTitle) {
         if (!currentUserId) { window.location.href = '${pageContext.request.contextPath}/login'; return; }
-        currentDiscussingItemId = itemId;
-        isOwnerOfCurrentItem = false;
+
+        // Gửi request tạo transaction trước
         try {
             const fd = new URLSearchParams(); fd.append('itemId', itemId);
-            fetch('${pageContext.request.contextPath}/request-item', { method: 'POST', body: fd });
+            await fetch('${pageContext.request.contextPath}/request-item', { method: 'POST', body: fd });
         } catch(e){}
-        openChatWindow();
-        await loadInboxList();
-        selectUserChat(giverId, giverName, itemId, itemTitle, giverId);
-        setTimeout(() => sendMessageAuto("Chào bạn, mình muốn xin món '" + itemTitle + "'. Nó còn không ạ?"), 500);
+
+        // Chuyển hướng sang trang chat
+        window.location.href = '${pageContext.request.contextPath}/chat?partnerId=' + giverId + '&itemId=' + itemId;
     }
 
     async function openManageChat(itemId, itemTitle) {
-        currentDiscussingItemId = itemId;
-        isOwnerOfCurrentItem = true;
-        openChatWindow();
-        updateHeaderInfo(itemTitle);
-        document.getElementById('chatTitle').innerText = 'Chọn người nhận';
-        document.getElementById('chatHeaderAvatar').innerText = '?';
-        document.getElementById('chatMessages').innerHTML = '<div class="flex flex-col items-center justify-center h-full text-slate-400 gap-2"><span class="material-symbols-outlined text-4xl opacity-50">arrow_back</span><p class="text-xs text-center">Chọn một người trong danh sách bên trái<br>để tặng món <b>' + itemTitle + '</b></p></div>';
-        document.getElementById('chatInput').disabled = true;
-        document.getElementById('btnSend').disabled = true;
-        document.getElementById('btnGiverConfirm').classList.add('hidden');
-        document.getElementById('btnReceiverConfirm').classList.add('hidden');
-        loadInboxList();
+        // Chuyển hướng sang trang chat (không cần partnerId cụ thể, user sẽ chọn từ list)
+        // Hoặc có thể tìm partner gần nhất nếu muốn
+        window.location.href = '${pageContext.request.contextPath}/chat';
     }
-
-    // --- 3. CHAT UI LOGIC ---
-    function openChatWindow() {
-        document.getElementById('chatModal').classList.remove('hidden');
-        document.getElementById('msgBadge').classList.add('hidden');
-    }
-
-    function toggleChatModal(forceClose) {
-        const modal = document.getElementById('chatModal');
-        if (forceClose) {
-            modal.classList.add('hidden');
-            currentDiscussingItemId = null;
-            isOwnerOfCurrentItem = false;
-            currentReceiverId = null;
-        } else {
-            modal.classList.toggle('hidden');
-            if (!modal.classList.contains('hidden')) loadInboxList();
-        }
-    }
-
-    async function loadInboxList() {
-        try {
-            const res = await fetch('${pageContext.request.contextPath}/api/chat?action=inbox');
-            const users = await res.json();
-            const listEl = document.getElementById('inboxList');
-            listEl.innerHTML = '';
-            if (users.length === 0) { listEl.innerHTML = '<div class="text-center text-xs text-slate-400 mt-8">Chưa có tin nhắn</div>'; return; }
-            users.forEach(u => {
-                const activeClass = (u.userId == currentReceiverId) ? 'bg-emerald-50 border-primary' : 'border-transparent hover:bg-slate-50';
-
-                const itemId = u.itemId || '';
-                const itemName = u.itemName || '';
-                const giverId = u.giverId || '';
-
-                listEl.innerHTML += `
-                    <div onclick="selectUserChat(\${u.userId}, '\${u.username}', '\${itemId}', '\${itemName}', '\${giverId}')"
-                         class="cursor-pointer p-3 border-l-4 \${activeClass} transition flex items-center gap-3 border-b border-slate-100 last:border-0">
-                        <div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-600 overflow-hidden shrink-0">
-                             <img src="https://api.dicebear.com/9.x/notionists-neutral/svg?seed=\${u.username}" class="w-full h-full">
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="flex justify-between items-center mb-0.5">
-                                <div class="font-bold text-sm text-slate-800 truncate">\${u.username}</div>
-                                <div class="text-[10px] text-slate-400">Vừa xong</div>
-                            </div>
-                            <div class="text-xs text-slate-500 truncate">\${u.lastMsg || '...'}</div>
-                        </div>
-                    </div>`;
-            });
-        } catch (e) {}
-    }
-
-    async function selectUserChat(userId, username, itemId, itemName, giverId) {
-        currentReceiverId = userId;
-        document.getElementById('chatTitle').innerText = username;
-        document.getElementById('chatHeaderAvatar').innerHTML = `<img src="https://api.dicebear.com/9.x/notionists-neutral/svg?seed=\${username}" class="w-full h-full rounded-full">`;
-        const input = document.getElementById('chatInput');
-        input.disabled = false; input.classList.remove('bg-slate-50'); input.classList.add('bg-white');
-        document.getElementById('btnSend').disabled = false;
-
-        // Mobile Logic: Hide Inbox, Show Detail
-        if (window.innerWidth < 768) {
-            document.getElementById('inboxPanel').classList.add('hidden');
-            document.getElementById('inboxPanel').classList.remove('flex');
-        }
-
-        const detailPanel = document.getElementById('chatDetailPanel');
-        detailPanel.classList.remove('hidden');
-        detailPanel.classList.add('flex');
-
-        const btnGiver = document.getElementById('btnGiverConfirm');
-        const btnReceiver = document.getElementById('btnReceiverConfirm');
-        btnGiver.classList.add('hidden');
-        btnReceiver.classList.add('hidden');
-
-        document.getElementById('quickReplies').classList.remove('hidden');
-
-        document.getElementById('qrGiver').classList.add('hidden');
-        document.getElementById('qrReceiver1').classList.add('hidden');
-        document.getElementById('qrReceiver2').classList.add('hidden');
-
-        if (itemId && itemId !== 'undefined') {
-            currentDiscussingItemId = itemId;
-            updateHeaderInfo(itemName);
-
-            if (giverId && giverId != 'undefined') {
-                isOwnerOfCurrentItem = (Number(giverId) === currentUserId);
-            } else {
-                isOwnerOfCurrentItem = false;
-            }
-
-            if (isOwnerOfCurrentItem) {
-                document.getElementById('qrGiver').classList.remove('hidden');
-            } else {
-                document.getElementById('qrReceiver2').classList.remove('hidden');
-            }
-
-        } else {
-            document.getElementById('chatItemInfo').classList.add('hidden');
-            currentDiscussingItemId = null;
-        }
-
-        loadHistory(userId);
-        loadInboxList();
-    }
-
-    function backToInbox() {
-        document.getElementById('chatDetailPanel').classList.add('hidden');
-        document.getElementById('chatDetailPanel').classList.remove('flex');
-
-        document.getElementById('inboxPanel').classList.remove('hidden');
-        document.getElementById('inboxPanel').classList.add('flex');
-
-        currentReceiverId = null;
-        currentDiscussingItemId = null;
-    }
-
-    // --- 4. LOGIC ĐÁNH GIÁ & HOÀN TẤT ---
-    function openRatingModal() {
-        document.getElementById('ratingModal').classList.remove('hidden');
-    }
-
-    async function submitRating() {
-        const rating = document.getElementById('ratingValue').value;
-        const comment = document.getElementById('ratingComment').value;
-        if (!comment) { alert("Hãy viết vài lời nhận xét!"); return; }
-        try {
-            const fd = new URLSearchParams();
-            fd.append('itemId', currentDiscussingItemId);
-            fd.append('rating', rating);
-            fd.append('comment', comment);
-            const res = await fetch('${pageContext.request.contextPath}/api/rate-transaction', { method: 'POST', body: fd });
-            const data = await res.json();
-            if (data.status === 'success') {
-                alert("🎉 Cảm ơn bạn! Giao dịch hoàn tất.");
-                document.getElementById('ratingModal').classList.add('hidden');
-                document.getElementById('btnReceiverConfirm').classList.add('hidden');
-                sendMessageAuto("✅ Mình đã nhận được đồ và đánh giá " + rating + " sao. Cảm ơn bạn!");
-                currentDiscussingItemId = null;
-                loadItems();
-            } else {
-                alert("Lỗi: " + data.message);
-            }
-        } catch (e) { alert("Lỗi kết nối"); }
-    }
-
-    async function loadHistory(userId) {
-        const chatBox = document.getElementById('chatMessages');
-        chatBox.innerHTML = '<div class="text-center text-xs text-slate-400 mt-10">Đang tải...</div>';
-        try {
-            const res = await fetch('${pageContext.request.contextPath}/api/chat?action=history&partnerId=' + userId);
-            const msgs = await res.json();
-            chatBox.innerHTML = '';
-
-            let lastSystemMsg = "";
-
-            msgs.forEach(m => {
-                if (m.content.startsWith("SYSTEM_GIFT:")) {
-                    if (currentDiscussingItemId && m.itemId == currentDiscussingItemId) {
-                        lastSystemMsg = m.content;
-                    }
-                    let cleanText = m.content.replace("SYSTEM_GIFT:", "");
-                    appendSystemMessage(cleanText);
-                } else {
-                    appendMessage(m.content, m.senderId === currentUserId ? 'outgoing' : 'incoming');
-                }
-            });
-
-            const btnGiver = document.getElementById('btnGiverConfirm');
-            const btnReceiver = document.getElementById('btnReceiverConfirm');
-
-            const qrGiver = document.getElementById('qrGiver');
-            const qrReceiver1 = document.getElementById('qrReceiver1');
-            const qrReceiver2 = document.getElementById('qrReceiver2');
-
-            if (currentDiscussingItemId) {
-                if (isOwnerOfCurrentItem) {
-                    if (!lastSystemMsg.includes("CONFIRMED") && !lastSystemMsg.includes("COMPLETED")) {
-                        btnGiver.classList.remove('hidden');
-                        qrGiver.classList.remove('hidden');
-                    } else {
-                        btnGiver.classList.add('hidden');
-                        qrGiver.classList.add('hidden');
-                    }
-                } else {
-                    if (lastSystemMsg.includes("CONFIRMED") && !lastSystemMsg.includes("COMPLETED")) {
-                        btnReceiver.classList.remove('hidden');
-                        qrReceiver1.classList.remove('hidden');
-                        qrReceiver2.classList.add('hidden');
-                    } else if (!lastSystemMsg.includes("CONFIRMED") && !lastSystemMsg.includes("COMPLETED")) {
-                        btnReceiver.classList.add('hidden');
-                        qrReceiver1.classList.add('hidden');
-                        qrReceiver2.classList.remove('hidden');
-                    } else {
-                        btnReceiver.classList.add('hidden');
-                        qrReceiver1.classList.add('hidden');
-                        qrReceiver2.classList.add('hidden');
-                    }
-                }
-            }
-
-            chatBox.scrollTop = chatBox.scrollHeight;
-        } catch(e) { chatBox.innerHTML = 'Lỗi tải tin nhắn'; }
-    }
-
-    // --- 5. CONFIRM TRANSACTION (2-WAY) ---
-    async function confirmTransaction(action) {
-        const receiverName = document.getElementById('chatTitle').innerText;
-        let confirmMsg = "";
-        if (action === 'giver_confirm') confirmMsg = "Bạn xác nhận đã giao món đồ này cho " + receiverName + "?\n(Người nhận sẽ có 3 ngày để xác nhận)";
-        else confirmMsg = "Bạn xác nhận đã nhận được món đồ này?";
-
-        if (!confirm(confirmMsg)) return;
-
-        try {
-            const fd = new URLSearchParams();
-            fd.append('itemId', currentDiscussingItemId);
-
-            let targetReceiverId;
-            if (isOwnerOfCurrentItem) {
-                targetReceiverId = currentReceiverId;
-            } else {
-                targetReceiverId = currentUserId;
-            }
-            fd.append('receiverId', targetReceiverId);
-
-            fd.append('action', action);
-
-            const res = await fetch('${pageContext.request.contextPath}/api/confirm-transaction', { method: 'POST', body: fd });
-            const data = await res.json();
-
-            if (data.status === 'success') {
-                alert("✅ " + data.message);
-
-                let sysMsg = "";
-                if (action === 'giver_confirm') {
-                    sysMsg = "SYSTEM_GIFT:Người tặng đã xác nhận giao đồ. Trạng thái: CONFIRMED. Bạn hãy xác nhận khi đã nhận được nhé!";
-                    document.getElementById('btnGiverConfirm').classList.add('hidden');
-                    document.getElementById('qrGiver').classList.add('hidden');
-                } else {
-                    sysMsg = "SYSTEM_GIFT:Người nhận đã xác nhận nhận đồ. Trạng thái: COMPLETED. Giao dịch hoàn tất!";
-                    document.getElementById('btnReceiverConfirm').classList.add('hidden');
-                    document.getElementById('qrReceiver1').classList.add('hidden');
-                    openRatingModal();
-                }
-
-                if (chatSocket && currentReceiverId) {
-                    chatSocket.send(JSON.stringify({ receiverId: currentReceiverId, content: sysMsg }));
-                }
-                appendSystemMessage(sysMsg.replace("SYSTEM_GIFT:", ""));
-
-                loadItems();
-                setTimeout(loadInboxList, 500);
-            } else {
-                alert("❌ Lỗi: " + data.message);
-            }
-        } catch (e) { alert("❌ Lỗi kết nối"); }
-    }
-
-    function sendQuickReply(text) {
-        sendMessageAuto(text);
-    }
-
-    // --- UTILS & WS ---
-    function updateHeaderInfo(title) {
-        document.getElementById('chatItemInfo').classList.remove('hidden');
-        document.getElementById('chatItemName').innerText = title;
-    }
-
-    function connectWebSocket() {
-        if (chatSocket && chatSocket.readyState === WebSocket.OPEN) return;
-        const wsUrl = (window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host + '${pageContext.request.contextPath}/chat/' + currentUserId;
-        chatSocket = new WebSocket(wsUrl);
-        chatSocket.onmessage = (e) => {
-            const data = JSON.parse(e.data);
-            if (data.content.startsWith("SYSTEM_GIFT:")) {
-                const msgText = data.content.replace("SYSTEM_GIFT:", "");
-                appendSystemMessage(msgText);
-
-                if (data.content.includes("CONFIRMED") && !isOwnerOfCurrentItem) {
-                    document.getElementById('btnReceiverConfirm').classList.remove('hidden');
-                    document.getElementById('qrReceiver1').classList.remove('hidden');
-                    document.getElementById('qrReceiver2').classList.add('hidden');
-                }
-
-                loadInboxList();
-                loadItems();
-                return;
-            }
-            if (data.senderId == currentReceiverId) appendMessage(data.content, 'incoming');
-            else document.getElementById('msgBadge').classList.remove('hidden');
-            loadInboxList();
-        };
-        chatSocket.onclose = () => setTimeout(connectWebSocket, 3000);
-    }
-
-    function sendMessage() { const inp = document.getElementById('chatInput'); if (inp.value.trim()) { sendMessageAuto(inp.value.trim()); inp.value = ''; } }
-    function sendMessageAuto(txt) {
-        if (chatSocket && currentReceiverId) {
-            chatSocket.send(JSON.stringify({ receiverId: currentReceiverId, content: txt }));
-            if (txt.startsWith("SYSTEM_GIFT:")) appendSystemMessage(txt.replace("SYSTEM_GIFT:", ""));
-            else appendMessage(txt, 'outgoing');
-            setTimeout(loadInboxList, 500);
-        }
-    }
-    function appendMessage(txt, type) {
-        const box = document.getElementById('chatMessages');
-        const cls = type === 'outgoing' ? 'bg-primary text-white ml-auto rounded-tr-none' : 'bg-white border border-slate-200 text-slate-700 mr-auto rounded-tl-none';
-        box.innerHTML += `<div class="w-fit max-w-[80%] px-4 py-2.5 rounded-2xl mb-2 text-sm shadow-sm \${cls}">\${txt}</div>`;
-        box.scrollTop = box.scrollHeight;
-    }
-    function appendSystemMessage(txt) {
-        const box = document.getElementById('chatMessages');
-        box.innerHTML += `<div class="text-center my-4"><span class="bg-yellow-50 text-yellow-800 text-xs font-bold px-3 py-1 rounded-full border border-yellow-100 shadow-sm">🎁 \${txt}</span></div>`;
-        box.scrollTop = box.scrollHeight;
-    }
-    document.getElementById('chatInput').addEventListener('keypress', (e) => { if(e.key==='Enter') sendMessage(); });
 
     // --- AI BOT LOGIC ---
     function toggleAiModal() { const modal = document.getElementById('aiModal'); modal.classList.toggle('hidden'); if(!modal.classList.contains('hidden')) { document.getElementById('aiInput').focus(); } }

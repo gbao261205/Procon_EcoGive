@@ -2,7 +2,7 @@ package ecogive.Controller;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import ecogive.util.DatabaseConnection; // Import DatabaseConnection
+import ecogive.util.DatabaseConnection;
 import jakarta.websocket.*;
 import jakarta.websocket.server.PathParam;
 import jakarta.websocket.server.ServerEndpoint;
@@ -30,14 +30,17 @@ public class ChatEndpoint {
         try {
             // 1. Parse tin nhắn từ Client
             JsonObject jsonMsg = gson.fromJson(message, JsonObject.class);
-            String receiverIdStr = jsonMsg.get("receiverId").getAsString();
-            String content = jsonMsg.get("content").getAsString();
+            String receiverIdStr = jsonMsg.has("receiverId") ? jsonMsg.get("receiverId").getAsString() : null;
+            String content = jsonMsg.has("content") ? jsonMsg.get("content").getAsString() : "";
+            String imageUrl = jsonMsg.has("imageUrl") ? jsonMsg.get("imageUrl").getAsString() : null;
+
+            if (receiverIdStr == null) return;
 
             // Lấy senderId từ URL kết nối websocket
             String senderIdStr = senderSession.getPathParameters().get("userId");
 
-            // 2. LƯU VÀO DATABASE (QUAN TRỌNG: Lưu bất kể người nhận on hay off)
-            saveMessageToDB(Long.parseLong(senderIdStr), Long.parseLong(receiverIdStr), content);
+            // 2. LƯU VÀO DATABASE
+            saveMessageToDB(Long.parseLong(senderIdStr), Long.parseLong(receiverIdStr), content, imageUrl);
 
             // 3. Gửi Real-time nếu người nhận đang Online
             Session receiverSession = userSessions.get(receiverIdStr);
@@ -45,6 +48,8 @@ public class ChatEndpoint {
                 JsonObject response = new JsonObject();
                 response.addProperty("senderId", senderIdStr);
                 response.addProperty("content", content);
+                if (imageUrl != null) response.addProperty("imageUrl", imageUrl);
+                
                 receiverSession.getBasicRemote().sendText(gson.toJson(response));
             }
         } catch (Exception e) {
@@ -62,20 +67,20 @@ public class ChatEndpoint {
         System.err.println("Chat Error: " + throwable.getMessage());
     }
 
-    // --- HÀM LƯU DB ĐÃ SỬA ---
-    private void saveMessageToDB(long senderId, long receiverId, String content) {
-        String sql = "INSERT INTO messages (sender_id, receiver_id, content) VALUES (?, ?, ?)";
+    // --- HÀM LƯU DB ĐÃ CẬP NHẬT ---
+    private void saveMessageToDB(long senderId, long receiverId, String content, String imageUrl) {
+        String sql = "INSERT INTO messages (sender_id, receiver_id, content, image_url) VALUES (?, ?, ?, ?)";
 
-        // Sử dụng DatabaseConnection thay vì hardcode
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setLong(1, senderId);
             ps.setLong(2, receiverId);
             ps.setString(3, content);
+            ps.setString(4, imageUrl); // Có thể là null
             ps.executeUpdate();
 
-            System.out.println("Saved message from " + senderId + " to " + receiverId);
+            System.out.println("Saved message from " + senderId + " to " + receiverId + (imageUrl != null ? " with image" : ""));
         } catch (SQLException e) {
             e.printStackTrace();
             System.err.println("Lỗi lưu tin nhắn vào DB: " + e.getMessage());

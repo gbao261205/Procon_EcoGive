@@ -123,6 +123,7 @@ public class ChatApiServlet extends HttpServlet {
                     JsonObject msg = new JsonObject();
                     msg.addProperty("senderId", rs.getLong("sender_id"));
                     msg.addProperty("content", rs.getString("content"));
+                    msg.addProperty("imageUrl", rs.getString("image_url")); // Thêm dòng này
                     msg.addProperty("createdAt", rs.getString("created_at"));
                     history.add(msg);
                 }
