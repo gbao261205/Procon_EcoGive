@@ -188,14 +188,26 @@
                     </div>
 
                     <div class="flex items-center gap-2 shrink-0">
-                        <!-- Action Buttons (Styled as Badges/Buttons) -->
+                        <!-- Action Buttons -->
                         <button id="btnGiverConfirm" onclick="confirmTransaction('giver_confirm')" class="hidden group bg-gradient-to-r from-primary to-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-full hover:shadow-lg hover:shadow-emerald-200/50 transform hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-1.5">
                             <span class="material-symbols-rounded text-[16px] group-hover:animate-bounce">card_giftcard</span>
-                            <span class="hidden sm:inline">Xác nhận đã cho</span><span class="sm:hidden">Đã cho</span>
+                            <span class="hidden sm:inline">Xác nhận cho</span><span class="sm:hidden">Cho</span>
                         </button>
                         <button id="btnReceiverConfirm" onclick="confirmTransaction('receiver_confirm')" class="hidden group bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-xs font-bold px-4 py-2 rounded-full hover:shadow-lg hover:shadow-blue-200/50 transform hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-1.5">
                             <span class="material-symbols-rounded text-[16px] group-hover:animate-bounce">check_circle</span>
-                            <span class="hidden sm:inline">Xác nhận đã nhận</span><span class="sm:hidden">Đã nhận</span>
+                            <span class="hidden sm:inline">Đã nhận được</span><span class="sm:hidden">Đã nhận</span>
+                        </button>
+
+                        <!-- Nút Hủy Giao Dịch -->
+                        <button id="btnCancelTrans" onclick="confirmTransaction('cancel')" class="hidden group bg-white text-red-500 text-xs font-bold px-3 py-2 rounded-full border border-red-200 hover:bg-red-50 hover:shadow-md transition-all duration-300 flex items-center gap-1.5" title="Hủy giao dịch">
+                            <span class="material-symbols-rounded text-[16px]">cancel</span>
+                            <span class="hidden sm:inline">Hủy</span>
+                        </button>
+
+                        <!-- Nút Xin Lại (Mới) -->
+                        <button id="btnRequestAgain" onclick="reRequestItem()" class="hidden group bg-gradient-to-r from-primary to-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-full hover:shadow-lg hover:shadow-emerald-200/50 transform hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-1.5">
+                            <span class="material-symbols-rounded text-[16px]">volunteer_activism</span>
+                            <span class="hidden sm:inline">Xin món này</span><span class="sm:hidden">Xin lại</span>
                         </button>
 
                         <button class="w-9 h-9 rounded-full bg-white text-slate-400 hover:text-primary hover:bg-emerald-50 transition flex items-center justify-center shadow-sm border border-slate-100" title="Thông tin">
@@ -219,11 +231,11 @@
                 <div id="quickReplies" class="px-6 py-3 flex gap-2 overflow-x-auto hidden no-scrollbar shrink-0 mask-linear-fade">
                     <button id="qrGiver" onclick="confirmTransaction('giver_confirm')"
                             class="hidden whitespace-nowrap bg-emerald-100/80 hover:bg-emerald-200 text-emerald-800 text-xs font-bold px-4 py-2 rounded-full border border-emerald-200 transition shadow-sm backdrop-blur-sm">
-                        🎁 Xác nhận đã cho
+                        🎁 Xác nhận cho
                     </button>
                     <button id="qrReceiver1" onclick="confirmTransaction('receiver_confirm')"
                             class="hidden whitespace-nowrap bg-blue-100/80 hover:bg-blue-200 text-blue-800 text-xs font-bold px-4 py-2 rounded-full border border-blue-200 transition shadow-sm backdrop-blur-sm">
-                        ✅ Xác nhận đã nhận
+                        ✅ Đã nhận được
                     </button>
                     <button id="qrReceiver2" onclick="sendQuickReply('Bạn ơi, khi nào mình có thể qua lấy đồ được ạ?')"
                             class="hidden whitespace-nowrap bg-white/80 hover:bg-white text-slate-700 text-xs font-bold px-4 py-2 rounded-full border border-white/60 transition shadow-sm backdrop-blur-sm hover:text-primary">
@@ -337,10 +349,9 @@
                     const msgText = data.content.replace("SYSTEM_GIFT:", "");
                     appendSystemMessage(msgText);
 
-                    if (data.content.includes("CONFIRMED") && !isOwnerOfCurrentItem) {
-                        document.getElementById('btnReceiverConfirm').classList.remove('hidden');
-                        document.getElementById('qrReceiver1').classList.remove('hidden');
-                        document.getElementById('qrReceiver2').classList.add('hidden');
+                    // Reload để cập nhật trạng thái nút
+                    if (currentDiscussingItemId) {
+                        loadHistory(currentReceiverId);
                     }
                     loadInboxList();
                     return;
@@ -439,10 +450,16 @@
 
             document.getElementById('quickReplies').classList.remove('hidden');
 
+            // Reset buttons
             const btnGiver = document.getElementById('btnGiverConfirm');
             const btnReceiver = document.getElementById('btnReceiverConfirm');
+            const btnCancel = document.getElementById('btnCancelTrans');
+            const btnRequestAgain = document.getElementById('btnRequestAgain');
+
             btnGiver.classList.add('hidden');
             btnReceiver.classList.add('hidden');
+            btnCancel.classList.add('hidden');
+            btnRequestAgain.classList.add('hidden');
 
             const qrGiver = document.getElementById('qrGiver');
             const qrReceiver1 = document.getElementById('qrReceiver1');
@@ -462,11 +479,7 @@
                     isOwnerOfCurrentItem = false;
                 }
 
-                if (isOwnerOfCurrentItem) {
-                    document.getElementById('qrGiver').classList.remove('hidden');
-                } else {
-                    document.getElementById('qrReceiver2').classList.remove('hidden');
-                }
+                // Logic hiển thị nút sẽ được xử lý trong loadHistory dựa trên trạng thái giao dịch
             } else {
                 document.getElementById('chatItemInfo').classList.add('hidden');
                 currentDiscussingItemId = null;
@@ -505,35 +518,73 @@
                     }
                 });
 
-                // Update Action Buttons logic (same as before)
+                // --- LOGIC HIỂN THỊ NÚT BẤM ---
                 const btnGiver = document.getElementById('btnGiverConfirm');
                 const btnReceiver = document.getElementById('btnReceiverConfirm');
+                const btnCancel = document.getElementById('btnCancelTrans');
+                const btnRequestAgain = document.getElementById('btnRequestAgain');
+
                 const qrGiver = document.getElementById('qrGiver');
                 const qrReceiver1 = document.getElementById('qrReceiver1');
                 const qrReceiver2 = document.getElementById('qrReceiver2');
 
                 if (currentDiscussingItemId) {
-                    if (isOwnerOfCurrentItem) {
-                        if (!lastSystemMsg.includes("CONFIRMED") && !lastSystemMsg.includes("COMPLETED")) {
-                            btnGiver.classList.remove('hidden');
-                            qrGiver.classList.remove('hidden');
-                        } else {
-                            btnGiver.classList.add('hidden');
-                            qrGiver.classList.add('hidden');
+                    const isConfirmed = lastSystemMsg.includes("CONFIRMED");
+                    const isCompleted = lastSystemMsg.includes("COMPLETED");
+                    const isCanceled = lastSystemMsg.includes("CANCELED") || lastSystemMsg.includes("đã bị hủy");
+
+                    if (isCompleted) {
+                        // Giao dịch đã hoàn tất -> Ẩn hết
+                        btnGiver.classList.add('hidden');
+                        btnReceiver.classList.add('hidden');
+                        btnCancel.classList.add('hidden');
+                        btnRequestAgain.classList.add('hidden');
+                        qrGiver.classList.add('hidden');
+                        qrReceiver1.classList.add('hidden');
+                        qrReceiver2.classList.add('hidden');
+                    } else if (isCanceled) {
+                        // Giao dịch đã hủy -> Ẩn nút Hủy
+                        btnGiver.classList.add('hidden');
+                        btnReceiver.classList.add('hidden');
+                        btnCancel.classList.add('hidden');
+                        qrGiver.classList.add('hidden');
+                        qrReceiver1.classList.add('hidden');
+                        qrReceiver2.classList.add('hidden');
+
+                        // Nếu là người nhận -> Hiện nút Xin lại
+                        if (!isOwnerOfCurrentItem) {
+                            btnRequestAgain.classList.remove('hidden');
                         }
                     } else {
-                        if (lastSystemMsg.includes("CONFIRMED") && !lastSystemMsg.includes("COMPLETED")) {
-                            btnReceiver.classList.remove('hidden');
-                            qrReceiver1.classList.remove('hidden');
-                            qrReceiver2.classList.add('hidden');
-                        } else if (!lastSystemMsg.includes("CONFIRMED") && !lastSystemMsg.includes("COMPLETED")) {
-                            btnReceiver.classList.add('hidden');
-                            qrReceiver1.classList.add('hidden');
-                            qrReceiver2.classList.remove('hidden');
+                        // Giao dịch đang diễn ra (PENDING hoặc CONFIRMED)
+                        if (isOwnerOfCurrentItem) {
+                            // NGƯỜI CHO
+                            if (!isConfirmed) {
+                                // Chưa xác nhận -> Hiện nút Xác nhận
+                                btnGiver.classList.remove('hidden');
+                                qrGiver.classList.remove('hidden');
+                                btnCancel.classList.add('hidden');
+                            } else {
+                                // Đã xác nhận -> Hiện nút Hủy (để quay xe)
+                                btnGiver.classList.add('hidden');
+                                qrGiver.classList.add('hidden');
+                                btnCancel.classList.remove('hidden');
+                            }
                         } else {
-                            btnReceiver.classList.add('hidden');
-                            qrReceiver1.classList.add('hidden');
-                            qrReceiver2.classList.add('hidden');
+                            // NGƯỜI NHẬN
+                            if (isConfirmed) {
+                                // Đã được xác nhận -> Hiện nút Đã nhận & Hủy
+                                btnReceiver.classList.remove('hidden');
+                                qrReceiver1.classList.remove('hidden');
+                                btnCancel.classList.remove('hidden');
+                                qrReceiver2.classList.add('hidden');
+                            } else {
+                                // Chưa được xác nhận -> Hiện nút Hủy yêu cầu & Hẹn lịch
+                                btnReceiver.classList.add('hidden');
+                                qrReceiver1.classList.add('hidden');
+                                btnCancel.classList.remove('hidden'); // Hủy yêu cầu
+                                qrReceiver2.classList.remove('hidden');
+                            }
                         }
                     }
                 }
@@ -553,8 +604,6 @@
             const formData = new FormData();
             formData.append("image", file);
 
-            // Show loading state if needed
-
             try {
                 const res = await fetch('${pageContext.request.contextPath}/api/chat/upload-image', {
                     method: 'POST',
@@ -563,7 +612,6 @@
                 const data = await res.json();
 
                 if (data.status === 'success') {
-                    // Gửi tin nhắn chứa ảnh
                     sendMessageAuto("", data.imageUrl);
                 } else {
                     alert("Lỗi upload ảnh: " + data.message);
@@ -571,7 +619,7 @@
             } catch (e) {
                 alert("Lỗi kết nối khi upload ảnh");
             } finally {
-                input.value = ''; // Reset input
+                input.value = '';
             }
         }
 
@@ -619,19 +667,14 @@
 
             let contentHtml = '';
 
-            // Render Image if exists
             if (imgUrl) {
-                // Kiểm tra nếu là URL Cloudinary (bắt đầu bằng http) thì dùng trực tiếp
-                // Nếu không thì dùng qua ImageServlet
                 let displayUrl = imgUrl;
                 if (!imgUrl.startsWith('http')) {
                     displayUrl = '${pageContext.request.contextPath}/images?path=' + encodeURIComponent(imgUrl);
                 }
-
                 contentHtml += `<img src="\${displayUrl}" onclick="openLightbox(this.src)" class="max-w-full w-48 h-auto rounded-lg mb-1 cursor-pointer hover:opacity-90 transition border border-white/20">`;
             }
 
-            // Render Text if exists
             if (txt) {
                 contentHtml += `<div>\${txt}</div>`;
             }
@@ -665,7 +708,9 @@
         async function confirmTransaction(action) {
             const receiverName = document.getElementById('chatTitle').innerText;
             let confirmMsg = "";
-            if (action === 'giver_confirm') confirmMsg = "Bạn xác nhận đã giao món đồ này cho " + receiverName + "?";
+
+            if (action === 'cancel') confirmMsg = "Bạn chắc chắn muốn HỦY giao dịch này?";
+            else if (action === 'giver_confirm') confirmMsg = "Bạn xác nhận đã giao món đồ này cho " + receiverName + "?";
             else confirmMsg = "Bạn xác nhận đã nhận được món đồ này?";
 
             if (!confirm(confirmMsg)) return;
@@ -688,14 +733,13 @@
 
                 if (data.status === 'success') {
                     let sysMsg = "";
-                    if (action === 'giver_confirm') {
+
+                    if (action === 'cancel') {
+                        sysMsg = "SYSTEM_GIFT:Giao dịch về sản phẩm " + data.itemName + " đã bị hủy!";
+                    } else if (action === 'giver_confirm') {
                         sysMsg = "SYSTEM_GIFT:Người tặng đã xác nhận giao đồ. Trạng thái: CONFIRMED. Bạn hãy xác nhận khi đã nhận được nhé!";
-                        document.getElementById('btnGiverConfirm').classList.add('hidden');
-                        document.getElementById('qrGiver').classList.add('hidden');
                     } else {
                         sysMsg = "SYSTEM_GIFT:Người nhận đã xác nhận nhận đồ. Trạng thái: COMPLETED. Giao dịch hoàn tất!";
-                        document.getElementById('btnReceiverConfirm').classList.add('hidden');
-                        document.getElementById('qrReceiver1').classList.add('hidden');
                         openRatingModal();
                     }
 
@@ -703,11 +747,44 @@
                         chatSocket.send(JSON.stringify({ receiverId: currentReceiverId, content: sysMsg }));
                     }
                     appendSystemMessage(sysMsg.replace("SYSTEM_GIFT:", ""));
+
+                    // Reload lại lịch sử để cập nhật nút bấm
+                    setTimeout(() => loadHistory(currentReceiverId), 500);
                     setTimeout(loadInboxList, 500);
                 } else {
                     alert("❌ Lỗi: " + data.message);
                 }
             } catch (e) { alert("❌ Lỗi kết nối"); }
+        }
+
+        // --- RE-REQUEST ITEM (XIN LẠI) ---
+        async function reRequestItem() {
+            if (!currentDiscussingItemId) return;
+
+            try {
+                const fd = new URLSearchParams();
+                fd.append('itemId', currentDiscussingItemId);
+
+                const res = await fetch('${pageContext.request.contextPath}/request-item', { method: 'POST', body: fd });
+                const data = await res.json();
+
+                if (data.status === 'success') {
+                    // Gửi tin nhắn thông báo
+                    const sysMsg = "SYSTEM_GIFT:Người nhận muốn xin lại món đồ này.";
+                    if (chatSocket && currentReceiverId) {
+                        chatSocket.send(JSON.stringify({ receiverId: currentReceiverId, content: sysMsg }));
+                    }
+                    appendSystemMessage("Người nhận muốn xin lại món đồ này.");
+
+                    // Reload UI
+                    setTimeout(() => loadHistory(currentReceiverId), 500);
+                    setTimeout(loadInboxList, 500);
+                } else {
+                    alert("Lỗi: " + data.message);
+                }
+            } catch(e) {
+                alert("Lỗi kết nối khi xin lại đồ.");
+            }
         }
 
         function openRatingModal() {

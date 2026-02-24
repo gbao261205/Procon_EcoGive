@@ -19,7 +19,6 @@ import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.sql.SQLException;
 
 @WebServlet("/api/confirm-transaction")
 public class ConfirmTransactionServlet extends HttpServlet {
@@ -56,27 +55,54 @@ public class ConfirmTransactionServlet extends HttpServlet {
             Item item = itemDAO.findById(itemId);
             if (item == null) throw new Exception("Không tìm thấy vật phẩm ID=" + itemId);
 
+            // Tìm transaction cụ thể giữa item và receiver này
             Transaction trans = transactionDAO.findActiveTransaction(itemId, receiverId);
-            if (trans == null) {
-                System.out.println("Transaction not found for itemId=" + itemId + ", receiverId=" + receiverId);
-                throw new Exception("Không tìm thấy giao dịch cho item " + itemId);
-            }
             
-            System.out.println("Found Transaction: ID=" + trans.getTransactionId() + ", Status=" + trans.getStatus() + ", ItemID=" + trans.getItemId());
+            if (trans == null) {
+                // Nếu chưa có transaction (trường hợp hiếm hoi hoặc lỗi), có thể tạo mới nếu action là giver_confirm?
+                // Nhưng theo logic mới, request đã tạo transaction PENDING rồi.
+                throw new Exception("Không tìm thấy giao dịch hợp lệ.");
+            }
 
-            if ("giver_confirm".equals(action)) {
-                // 1. NGƯỜI CHO XÁC NHẬN
+            if ("cancel".equals(action)) {
+                // --- HỦY GIAO DỊCH ---
+                // Chỉ cho phép hủy nếu là người trong cuộc
+                if (currentUser.getUserId() != item.getGiverId() && currentUser.getUserId() != trans.getReceiverId()) {
+                    throw new Exception("Bạn không có quyền hủy giao dịch này.");
+                }
+
+                boolean success = transactionDAO.cancelTransaction(trans.getTransactionId());
+                if (success) {
+                    // Nếu item đang PENDING (do đã confirm trước đó), trả về AVAILABLE
+                    if (item.getStatus() == ItemStatus.PENDING) {
+                        itemDAO.updateStatus(itemId, ItemStatus.AVAILABLE);
+                    }
+                    response.addProperty("status", "success");
+                    response.addProperty("message", "Đã hủy giao dịch.");
+                    response.addProperty("newStatus", "CANCELED");
+                } else {
+                    throw new Exception("Lỗi khi hủy giao dịch.");
+                }
+
+            } else if ("giver_confirm".equals(action)) {
+                // --- NGƯỜI CHO XÁC NHẬN ---
                 if (item.getGiverId() != currentUser.getUserId()) {
                     throw new Exception("Bạn không phải chủ món đồ.");
                 }
                 
+                // Kiểm tra xem item có đang bị khóa bởi giao dịch khác không
+                if (item.getStatus() != ItemStatus.AVAILABLE && trans.getStatus() == TransactionStatus.PENDING) {
+                     // Nếu item không AVAILABLE (ví dụ PENDING do giao dịch khác), không cho confirm cái mới
+                     throw new Exception("Vật phẩm đang trong quá trình giao dịch với người khác.");
+                }
+
                 if (trans.getStatus() == TransactionStatus.CONFIRMED) {
                     response.addProperty("status", "success");
                     response.addProperty("message", "Bạn đã xác nhận giao dịch này rồi.");
-                    response.addProperty("newStatus", "CONFIRMED");
                 } else if (trans.getStatus() == TransactionStatus.PENDING) {
                     boolean success = transactionDAO.confirmByGiver(trans.getTransactionId());
                     if (success) {
+                        // Khóa item lại
                         itemDAO.updateStatus(itemId, ItemStatus.PENDING);
                         response.addProperty("status", "success");
                         response.addProperty("message", "Đã xác nhận cho! Chờ người nhận xác nhận.");
@@ -85,11 +111,11 @@ public class ConfirmTransactionServlet extends HttpServlet {
                         throw new Exception("Lỗi cập nhật giao dịch.");
                     }
                 } else {
-                    throw new Exception("Trạng thái giao dịch không hợp lệ (" + trans.getStatus() + "). ItemID=" + itemId);
+                    throw new Exception("Trạng thái giao dịch không hợp lệ (" + trans.getStatus() + ").");
                 }
 
             } else if ("receiver_confirm".equals(action)) {
-                // 2. NGƯỜI NHẬN XÁC NHẬN
+                // --- NGƯỜI NHẬN XÁC NHẬN ---
                 if (trans.getReceiverId() != currentUser.getUserId()) {
                     throw new Exception("Bạn không phải người nhận trong giao dịch này.");
                 }
@@ -97,23 +123,16 @@ public class ConfirmTransactionServlet extends HttpServlet {
                 if (trans.getStatus() == TransactionStatus.COMPLETED) {
                      response.addProperty("status", "success");
                      response.addProperty("message", "Giao dịch đã hoàn tất trước đó.");
-                     response.addProperty("newStatus", "COMPLETED");
                 } else if (trans.getStatus() == TransactionStatus.CONFIRMED) {
                     boolean success = transactionDAO.confirmByReceiver(trans.getTransactionId());
                     if (success) {
                         itemDAO.updateStatus(itemId, ItemStatus.COMPLETED);
 
-                        // --- MỚI: CỘNG ĐIỂM CHO NGƯỜI TẶNG ---
+                        // Cộng điểm
                         BigDecimal points = item.getEcoPoints();
                         if (points != null && points.compareTo(BigDecimal.ZERO) > 0) {
-                            boolean added = userDAO.addEcoPoints(item.getGiverId(), points);
-                            if (added) {
-                                System.out.println("Added " + points + " EcoPoints to user " + item.getGiverId());
-                            } else {
-                                System.err.println("Failed to add EcoPoints to user " + item.getGiverId());
-                            }
+                            userDAO.addEcoPoints(item.getGiverId(), points);
                         }
-                        // --------------------------------------
 
                         response.addProperty("status", "success");
                         response.addProperty("message", "Giao dịch hoàn tất! Cảm ơn bạn.");
@@ -122,20 +141,10 @@ public class ConfirmTransactionServlet extends HttpServlet {
                         throw new Exception("Lỗi cập nhật giao dịch.");
                     }
                 } else {
-                    throw new Exception("Người cho chưa xác nhận hoặc trạng thái không hợp lệ (" + trans.getStatus() + ").");
+                    throw new Exception("Người cho chưa xác nhận hoặc trạng thái không hợp lệ.");
                 }
             } else {
-                // Fallback
-                if (item.getGiverId() == currentUser.getUserId()) {
-                     boolean success = transactionDAO.confirmByGiver(trans.getTransactionId());
-                     if(success) {
-                         itemDAO.updateStatus(itemId, ItemStatus.PENDING);
-                         response.addProperty("status", "success");
-                         response.addProperty("message", "Đã xác nhận cho.");
-                     }
-                } else {
-                    throw new Exception("Hành động không hợp lệ.");
-                }
+                throw new Exception("Hành động không hợp lệ.");
             }
             
             response.addProperty("itemName", item.getTitle());

@@ -99,6 +99,19 @@ public class TransactionDAO {
         }
     }
 
+    // --- MỚI: Hủy giao dịch ---
+    public boolean cancelTransaction(long transactionId) throws SQLException {
+        String sql = "UPDATE transactions SET status = 'CANCELED' WHERE transaction_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setLong(1, transactionId);
+            return stmt.executeUpdate() > 0;
+        } catch (Exception e) {
+            throw new SQLException(e);
+        }
+    }
+    // --------------------------
+
     // Kiểm tra tồn tại
     public boolean checkExists(long itemId, long receiverId) throws SQLException {
         String sql = "SELECT 1 FROM transactions WHERE item_id = ? AND receiver_id = ? AND status IN ('PENDING', 'CONFIRMED')";
