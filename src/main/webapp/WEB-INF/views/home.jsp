@@ -653,6 +653,66 @@
     </div>
 </div>
 
+<!-- TRADE PROPOSAL MODAL (MỚI) -->
+<div id="tradeProposalModal" class="fixed inset-0 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[90]">
+    <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl relative modal-animate max-h-[90vh] overflow-y-auto">
+        <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-white shrink-0">
+            <h3 class="font-bold text-xl text-slate-800 flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">swap_horiz</span>
+                Đề nghị trao đổi
+            </h3>
+            <button onclick="document.getElementById('tradeProposalModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <div class="p-6 space-y-6">
+            <!-- Target Item Info -->
+            <div class="flex gap-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
+                <img id="tradeTargetImg" src="" class="w-16 h-16 rounded-lg object-cover bg-white">
+                <div>
+                    <div class="text-xs text-slate-500 uppercase font-bold mb-1">Bạn muốn đổi lấy:</div>
+                    <div id="tradeTargetName" class="font-bold text-slate-800">...</div>
+                </div>
+            </div>
+
+            <!-- Offer Selection -->
+            <div>
+                <label class="block text-sm font-bold text-slate-700 mb-3">Bạn muốn đổi bằng gì?</label>
+
+                <!-- Tabs -->
+                <div class="flex gap-2 mb-4">
+                    <button onclick="switchTradeTab('existing')" id="tabExisting" class="flex-1 py-2 text-sm font-bold rounded-lg bg-primary text-white transition">Đồ cũ của tôi</button>
+                    <button onclick="switchTradeTab('new')" id="tabNew" class="flex-1 py-2 text-sm font-bold rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition">Tải lên mới</button>
+                </div>
+
+                <!-- Tab Content: Existing -->
+                <div id="contentExisting">
+                    <select id="tradeOfferSelect" class="w-full p-3 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-primary outline-none">
+                        <option value="" disabled selected>-- Chọn món đồ --</option>
+                        <!-- Items will be loaded here -->
+                    </select>
+                    <p class="text-xs text-slate-500 mt-2">* Chỉ hiện các món đang AVAILABLE</p>
+                </div>
+
+                <!-- Tab Content: New -->
+                <div id="contentNew" class="hidden space-y-3">
+                    <input type="text" id="tradeOfferTitle" placeholder="Tên vật phẩm..." class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary outline-none">
+                    <textarea id="tradeOfferDesc" placeholder="Mô tả..." rows="2" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary outline-none resize-none"></textarea>
+                    <!-- Simple file input for now -->
+                    <div class="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center hover:bg-slate-50 transition cursor-pointer relative">
+                        <input type="file" id="tradeOfferPhoto" class="absolute inset-0 opacity-0 cursor-pointer">
+                        <span class="material-symbols-outlined text-slate-400 text-2xl">add_a_photo</span>
+                        <p class="text-xs text-slate-500 mt-1">Chọn ảnh</p>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="submitTradeProposal()" class="w-full bg-primary text-white font-bold py-3 rounded-xl hover:bg-primary-hover transition shadow-lg">Gửi đề nghị</button>
+        </div>
+    </div>
+</div>
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script>
     // --- KHỞI TẠO ---
@@ -678,6 +738,9 @@
     let itemLayers = [];
     let pointLayers = [];
     let itemDataCache = {};
+
+    // Trade Variables
+    let currentTradeTargetId = null;
 
     // --- INFINITE SCROLL VARS ---
     let currentPageItems = 1;
@@ -857,7 +920,13 @@
                         if (item.giverId === currentUserId) {
                             actionBtn = `<button onclick="openManageChat(\${item.itemId}, '\${item.title}')" class="w-full bg-slate-100 text-slate-700 text-xs font-bold py-2 rounded-lg hover:bg-slate-200 border border-slate-200 transition">Quản lý & Chốt đơn 📩</button>`;
                         } else {
-                            actionBtn = `<button onclick="requestItem(\${item.itemId}, \${item.giverId}, '\${item.giverName || 'Người tặng'}', '\${item.title}')" class="w-full bg-primary text-white text-xs font-bold py-2 rounded-lg hover:bg-primary-hover shadow-md transition">Xin món này 🎁</button>`;
+                            // Cập nhật nút bấm trong Popup
+                            actionBtn = `
+                                <div class="flex flex-col gap-1 mt-2">
+                                    <button onclick="requestItem(\${item.itemId}, \${item.giverId}, '\${item.giverName || 'Người tặng'}', '\${item.title}')" class="w-full bg-primary text-white text-xs font-bold py-2 rounded-lg hover:bg-primary-hover shadow-md transition">Xin món này 🎁</button>
+                                    <button onclick="openTradeProposal(\${item.itemId}, '\${item.title}', '\${imgUrl}')" class="w-full bg-white text-primary text-xs font-bold py-2 rounded-lg border border-primary hover:bg-emerald-50 transition">Trao đổi 🔄</button>
+                                </div>
+                            `;
                         }
                     } else {
                         actionBtn = `<a href="${pageContext.request.contextPath}/login" class="block w-full text-center bg-slate-100 text-slate-700 text-xs font-bold py-2 rounded-lg hover:bg-slate-200 transition">Đăng nhập để nhận</a>`;
@@ -938,7 +1007,13 @@
             if (item.giverId === currentUserId) {
                 actionContainer.innerHTML = `<button onclick="openManageChat(\${item.itemId}, '\${item.title}'); document.getElementById('itemDetailModal').classList.add('hidden');" class="w-full bg-slate-100 text-slate-700 font-bold py-3 px-6 rounded-xl hover:bg-slate-200 border border-slate-200 transition">Quản lý tin đăng</button>`;
             } else {
-                actionContainer.innerHTML = `<button onclick="requestItem(\${item.itemId}, \${item.giverId}, '\${item.giverName}', '\${item.title}'); document.getElementById('itemDetailModal').classList.add('hidden');" class="w-full bg-primary text-white font-bold py-3 px-6 rounded-xl hover:bg-primary-hover shadow-lg shadow-emerald-200 transition">Xin món này 🎁</button>`;
+                // Thêm nút Trao đổi
+                actionContainer.innerHTML = `
+                    <div class="flex flex-col gap-2 w-full">
+                        <button onclick="requestItem(\${item.itemId}, \${item.giverId}, '\${item.giverName}', '\${item.title}'); document.getElementById('itemDetailModal').classList.add('hidden');" class="w-full bg-primary text-white font-bold py-3 px-6 rounded-xl hover:bg-primary-hover shadow-lg shadow-emerald-200 transition">Xin món này 🎁</button>
+                        <button onclick="openTradeProposal(\${item.itemId}, '\${item.title}', '\${imgUrl}'); document.getElementById('itemDetailModal').classList.add('hidden');" class="w-full bg-white text-primary font-bold py-3 px-6 rounded-xl border-2 border-primary hover:bg-emerald-50 transition">Đề nghị trao đổi 🔄</button>
+                    </div>
+                `;
             }
         } else {
             actionContainer.innerHTML = `<a href="${pageContext.request.contextPath}/login" class="block w-full text-center bg-primary text-white font-bold py-3 px-6 rounded-xl hover:bg-primary-hover transition">Đăng nhập để xin</a>`;
@@ -1516,7 +1591,12 @@
                     // Owner: No request button
                     requestBtn = '<span class="text-xs font-bold text-slate-400 px-4 py-2">Vật phẩm của bạn</span>';
                 } else {
-                    requestBtn = `<button onclick="event.stopPropagation(); requestItem(\${item.itemId}, \${item.giverId}, '\${giverNameEscaped}', '\${itemTitle}');" class="bg-primary text-white text-xs font-bold px-4 py-2 rounded-full hover:bg-primary-hover transition shadow-sm">Xin vật phẩm</button>`;
+                    requestBtn = `
+                        <div class="flex gap-2">
+                            <button onclick="event.stopPropagation(); requestItem(\${item.itemId}, \${item.giverId}, '\${giverNameEscaped}', '\${itemTitle}');" class="bg-primary text-white text-xs font-bold px-4 py-2 rounded-full hover:bg-primary-hover transition shadow-sm">Xin</button>
+                            <button onclick="event.stopPropagation(); openTradeProposal(\${item.itemId}, '\${itemTitle}', '\${imgUrl}');" class="bg-white text-primary text-xs font-bold px-4 py-2 rounded-full border border-primary hover:bg-emerald-50 transition shadow-sm">Đổi 🔄</button>
+                        </div>
+                    `;
                 }
 
                 const itemHtml = `
@@ -1703,6 +1783,92 @@
                     item.style.display = "none";
                 }
             }
+        }
+    }
+
+    // --- TRADE LOGIC (MỚI) ---
+    function openTradeProposal(targetItemId, targetItemTitle, targetItemImg) {
+        document.getElementById('tradeTargetName').innerText = targetItemTitle;
+        document.getElementById('tradeTargetImg').src = targetItemImg;
+        currentTradeTargetId = targetItemId;
+
+        // Load user's items for trade
+        loadMyItemsForTrade();
+
+        document.getElementById('tradeProposalModal').classList.remove('hidden');
+    }
+
+    async function loadMyItemsForTrade() {
+        try {
+            // Cần thêm API lấy danh sách đồ của user hiện tại (AVAILABLE)
+            // Tạm thời giả lập hoặc dùng API items với filter giverId
+            // const res = await fetch('${pageContext.request.contextPath}/api/items?giverId=' + currentUserId + '&status=AVAILABLE');
+            // const items = await res.json();
+
+            // Vì chưa có API riêng, ta sẽ dùng API items chung và lọc client-side (không tối ưu nhưng nhanh)
+            // Hoặc tốt nhất là thêm action vào ItemApiServlet
+
+            // Tạm thời hardcode để test UI
+            const select = document.getElementById('tradeOfferSelect');
+            select.innerHTML = '<option value="" disabled selected>-- Chọn món đồ --</option>';
+            // items.forEach...
+        } catch(e) { console.error(e); }
+    }
+
+    function switchTradeTab(tab) {
+        if (tab === 'existing') {
+            document.getElementById('tabExisting').className = 'flex-1 py-2 text-sm font-bold rounded-lg bg-primary text-white transition';
+            document.getElementById('tabNew').className = 'flex-1 py-2 text-sm font-bold rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition';
+            document.getElementById('contentExisting').classList.remove('hidden');
+            document.getElementById('contentNew').classList.add('hidden');
+        } else {
+            document.getElementById('tabNew').className = 'flex-1 py-2 text-sm font-bold rounded-lg bg-primary text-white transition';
+            document.getElementById('tabExisting').className = 'flex-1 py-2 text-sm font-bold rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition';
+            document.getElementById('contentNew').classList.remove('hidden');
+            document.getElementById('contentExisting').classList.add('hidden');
+        }
+    }
+
+    async function submitTradeProposal() {
+        const offerType = document.getElementById('contentNew').classList.contains('hidden') ? 'existing' : 'new';
+        const fd = new FormData();
+
+        fd.append('action', 'propose');
+        fd.append('targetItemId', currentTradeTargetId);
+        fd.append('offerType', offerType);
+
+        if (offerType === 'existing') {
+            const offerItemId = document.getElementById('tradeOfferSelect').value;
+            if (!offerItemId) { alert("Vui lòng chọn món đồ!"); return; }
+            fd.append('offerItemId', offerItemId);
+        } else {
+            const title = document.getElementById('tradeOfferTitle').value;
+            const desc = document.getElementById('tradeOfferDesc').value;
+            if (!title) { alert("Vui lòng nhập tên món đồ!"); return; }
+            fd.append('offerTitle', title);
+            fd.append('offerDesc', desc);
+
+            const fileInput = document.getElementById('tradeOfferPhoto');
+            if (fileInput.files.length > 0) {
+                fd.append('offerImage', fileInput.files[0]);
+            }
+        }
+
+        try {
+            const res = await fetch('${pageContext.request.contextPath}/api/trade', { method: 'POST', body: fd });
+            const data = await res.json();
+
+            if (data.status === 'success') {
+                alert(data.message);
+                document.getElementById('tradeProposalModal').classList.add('hidden');
+                // Chuyển hướng sang chat hoặc reload
+                window.location.href = '${pageContext.request.contextPath}/chat';
+            } else {
+                alert("Lỗi: " + data.message);
+            }
+        } catch(e) {
+            console.error(e);
+            alert("Lỗi gửi đề nghị");
         }
     }
 </script>

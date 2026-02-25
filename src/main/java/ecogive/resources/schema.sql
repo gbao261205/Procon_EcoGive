@@ -78,14 +78,17 @@ CREATE SPATIAL INDEX sp_index_cp_location ON collection_points (location);
 
 -- Bảng 5: Giao dịch (Transactions)
 CREATE TABLE transactions (
-    transaction_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    item_id BIGINT NOT NULL,
-    receiver_id BIGINT NOT NULL,
-    exchange_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    status ENUM('PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELED') DEFAULT 'PENDING',
-    giver_confirmed_date TIMESTAMP NULL DEFAULT NULL,
-    FOREIGN KEY (item_id) REFERENCES items(item_id) ON DELETE CASCADE,
-    FOREIGN KEY (receiver_id) REFERENCES users(user_id) ON DELETE CASCADE
+  transaction_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  item_id BIGINT NOT NULL,
+  receiver_id BIGINT NOT NULL,
+  transaction_type ENUM('GIVE', 'TRADE') DEFAULT 'GIVE',
+  offer_item_id BIGINT NULL,
+  status ENUM('PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELED', 'PENDING_TRADE', 'TRADE_ACCEPTED', 'CONFIRMED_BY_A', 'CONFIRMED_BY_B') DEFAULT 'PENDING',
+  exchange_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  giver_confirmed_date TIMESTAMP NULL DEFAULT NULL,
+  FOREIGN KEY (item_id) REFERENCES items(item_id) ON DELETE CASCADE,
+  FOREIGN KEY (receiver_id) REFERENCES users(user_id) ON DELETE CASCADE,
+  CONSTRAINT fk_transactions_offer_item FOREIGN KEY (offer_item_id) REFERENCES items(item_id) ON DELETE SET NULL
 );
 
 -- Bảng 6: Đánh giá (Reviews)
@@ -105,15 +108,15 @@ CREATE TABLE reviews (
 
 -- Bảng 7: Tin nhắn (Messages)
 CREATE TABLE messages (
-      message_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-      sender_id BIGINT NOT NULL,
-      receiver_id BIGINT NOT NULL,
-      content TEXT CHARACTER SET utf8mb4 NOT NULL,
-      image_url VARCHAR(255) NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      is_read BOOLEAN DEFAULT FALSE,
-      FOREIGN KEY (sender_id) REFERENCES users(user_id) ON DELETE CASCADE,
-      FOREIGN KEY (receiver_id) REFERENCES users(user_id) ON DELETE CASCADE
+    message_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    sender_id BIGINT NOT NULL,
+    receiver_id BIGINT NOT NULL,
+    content TEXT CHARACTER SET utf8mb4, -- Cho phép NULL nếu chỉ gửi ảnh
+    image_url VARCHAR(255) NULL,        -- Cột mới để lưu link ảnh
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_read BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (sender_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (receiver_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
 -- Bảng 8: Yêu cầu Thu gom (Collection Requests)
@@ -128,3 +131,16 @@ CREATE TABLE collection_requests (
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
+-- ===========================
+-- 3. MIGRATION (Dành cho DB cũ)
+-- ===========================
+-- Nếu bạn đang chạy trên Database cũ và muốn cập nhật thêm cột image_url,
+-- hãy chạy dòng lệnh dưới đây (bỏ comment):
+
+-- ALTER TABLE messages ADD COLUMN image_url VARCHAR(255) NULL;
+
+-- Migration cho tính năng Trade (Chạy nếu DB đã tồn tại)
+-- ALTER TABLE transactions ADD COLUMN transaction_type ENUM('GIVE', 'TRADE') DEFAULT 'GIVE';
+-- ALTER TABLE transactions ADD COLUMN offer_item_id BIGINT NULL;
+-- ALTER TABLE transactions ADD CONSTRAINT fk_offer_item FOREIGN KEY (offer_item_id) REFERENCES items(item_id) ON DELETE SET NULL;
+-- ALTER TABLE transactions MODIFY COLUMN status ENUM('PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELED', 'PENDING_TRADE', 'TRADE_ACCEPTED', 'CONFIRMED_BY_A', 'CONFIRMED_BY_B') DEFAULT 'PENDING';

@@ -9,11 +9,11 @@ import java.time.LocalDateTime;
 
 public class TransactionDAO {
 
-    public Transaction findById(int id) throws SQLException {
+    public Transaction findById(long id) throws SQLException {
         String sql = "SELECT * FROM transactions WHERE transaction_id = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, id);
+            stmt.setLong(1, id);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     return mapRow(rs);
@@ -27,9 +27,9 @@ public class TransactionDAO {
     
     // Tìm transaction đang active (chưa hoàn thành/hủy) giữa item và receiver
     public Transaction findActiveTransaction(long itemId, long receiverId) throws SQLException {
-        // Ưu tiên tìm cái đang PENDING hoặc CONFIRMED
+        // Ưu tiên tìm cái đang PENDING hoặc CONFIRMED hoặc các trạng thái TRADE
         String sql = "SELECT * FROM transactions WHERE item_id = ? AND receiver_id = ? " +
-                     "AND status IN ('PENDING', 'CONFIRMED') " +
+                     "AND status IN ('PENDING', 'CONFIRMED', 'PENDING_TRADE', 'TRADE_ACCEPTED', 'CONFIRMED_BY_A', 'CONFIRMED_BY_B') " +
                      "ORDER BY transaction_id DESC LIMIT 1";
         
         try (Connection conn = DatabaseConnection.getConnection();
@@ -44,22 +44,6 @@ public class TransactionDAO {
         } catch (Exception e) {
             throw new SQLException(e);
         }
-        
-        // Fallback
-        String sqlFallback = "SELECT * FROM transactions WHERE item_id = ? AND receiver_id = ? ORDER BY transaction_id DESC LIMIT 1";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sqlFallback)) {
-            stmt.setLong(1, itemId);
-            stmt.setLong(2, receiverId);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return mapRow(rs);
-                }
-            }
-        } catch (Exception e) {
-            throw new SQLException(e);
-        }
-        
         return null;
     }
 
@@ -99,7 +83,7 @@ public class TransactionDAO {
         }
     }
 
-    // --- MỚI: Hủy giao dịch ---
+    // Hủy giao dịch
     public boolean cancelTransaction(long transactionId) throws SQLException {
         String sql = "UPDATE transactions SET status = 'CANCELED' WHERE transaction_id = ?";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -110,11 +94,10 @@ public class TransactionDAO {
             throw new SQLException(e);
         }
     }
-    // --------------------------
 
     // Kiểm tra tồn tại
     public boolean checkExists(long itemId, long receiverId) throws SQLException {
-        String sql = "SELECT 1 FROM transactions WHERE item_id = ? AND receiver_id = ? AND status IN ('PENDING', 'CONFIRMED')";
+        String sql = "SELECT 1 FROM transactions WHERE item_id = ? AND receiver_id = ? AND status NOT IN ('COMPLETED', 'CANCELED')";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setLong(1, itemId);
@@ -135,6 +118,13 @@ public class TransactionDAO {
         t.setExchangeDate(rs.getTimestamp("exchange_date").toLocalDateTime());
         t.setStatus(TransactionStatus.valueOf(rs.getString("status")));
         
+        // Map các cột mới
+        t.setTransactionType(rs.getString("transaction_type"));
+        long offerId = rs.getLong("offer_item_id");
+        if (!rs.wasNull()) {
+            t.setOfferItemId(offerId);
+        }
+        
         try {
             Timestamp ts = rs.getTimestamp("giver_confirmed_date");
             if (ts != null) {
@@ -147,18 +137,22 @@ public class TransactionDAO {
     }
 
     public boolean insert(Transaction transaction) throws SQLException {
-        String sql = "INSERT INTO transactions (item_id, receiver_id, status, exchange_date) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO transactions (item_id, receiver_id, status, exchange_date, transaction_type, offer_item_id) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             
             stmt.setLong(1, transaction.getItemId());
             stmt.setLong(2, transaction.getReceiverId());
-            
-            String statusName = transaction.getStatus().name();
-            System.out.println("Inserting Transaction: Item=" + transaction.getItemId() + ", Receiver=" + transaction.getReceiverId() + ", Status=" + statusName);
-            
-            stmt.setString(3, statusName);
+            stmt.setString(3, transaction.getStatus().name());
             stmt.setTimestamp(4, Timestamp.valueOf(transaction.getExchangeDate()));
+            
+            // Set giá trị mới
+            stmt.setString(5, transaction.getTransactionType() != null ? transaction.getTransactionType() : "GIVE");
+            if (transaction.getOfferItemId() != null) {
+                stmt.setLong(6, transaction.getOfferItemId());
+            } else {
+                stmt.setNull(6, Types.BIGINT);
+            }
 
             int affectedRows = stmt.executeUpdate();
             if (affectedRows > 0) {

@@ -63,14 +63,7 @@ public class ChatApiServlet extends HttpServlet {
                 PreparedStatement ps = conn.prepareStatement(sql);
                 long uid = currentUser.getUserId();
                 
-                ps.setLong(1, uid);
-                ps.setLong(2, uid);
-                ps.setLong(3, uid);
-                ps.setLong(4, uid);
-                ps.setLong(5, uid);
-                ps.setLong(6, uid);
-                ps.setLong(7, uid);
-                ps.setLong(8, uid);
+                for(int i=1; i<=8; i++) ps.setLong(i, uid);
 
                 ResultSet rs = ps.executeQuery();
                 JsonArray inboxList = new JsonArray();
@@ -91,18 +84,15 @@ public class ChatApiServlet extends HttpServlet {
                                 obj.addProperty("itemId", Long.parseLong(parts[0]));
                                 obj.addProperty("itemName", parts[1]);
                                 obj.addProperty("giverId", Long.parseLong(parts[2]));
-                            } catch (NumberFormatException e) {
-                                // Ignore parse error
-                            }
+                            } catch (NumberFormatException e) {}
                         }
                     }
-
                     inboxList.add(obj);
                 }
                 resp.getWriter().write(new Gson().toJson(inboxList));
             }
 
-            // 2. CHAT HISTORY
+            // 2. CHAT HISTORY (Có check lỗi image_url)
             else if ("history".equals(action)) {
                 long partnerId = Long.parseLong(req.getParameter("partnerId"));
                 long myId = currentUser.getUserId();
@@ -117,12 +107,22 @@ public class ChatApiServlet extends HttpServlet {
                 ps.setLong(4, myId);
 
                 ResultSet rs = ps.executeQuery();
+                
+                // Check column exist
+                boolean hasImageColumn = false;
+                try {
+                    rs.findColumn("image_url");
+                    hasImageColumn = true;
+                } catch (SQLException e) {}
+
                 JsonArray history = new JsonArray();
                 while(rs.next()) {
                     JsonObject msg = new JsonObject();
                     msg.addProperty("senderId", rs.getLong("sender_id"));
                     msg.addProperty("content", rs.getString("content"));
-                    msg.addProperty("imageUrl", rs.getString("image_url"));
+                    if (hasImageColumn) {
+                        msg.addProperty("imageUrl", rs.getString("image_url"));
+                    }
                     msg.addProperty("createdAt", rs.getString("created_at"));
                     history.add(msg);
                 }
@@ -164,17 +164,14 @@ public class ChatApiServlet extends HttpServlet {
             // 4. ITEM DETAIL
             else if ("item_detail".equals(action)) {
                 long itemId = Long.parseLong(req.getParameter("itemId"));
-                
                 String sql = "SELECT i.*, u.username as giver_name, c.name as category_name " +
                              "FROM items i " +
                              "JOIN users u ON i.giver_id = u.user_id " +
                              "LEFT JOIN categories c ON i.category_id = c.category_id " +
                              "WHERE i.item_id = ?";
-                             
                 PreparedStatement ps = conn.prepareStatement(sql);
                 ps.setLong(1, itemId);
                 ResultSet rs = ps.executeQuery();
-                
                 if (rs.next()) {
                     JsonObject item = new JsonObject();
                     item.addProperty("itemId", rs.getLong("item_id"));
@@ -189,23 +186,17 @@ public class ChatApiServlet extends HttpServlet {
                     resp.getWriter().write(new Gson().toJson(item));
                 } else {
                     resp.setStatus(404);
-                    JsonObject err = new JsonObject();
-                    err.addProperty("error", "Item not found");
-                    resp.getWriter().write(new Gson().toJson(err));
                 }
             }
 
-            // 5. USER INFO (MỚI)
+            // 5. USER INFO
             else if ("user_info".equals(action)) {
                 long userId = Long.parseLong(req.getParameter("userId"));
-                
                 String sql = "SELECT user_id, username, email, eco_points, reputation_score, join_date, role, address " +
                              "FROM users WHERE user_id = ?";
-                             
                 PreparedStatement ps = conn.prepareStatement(sql);
                 ps.setLong(1, userId);
                 ResultSet rs = ps.executeQuery();
-                
                 if (rs.next()) {
                     JsonObject user = new JsonObject();
                     user.addProperty("userId", rs.getLong("user_id"));
@@ -217,31 +208,22 @@ public class ChatApiServlet extends HttpServlet {
                     user.addProperty("role", rs.getString("role"));
                     user.addProperty("address", rs.getString("address"));
                     
-                    // Đếm số giao dịch thành công (đã cho)
                     String countSql = "SELECT COUNT(*) FROM transactions t JOIN items i ON t.item_id = i.item_id " +
                                       "WHERE i.giver_id = ? AND t.status = 'COMPLETED'";
                     PreparedStatement psCount = conn.prepareStatement(countSql);
                     psCount.setLong(1, userId);
                     ResultSet rsCount = psCount.executeQuery();
-                    if (rsCount.next()) {
-                        user.addProperty("givenCount", rsCount.getInt(1));
-                    }
+                    if (rsCount.next()) user.addProperty("givenCount", rsCount.getInt(1));
                     
                     resp.getWriter().write(new Gson().toJson(user));
                 } else {
                     resp.setStatus(404);
-                    JsonObject err = new JsonObject();
-                    err.addProperty("error", "User not found");
-                    resp.getWriter().write(new Gson().toJson(err));
                 }
             }
 
         } catch (Exception e) {
             e.printStackTrace();
             resp.setStatus(500);
-            JsonObject err = new JsonObject();
-            err.addProperty("error", e.getMessage());
-            resp.getWriter().write(new Gson().toJson(err));
         }
     }
 }

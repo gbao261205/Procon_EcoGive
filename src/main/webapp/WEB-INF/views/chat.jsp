@@ -234,7 +234,7 @@
                             <span class="hidden sm:inline" id="btnBatchLabel">N giao dịch</span>
                         </button>
 
-                        <!-- Nút Info (Đã đổi thành showUserProfile) -->
+                        <!-- Nút Info -->
                         <button onclick="showUserProfile()" class="w-9 h-9 rounded-full bg-white text-slate-400 hover:text-primary hover:bg-emerald-50 transition flex items-center justify-center shadow-sm border border-slate-100" title="Thông tin người dùng">
                             <span class="material-symbols-rounded text-[20px]">info</span>
                         </button>
@@ -366,7 +366,7 @@
         </div>
     </div>
 
-    <!-- User Profile Modal (MỚI) -->
+    <!-- User Profile Modal -->
     <div id="userProfileModal" class="fixed inset-0 hidden bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-[90]">
         <div class="bg-white/95 backdrop-blur-xl rounded-3xl w-full max-w-sm shadow-2xl border border-white/50 relative animate-scale-in overflow-hidden">
             <button onclick="document.getElementById('userProfileModal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition z-10">
@@ -556,6 +556,7 @@
 
                 let lastMsg = u.lastMsg || '...';
                 if (lastMsg.startsWith("SYSTEM_GIFT:")) lastMsg = "🎁 Thông báo hệ thống";
+                if (lastMsg.startsWith("SYSTEM_TRADE_PROPOSAL:")) lastMsg = "🔄 Đề nghị trao đổi";
 
                 listEl.innerHTML += `
                     <div onclick="selectUserChat(\${u.userId}, '\${u.username}', '\${itemId}', '\${itemName}', '\${giverId}')"
@@ -736,6 +737,9 @@
                         lastSystemMsg = m.content;
                         let cleanText = m.content.replace("SYSTEM_GIFT:", "");
                         appendSystemMessage(cleanText);
+                    } else if (m.content && m.content.startsWith("SYSTEM_TRADE_PROPOSAL:")) {
+                        const transId = m.content.split(":")[1];
+                        appendTradeProposal(transId);
                     } else {
                         appendMessage(m.content, m.imageUrl, m.senderId === currentUserId ? 'outgoing' : 'incoming');
                     }
@@ -780,7 +784,7 @@
                                 btnCancel.classList.add('hidden'); // Ẩn nút hủy đơn lẻ
                             } else {
                                 btnReceiver.classList.remove('hidden');
-                                btnCancel.classList.add('hidden'); // Đã confirm thì không cho hủy nữa
+                                btnCancel.classList.remove('hidden');
                             }
                         } else if (status === 'PENDING') {
                             btnCancel.classList.remove('hidden'); // Hủy yêu cầu
@@ -1054,6 +1058,27 @@
                     <span class="bg-yellow-50/90 backdrop-blur-sm text-yellow-800 text-xs font-bold px-4 py-1.5 rounded-full border border-yellow-200 shadow-sm flex items-center gap-1.5">
                         <span class="material-symbols-rounded text-[16px]">card_giftcard</span> \${txt}
                     </span>
+                </div>`;
+            box.insertAdjacentHTML('beforeend', html);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        // --- APPEND TRADE PROPOSAL (MỚI) ---
+        function appendTradeProposal(transId) {
+            const box = document.getElementById('chatMessages');
+            const html = `
+                <div class="flex justify-center my-6 animate-scale-in">
+                    <div class="bg-white/90 backdrop-blur-sm p-4 rounded-2xl border border-primary/30 shadow-lg max-w-xs w-full">
+                        <div class="flex items-center gap-2 mb-3 text-primary font-bold border-b border-slate-100 pb-2">
+                            <span class="material-symbols-rounded">swap_horiz</span>
+                            Đề nghị trao đổi
+                        </div>
+                        <p class="text-xs text-slate-600 mb-4">Đối phương muốn trao đổi vật phẩm với bạn.</p>
+                        <div class="flex gap-2">
+                            <button class="flex-1 bg-slate-100 text-slate-600 text-xs font-bold py-2 rounded-lg hover:bg-slate-200 transition">Từ chối</button>
+                            <button class="flex-1 bg-primary text-white text-xs font-bold py-2 rounded-lg hover:bg-primary-hover transition shadow-md">Chấp nhận</button>
+                        </div>
+                    </div>
                 </div>`;
             box.insertAdjacentHTML('beforeend', html);
             box.scrollTop = box.scrollHeight;

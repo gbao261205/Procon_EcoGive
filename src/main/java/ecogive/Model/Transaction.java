@@ -8,18 +8,13 @@ public class Transaction {
     private long receiverId;
     private LocalDateTime exchangeDate;
     private TransactionStatus status;
-    private LocalDateTime giverConfirmedDate; // Thời điểm người cho xác nhận
+    private LocalDateTime giverConfirmedDate;
+    
+    // --- MỚI CHO TRADE ---
+    private String transactionType; // "GIVE" hoặc "TRADE"
+    private Long offerItemId;       // Item mà người nhận mang ra đổi (có thể null)
 
     public Transaction() {
-    }
-
-    public Transaction(long transactionId, long itemId, long receiverId,
-                       LocalDateTime exchangeDate, TransactionStatus status) {
-        this.transactionId = transactionId;
-        this.itemId = itemId;
-        this.receiverId = receiverId;
-        this.exchangeDate = exchangeDate;
-        this.status = status;
     }
 
     public long getTransactionId() {
@@ -68,5 +63,21 @@ public class Transaction {
 
     public void setGiverConfirmedDate(LocalDateTime giverConfirmedDate) {
         this.giverConfirmedDate = giverConfirmedDate;
+    }
+
+    public String getTransactionType() {
+        return transactionType;
+    }
+
+    public void setTransactionType(String transactionType) {
+        this.transactionType = transactionType;
+    }
+
+    public Long getOfferItemId() {
+        return offerItemId;
+    }
+
+    public void setOfferItemId(Long offerItemId) {
+        this.offerItemId = offerItemId;
     }
 }
