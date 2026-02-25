@@ -60,11 +60,6 @@ public class RequestItemServlet extends HttpServlet {
                 result.put("status", "error");
                 result.put("message", "Bạn không thể nhận đồ của chính mình.");
             } else if (item.getStatus() != ItemStatus.AVAILABLE) {
-                // Nếu item đã COMPLETED (do giao dịch trước), ta có cho phép xin lại không?
-                // Nếu muốn cho phép xin lại (ví dụ người cho có nhiều cái), ta phải bỏ check này hoặc sửa logic.
-                // Nhưng hiện tại ItemStatus.COMPLETED nghĩa là đã xong.
-                // Nếu bạn muốn test lại trên item cũ, bạn phải set status item về AVAILABLE trong DB trước.
-                
                 System.out.println("Item status invalid: " + item.getStatus());
                 result.put("status", "error");
                 result.put("message", "Vật phẩm này đã có người nhận hoặc đang chờ xử lý (Status: " + item.getStatus() + ")");
@@ -90,6 +85,7 @@ public class RequestItemServlet extends HttpServlet {
                 if (transSuccess) {
                     result.put("status", "success");
                     result.put("message", "Đã gửi yêu cầu! Hãy chat với người tặng.");
+                    result.put("itemName", item.getTitle()); // Trả về tên vật phẩm
                 } else {
                     result.put("status", "error");
                     result.put("message", "Lỗi khi tạo giao dịch.");

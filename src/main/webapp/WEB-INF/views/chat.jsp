@@ -176,13 +176,31 @@
                             </div>
                         </div>
 
-                        <div class="min-w-0">
+                        <div class="min-w-0 flex-1">
                             <div id="chatTitle" class="font-bold text-slate-800 text-base truncate">Chọn hội thoại</div>
-                            <div id="chatItemInfo" class="hidden flex items-center gap-2 mt-0.5 animate-scale-in">
-                                <span class="bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full border border-primary/20 flex items-center gap-1">
-                                    <span class="material-symbols-rounded text-[12px]">inventory_2</span>
-                                    <span id="chatItemName" class="truncate max-w-[150px]">...</span>
-                                </span>
+
+                            <!-- Item Context (Dropdown or Single) -->
+                            <div id="chatItemContext" class="hidden mt-0.5">
+                                <!-- Single Item -->
+                                <div id="singleItemInfo" class="hidden flex items-center gap-2 animate-scale-in">
+                                    <span class="bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full border border-primary/20 flex items-center gap-1">
+                                        <span class="material-symbols-rounded text-[12px]">inventory_2</span>
+                                        <span id="chatItemName" class="truncate max-w-[150px]">...</span>
+                                    </span>
+                                </div>
+
+                                <!-- Multiple Items Dropdown -->
+                                <div id="multiItemDropdown" class="hidden relative group">
+                                    <button class="flex items-center gap-1 bg-yellow-50 text-yellow-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-yellow-200 hover:bg-yellow-100 transition">
+                                        <span class="material-symbols-rounded text-[12px]">layers</span>
+                                        <span id="multiItemCount">2 giao dịch</span>
+                                        <span class="material-symbols-rounded text-[12px]">expand_more</span>
+                                    </button>
+                                    <!-- Dropdown Content -->
+                                    <div id="dealList" class="absolute top-full left-0 mt-1 w-48 bg-white rounded-xl shadow-xl border border-slate-100 hidden group-hover:block z-50 overflow-hidden">
+                                        <!-- Items will be injected here -->
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -210,7 +228,14 @@
                             <span class="hidden sm:inline">Xin món này</span><span class="sm:hidden">Xin lại</span>
                         </button>
 
-                        <button class="w-9 h-9 rounded-full bg-white text-slate-400 hover:text-primary hover:bg-emerald-50 transition flex items-center justify-center shadow-sm border border-slate-100" title="Thông tin">
+                        <!-- Nút Batch Confirm (Mới - Màu Vàng) -->
+                        <button id="btnBatchAction" onclick="openBatchModal()" class="hidden group bg-yellow-400 text-white text-xs font-bold px-4 py-2 rounded-full hover:bg-yellow-500 hover:shadow-lg hover:shadow-yellow-200/50 transform hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-1.5">
+                            <span class="material-symbols-rounded text-[16px]">checklist</span>
+                            <span class="hidden sm:inline" id="btnBatchLabel">N giao dịch</span>
+                        </button>
+
+                        <!-- Nút Info (Đã đổi thành showUserProfile) -->
+                        <button onclick="showUserProfile()" class="w-9 h-9 rounded-full bg-white text-slate-400 hover:text-primary hover:bg-emerald-50 transition flex items-center justify-center shadow-sm border border-slate-100" title="Thông tin người dùng">
                             <span class="material-symbols-rounded text-[20px]">info</span>
                         </button>
                     </div>
@@ -273,7 +298,124 @@
     <!-- Hidden File Input -->
     <input type="file" id="imageInput" hidden accept="image/*" onchange="uploadImage()">
 
-    <!-- Rating Modal (Glassmorphism Style) -->
+    <!-- Batch Confirm Modal -->
+    <div id="batchConfirmModal" class="fixed inset-0 hidden bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-[80]">
+        <div class="bg-white/95 backdrop-blur-xl p-6 rounded-3xl w-full max-w-md shadow-2xl border border-white/50 relative animate-scale-in">
+            <h2 class="text-xl font-extrabold text-slate-800 mb-4 flex items-center gap-2">
+                <span class="material-symbols-rounded text-yellow-500">checklist</span>
+                Xác nhận nhận đồ
+            </h2>
+            <p class="text-sm text-slate-500 mb-4">Chọn các món đồ bạn đã nhận được từ người tặng:</p>
+
+            <div id="batchList" class="max-h-60 overflow-y-auto custom-scrollbar space-y-2 mb-6">
+                <!-- Items will be injected here -->
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="document.getElementById('batchConfirmModal').classList.add('hidden')" class="flex-1 bg-slate-100 text-slate-600 py-3 rounded-xl font-bold hover:bg-slate-200 transition">Đóng</button>
+                <button onclick="submitBatchConfirm()" class="flex-1 bg-gradient-to-r from-primary to-emerald-500 text-white py-3 rounded-xl font-bold hover:shadow-lg transition">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Item Info Modal -->
+    <div id="itemInfoModal" class="fixed inset-0 hidden bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-[90]">
+        <div class="bg-white/95 backdrop-blur-xl rounded-3xl w-full max-w-md shadow-2xl border border-white/50 relative animate-scale-in overflow-hidden flex flex-col max-h-[85vh]">
+            <!-- Header Image -->
+            <div class="h-48 bg-slate-100 relative shrink-0">
+                <img id="infoImg" src="" class="w-full h-full object-cover">
+                <button onclick="document.getElementById('itemInfoModal').classList.add('hidden')" class="absolute top-4 right-4 bg-black/30 hover:bg-black/50 text-white p-2 rounded-full backdrop-blur transition">
+                    <span class="material-symbols-rounded text-xl">close</span>
+                </button>
+                <div class="absolute bottom-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-primary shadow-sm flex items-center gap-1">
+                    <span class="material-symbols-rounded text-sm">eco</span>
+                    <span id="infoPoints">0</span> EcoPoints
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="p-6 overflow-y-auto custom-scrollbar">
+                <h2 id="infoTitle" class="text-xl font-extrabold text-slate-800 mb-2 leading-tight">Tên sản phẩm</h2>
+
+                <div class="flex items-center gap-2 mb-4 text-xs font-bold text-slate-500">
+                    <span class="bg-slate-100 px-2 py-1 rounded border border-slate-200" id="infoCategory">Danh mục</span>
+                    <span class="bg-emerald-50 text-emerald-700 px-2 py-1 rounded border border-emerald-100 flex items-center gap-1">
+                        <span class="material-symbols-rounded text-sm">person</span> <span id="infoGiver">Người tặng</span>
+                    </span>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Mô tả</h4>
+                        <p id="infoDesc" class="text-sm text-slate-600 leading-relaxed">...</p>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Địa chỉ nhận</h4>
+                        <div class="flex items-start gap-2 text-sm text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                            <span class="material-symbols-rounded text-slate-400 mt-0.5">location_on</span>
+                            <span id="infoAddress">...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="p-4 border-t border-slate-100 bg-slate-50/50 shrink-0">
+                <button onclick="document.getElementById('itemInfoModal').classList.add('hidden')" class="w-full bg-slate-200 text-slate-700 font-bold py-3 rounded-xl hover:bg-slate-300 transition">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Profile Modal (MỚI) -->
+    <div id="userProfileModal" class="fixed inset-0 hidden bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-[90]">
+        <div class="bg-white/95 backdrop-blur-xl rounded-3xl w-full max-w-sm shadow-2xl border border-white/50 relative animate-scale-in overflow-hidden">
+            <button onclick="document.getElementById('userProfileModal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition z-10">
+                <span class="material-symbols-rounded text-xl">close</span>
+            </button>
+
+            <div class="p-8 flex flex-col items-center text-center">
+                <div class="w-24 h-24 rounded-full bg-slate-100 p-1 shadow-lg mb-4 relative">
+                    <img id="profileAvatar" src="" class="w-full h-full rounded-full object-cover bg-white">
+                    <div class="absolute bottom-1 right-1 bg-green-500 w-5 h-5 rounded-full border-4 border-white"></div>
+                </div>
+
+                <h2 id="profileName" class="text-2xl font-extrabold text-slate-800 mb-1">Username</h2>
+                <p id="profileEmail" class="text-sm text-slate-500 mb-6">email@example.com</p>
+
+                <div class="grid grid-cols-2 gap-4 w-full mb-6">
+                    <div class="bg-emerald-50 p-3 rounded-2xl border border-emerald-100">
+                        <div class="text-xs font-bold text-emerald-600 uppercase mb-1">EcoPoints</div>
+                        <div class="text-xl font-extrabold text-emerald-700 flex items-center justify-center gap-1">
+                            <span class="material-symbols-rounded text-lg">eco</span>
+                            <span id="profilePoints">0</span>
+                        </div>
+                    </div>
+                    <div class="bg-blue-50 p-3 rounded-2xl border border-blue-100">
+                        <div class="text-xs font-bold text-blue-600 uppercase mb-1">Uy tín</div>
+                        <div class="text-xl font-extrabold text-blue-700 flex items-center justify-center gap-1">
+                            <span class="material-symbols-rounded text-lg">star</span>
+                            <span id="profileReputation">0.0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="w-full space-y-3 text-left">
+                    <div class="flex items-center gap-3 text-sm text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        <span class="material-symbols-rounded text-slate-400">volunteer_activism</span>
+                        <span>Đã tặng: <b id="profileGivenCount">0</b> món quà</span>
+                    </div>
+                    <div class="flex items-center gap-3 text-sm text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        <span class="material-symbols-rounded text-slate-400">calendar_month</span>
+                        <span>Tham gia: <span id="profileJoinDate">...</span></span>
+                    </div>
+                </div>
+
+                <a id="profileLink" href="#" class="mt-6 w-full bg-slate-800 text-white font-bold py-3 rounded-xl hover:bg-slate-900 transition shadow-lg">Xem trang cá nhân</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rating Modal -->
     <div id="ratingModal" class="fixed inset-0 hidden bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-[70]">
         <div class="bg-white/90 backdrop-blur-xl p-8 rounded-3xl w-full max-w-sm shadow-2xl border border-white/50 relative animate-scale-in">
             <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
@@ -320,11 +462,13 @@
     <script>
         // --- KHỞI TẠO ---
         const currentUserId = ${sessionScope.currentUser.userId};
+        const currentUserName = "${sessionScope.currentUser.username}";
         let chatSocket = null;
         let currentReceiverId = null;
         let currentDiscussingItemId = null;
         let isOwnerOfCurrentItem = false;
         let allInboxUsers = [];
+        let activeDeals = []; // Danh sách các giao dịch đang hoạt động
 
         const urlParams = new URLSearchParams(window.location.search);
         const paramPartnerId = urlParams.get('partnerId');
@@ -354,6 +498,7 @@
                         loadHistory(currentReceiverId);
                     }
                     loadInboxList();
+                    loadActiveDeals(currentReceiverId); // Reload deals
                     return;
                 }
 
@@ -455,11 +600,13 @@
             const btnReceiver = document.getElementById('btnReceiverConfirm');
             const btnCancel = document.getElementById('btnCancelTrans');
             const btnRequestAgain = document.getElementById('btnRequestAgain');
+            const btnBatchAction = document.getElementById('btnBatchAction');
 
             btnGiver.classList.add('hidden');
             btnReceiver.classList.add('hidden');
             btnCancel.classList.add('hidden');
             btnRequestAgain.classList.add('hidden');
+            btnBatchAction.classList.add('hidden');
 
             const qrGiver = document.getElementById('qrGiver');
             const qrReceiver1 = document.getElementById('qrReceiver1');
@@ -468,25 +615,98 @@
             qrReceiver1.classList.add('hidden');
             qrReceiver2.classList.add('hidden');
 
+            // Load Active Deals
+            await loadActiveDeals(userId);
+
+            // Nếu có paramItemId (từ trang chủ), ưu tiên chọn item đó
+            if (paramItemId && activeDeals.some(d => d.itemId == paramItemId)) {
+                itemId = paramItemId;
+                const deal = activeDeals.find(d => d.itemId == paramItemId);
+                itemName = deal.itemName;
+                giverId = deal.giverId;
+            } else if (activeDeals.length > 0) {
+                // Nếu không có param, mặc định chọn deal đầu tiên (mới nhất)
+                const deal = activeDeals[0];
+                itemId = deal.itemId;
+                itemName = deal.itemName;
+                giverId = deal.giverId;
+            }
+
             if (itemId && itemId !== 'undefined' && itemId !== 'null') {
-                currentDiscussingItemId = itemId;
-                document.getElementById('chatItemInfo').classList.remove('hidden');
-                document.getElementById('chatItemName').innerText = itemName;
-
-                if (giverId && giverId != 'undefined') {
-                    isOwnerOfCurrentItem = (Number(giverId) === currentUserId);
-                } else {
-                    isOwnerOfCurrentItem = false;
-                }
-
-                // Logic hiển thị nút sẽ được xử lý trong loadHistory dựa trên trạng thái giao dịch
+                switchItemContext(itemId, itemName, giverId);
             } else {
-                document.getElementById('chatItemInfo').classList.add('hidden');
+                document.getElementById('chatItemContext').classList.add('hidden');
                 currentDiscussingItemId = null;
             }
 
             loadHistory(userId);
             searchFriends();
+        }
+
+        async function loadActiveDeals(partnerId) {
+            try {
+                const res = await fetch('${pageContext.request.contextPath}/api/chat?action=active_deals&partnerId=' + partnerId);
+                activeDeals = await res.json();
+
+                const contextDiv = document.getElementById('chatItemContext');
+                const singleInfo = document.getElementById('singleItemInfo');
+                const multiDropdown = document.getElementById('multiItemDropdown');
+                const dealList = document.getElementById('dealList');
+
+                if (activeDeals.length === 0) {
+                    contextDiv.classList.add('hidden');
+                } else if (activeDeals.length === 1) {
+                    contextDiv.classList.remove('hidden');
+                    singleInfo.classList.remove('hidden');
+                    multiDropdown.classList.add('hidden');
+
+                    document.getElementById('chatItemName').innerText = activeDeals[0].itemName;
+                } else {
+                    contextDiv.classList.remove('hidden');
+                    singleInfo.classList.add('hidden');
+                    multiDropdown.classList.remove('hidden');
+
+                    document.getElementById('multiItemCount').innerText = activeDeals.length + " giao dịch";
+
+                    dealList.innerHTML = '';
+                    activeDeals.forEach(d => {
+                        dealList.innerHTML += `
+                            <div onclick="switchItemContext(\${d.itemId}, '\${d.itemName}', \${d.giverId})"
+                                 class="px-4 py-2 hover:bg-slate-50 cursor-pointer text-xs border-b border-slate-50 last:border-0">
+                                <div class="font-bold text-slate-700 truncate">\${d.itemName}</div>
+                                <div class="text-[10px] text-slate-500">\${d.status}</div>
+                            </div>
+                        `;
+                    });
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        function switchItemContext(itemId, itemName, giverId) {
+            currentDiscussingItemId = itemId;
+
+            // Update UI Text
+            if (activeDeals.length <= 1) {
+                document.getElementById('chatItemName').innerText = itemName;
+            }
+
+            if (giverId && giverId != 'undefined') {
+                isOwnerOfCurrentItem = (Number(giverId) === currentUserId);
+            } else {
+                isOwnerOfCurrentItem = false;
+            }
+
+            // Update Quick Replies
+            if (isOwnerOfCurrentItem) {
+                document.getElementById('qrGiver').classList.remove('hidden');
+                document.getElementById('qrReceiver2').classList.add('hidden');
+            } else {
+                document.getElementById('qrGiver').classList.add('hidden');
+                document.getElementById('qrReceiver2').classList.remove('hidden');
+            }
+
+            // Reload history to update buttons based on this item's status
+            loadHistory(currentReceiverId);
         }
 
         function backToInbox() {
@@ -510,7 +730,10 @@
 
                 msgs.forEach(m => {
                     if (m.content && m.content.startsWith("SYSTEM_GIFT:")) {
-                        if (currentDiscussingItemId) lastSystemMsg = m.content;
+                        // Chỉ lấy system msg của item đang chọn
+                        // Tuy nhiên, message hiện tại chưa lưu itemId, nên ta phải dựa vào nội dung hoặc chấp nhận lấy cái cuối cùng
+                        // Tạm thời lấy cái cuối cùng, nhưng logic nút bấm sẽ dựa vào activeDeals
+                        lastSystemMsg = m.content;
                         let cleanText = m.content.replace("SYSTEM_GIFT:", "");
                         appendSystemMessage(cleanText);
                     } else {
@@ -518,73 +741,57 @@
                     }
                 });
 
-                // --- LOGIC HIỂN THỊ NÚT BẤM ---
+                // --- LOGIC HIỂN THỊ NÚT BẤM (DỰA VÀO ACTIVE DEALS) ---
                 const btnGiver = document.getElementById('btnGiverConfirm');
                 const btnReceiver = document.getElementById('btnReceiverConfirm');
                 const btnCancel = document.getElementById('btnCancelTrans');
                 const btnRequestAgain = document.getElementById('btnRequestAgain');
+                const btnBatchAction = document.getElementById('btnBatchAction');
 
-                const qrGiver = document.getElementById('qrGiver');
-                const qrReceiver1 = document.getElementById('qrReceiver1');
-                const qrReceiver2 = document.getElementById('qrReceiver2');
+                // Tìm deal hiện tại trong danh sách activeDeals
+                const currentDeal = activeDeals.find(d => d.itemId == currentDiscussingItemId);
 
-                if (currentDiscussingItemId) {
-                    const isConfirmed = lastSystemMsg.includes("CONFIRMED");
-                    const isCompleted = lastSystemMsg.includes("COMPLETED");
-                    const isCanceled = lastSystemMsg.includes("CANCELED") || lastSystemMsg.includes("đã bị hủy");
+                // Reset
+                btnGiver.classList.add('hidden');
+                btnReceiver.classList.add('hidden');
+                btnCancel.classList.add('hidden');
+                btnRequestAgain.classList.add('hidden');
+                btnBatchAction.classList.add('hidden');
 
-                    if (isCompleted) {
-                        // Giao dịch đã hoàn tất -> Ẩn hết
-                        btnGiver.classList.add('hidden');
-                        btnReceiver.classList.add('hidden');
-                        btnCancel.classList.add('hidden');
-                        btnRequestAgain.classList.add('hidden');
-                        qrGiver.classList.add('hidden');
-                        qrReceiver1.classList.add('hidden');
-                        qrReceiver2.classList.add('hidden');
-                    } else if (isCanceled) {
-                        // Giao dịch đã hủy -> Ẩn nút Hủy
-                        btnGiver.classList.add('hidden');
-                        btnReceiver.classList.add('hidden');
-                        btnCancel.classList.add('hidden');
-                        qrGiver.classList.add('hidden');
-                        qrReceiver1.classList.add('hidden');
-                        qrReceiver2.classList.add('hidden');
+                if (currentDeal) {
+                    const status = currentDeal.status; // PENDING, CONFIRMED
 
-                        // Nếu là người nhận -> Hiện nút Xin lại
-                        if (!isOwnerOfCurrentItem) {
-                            btnRequestAgain.classList.remove('hidden');
+                    if (isOwnerOfCurrentItem) {
+                        // NGƯỜI CHO
+                        if (status === 'PENDING') {
+                            btnGiver.classList.remove('hidden');
+                            btnCancel.classList.add('hidden');
+                        } else if (status === 'CONFIRMED') {
+                            btnCancel.classList.remove('hidden');
                         }
                     } else {
-                        // Giao dịch đang diễn ra (PENDING hoặc CONFIRMED)
-                        if (isOwnerOfCurrentItem) {
-                            // NGƯỜI CHO
-                            if (!isConfirmed) {
-                                // Chưa xác nhận -> Hiện nút Xác nhận
-                                btnGiver.classList.remove('hidden');
-                                qrGiver.classList.remove('hidden');
-                                btnCancel.classList.add('hidden');
+                        // NGƯỜI NHẬN
+                        if (status === 'CONFIRMED') {
+                            // Nếu có nhiều hơn 1 giao dịch đang CONFIRMED -> Hiện nút Batch
+                            const confirmedDeals = activeDeals.filter(d => d.status === 'CONFIRMED');
+                            if (confirmedDeals.length > 1) {
+                                btnBatchAction.classList.remove('hidden');
+                                document.getElementById('btnBatchLabel').innerText = confirmedDeals.length + " giao dịch";
+                                btnCancel.classList.add('hidden'); // Ẩn nút hủy đơn lẻ
                             } else {
-                                // Đã xác nhận -> Hiện nút Hủy (để quay xe)
-                                btnGiver.classList.add('hidden');
-                                qrGiver.classList.add('hidden');
-                                btnCancel.classList.remove('hidden');
-                            }
-                        } else {
-                            // NGƯỜI NHẬN
-                            if (isConfirmed) {
-                                // Đã được xác nhận -> Hiện nút Đã nhận & Hủy
                                 btnReceiver.classList.remove('hidden');
-                                qrReceiver1.classList.remove('hidden');
-                                btnCancel.classList.remove('hidden');
-                                qrReceiver2.classList.add('hidden');
-                            } else {
-                                // Chưa được xác nhận -> Hiện nút Hủy yêu cầu & Hẹn lịch
-                                btnReceiver.classList.add('hidden');
-                                qrReceiver1.classList.add('hidden');
-                                btnCancel.classList.remove('hidden'); // Hủy yêu cầu
-                                qrReceiver2.classList.remove('hidden');
+                                btnCancel.classList.add('hidden'); // Đã confirm thì không cho hủy nữa
                             }
+                        } else if (status === 'PENDING') {
+                            btnCancel.classList.remove('hidden'); // Hủy yêu cầu
+                        }
+                    }
+                } else {
+                    // Không tìm thấy deal active -> Có thể đã COMPLETED hoặc CANCELED
+                    // Kiểm tra lastSystemMsg để biết
+                    if (lastSystemMsg.includes("CANCELED") || lastSystemMsg.includes("đã bị hủy")) {
+                         if (!isOwnerOfCurrentItem) {
+                            btnRequestAgain.classList.remove('hidden');
                         }
                     }
                 }
@@ -592,6 +799,156 @@
                 chatBox.scrollTop = chatBox.scrollHeight;
             } catch(e) {
                 chatBox.innerHTML = '<div class="text-center text-red-500 text-sm mt-4 font-medium">Không thể tải tin nhắn</div>';
+            }
+        }
+
+        // --- BATCH CONFIRM LOGIC ---
+        function openBatchModal() {
+            const modal = document.getElementById('batchConfirmModal');
+            const list = document.getElementById('batchList');
+            list.innerHTML = '';
+
+            // Lọc các giao dịch CONFIRMED
+            const confirmedDeals = activeDeals.filter(d => d.status === 'CONFIRMED');
+
+            confirmedDeals.forEach(d => {
+                list.innerHTML += `
+                    <div class="flex items-center gap-2 p-2 bg-slate-50 rounded-xl border border-slate-100 transition hover:bg-slate-100">
+                        <label class="flex items-center gap-3 flex-1 cursor-pointer">
+                            <input type="checkbox" value="\${d.itemId}" class="w-5 h-5 text-primary rounded focus:ring-primary border-gray-300 batch-checkbox" checked>
+                            <div class="flex-1">
+                                <div class="font-bold text-slate-800">\${d.itemName}</div>
+                                <div class="text-xs text-slate-500">ID: \${d.itemId}</div>
+                            </div>
+                        </label>
+                        <button onclick="showItemInfo(\${d.itemId})" class="p-2 text-slate-400 hover:text-primary rounded-full hover:bg-white transition" title="Xem chi tiết">
+                            <span class="material-symbols-rounded">info</span>
+                        </button>
+                    </div>
+                `;
+            });
+
+            modal.classList.remove('hidden');
+        }
+
+        async function submitBatchConfirm() {
+            const checkboxes = document.querySelectorAll('.batch-checkbox:checked');
+            if (checkboxes.length === 0) {
+                alert("Vui lòng chọn ít nhất 1 món đồ!");
+                return;
+            }
+
+            const itemIds = Array.from(checkboxes).map(cb => cb.value);
+
+            // Lặp qua từng item để confirm (Tạm thời gọi API nhiều lần, sau này có thể tối ưu backend nhận mảng)
+            for (const itemId of itemIds) {
+                await confirmSingleItem(itemId);
+            }
+
+            document.getElementById('batchConfirmModal').classList.add('hidden');
+            alert("Đã xác nhận nhận " + itemIds.length + " món đồ!");
+
+            // Reload
+            loadActiveDeals(currentReceiverId);
+            loadHistory(currentReceiverId);
+        }
+
+        async function confirmSingleItem(itemId) {
+            try {
+                const fd = new URLSearchParams();
+                fd.append('itemId', itemId);
+                fd.append('receiverId', currentUserId);
+                fd.append('action', 'receiver_confirm');
+
+                const res = await fetch('${pageContext.request.contextPath}/api/confirm-transaction', { method: 'POST', body: fd });
+                const data = await res.json();
+
+                if (data.status === 'success') {
+                    // Gửi thông báo socket
+                    const sysMsg = "SYSTEM_GIFT:Người nhận đã xác nhận nhận đồ (" + data.itemName + "). Trạng thái: COMPLETED.";
+                    if (chatSocket && currentReceiverId) {
+                        chatSocket.send(JSON.stringify({ receiverId: currentReceiverId, content: sysMsg }));
+                    }
+                    appendSystemMessage(sysMsg.replace("SYSTEM_GIFT:", ""));
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        // --- ITEM INFO LOGIC (MỚI) ---
+        async function showItemInfo(specificItemId) {
+            // Use specific ID if provided, otherwise use global current ID
+            const targetId = specificItemId || currentDiscussingItemId;
+
+            if (!targetId) {
+                alert("Vui lòng chọn một cuộc hội thoại có vật phẩm!");
+                return;
+            }
+
+            try {
+                const res = await fetch('${pageContext.request.contextPath}/api/chat?action=item_detail&itemId=' + targetId);
+                const item = await res.json();
+
+                if (item.error) {
+                    alert("Không tìm thấy thông tin vật phẩm.");
+                    return;
+                }
+
+                document.getElementById('infoTitle').innerText = item.title;
+                document.getElementById('infoDesc').innerText = item.description || "Không có mô tả";
+                document.getElementById('infoAddress').innerText = item.address || "Chưa cập nhật địa chỉ";
+                document.getElementById('infoPoints').innerText = item.ecoPoints || 0;
+                document.getElementById('infoGiver').innerText = item.giverName || "Ẩn danh";
+                document.getElementById('infoCategory').innerText = item.categoryName || "Chung";
+
+                // Xử lý ảnh
+                let imgUrl = item.imageUrl;
+                if (imgUrl && !imgUrl.startsWith('http')) {
+                    imgUrl = '${pageContext.request.contextPath}/images?path=' + encodeURIComponent(imgUrl);
+                }
+                document.getElementById('infoImg').src = imgUrl || 'https://placehold.co/400x300';
+
+                document.getElementById('itemInfoModal').classList.remove('hidden');
+
+            } catch (e) {
+                console.error(e);
+                alert("Lỗi tải thông tin vật phẩm.");
+            }
+        }
+
+        // --- USER PROFILE LOGIC (MỚI) ---
+        async function showUserProfile() {
+            if (!currentReceiverId) {
+                alert("Vui lòng chọn một người dùng!");
+                return;
+            }
+
+            try {
+                const res = await fetch('${pageContext.request.contextPath}/api/chat?action=user_info&userId=' + currentReceiverId);
+                const user = await res.json();
+
+                if (user.error) {
+                    alert("Không tìm thấy thông tin người dùng.");
+                    return;
+                }
+
+                document.getElementById('profileName').innerText = user.username;
+                document.getElementById('profileEmail').innerText = user.email;
+                document.getElementById('profilePoints').innerText = user.ecoPoints || 0;
+                document.getElementById('profileReputation').innerText = user.reputationScore || 0;
+                document.getElementById('profileGivenCount').innerText = user.givenCount || 0;
+
+                // Format date
+                const joinDate = new Date(user.joinDate);
+                document.getElementById('profileJoinDate').innerText = joinDate.toLocaleDateString('vi-VN');
+
+                document.getElementById('profileAvatar').src = "https://api.dicebear.com/9.x/notionists-neutral/svg?seed=" + user.username;
+                document.getElementById('profileLink').href = "${pageContext.request.contextPath}/profile?userId=" + user.userId;
+
+                document.getElementById('userProfileModal').classList.remove('hidden');
+
+            } catch (e) {
+                console.error(e);
+                alert("Lỗi tải thông tin người dùng.");
             }
         }
 
@@ -737,7 +1094,8 @@
                     if (action === 'cancel') {
                         sysMsg = "SYSTEM_GIFT:Giao dịch về sản phẩm " + data.itemName + " đã bị hủy!";
                     } else if (action === 'giver_confirm') {
-                        sysMsg = "SYSTEM_GIFT:Người tặng đã xác nhận giao đồ. Trạng thái: CONFIRMED. Bạn hãy xác nhận khi đã nhận được nhé!";
+                        // SỬA ĐỔI: Dùng tên người dùng hiện tại (Giver)
+                        sysMsg = "SYSTEM_GIFT:" + currentUserName + " đã xác nhận giao đồ. Bạn hãy xác nhận khi nhận được nhé!";
                     } else {
                         sysMsg = "SYSTEM_GIFT:Người nhận đã xác nhận nhận đồ. Trạng thái: COMPLETED. Giao dịch hoàn tất!";
                         openRatingModal();
@@ -751,6 +1109,7 @@
                     // Reload lại lịch sử để cập nhật nút bấm
                     setTimeout(() => loadHistory(currentReceiverId), 500);
                     setTimeout(loadInboxList, 500);
+                    setTimeout(() => loadActiveDeals(currentReceiverId), 500); // Reload deals
                 } else {
                     alert("❌ Lỗi: " + data.message);
                 }
@@ -776,9 +1135,15 @@
                     }
                     appendSystemMessage("Người nhận muốn xin lại món đồ này.");
 
+                    // Gửi tin nhắn mở đầu (MỚI)
+                    const itemName = data.itemName || "món đồ này";
+                    const introMsg = "Tôi muốn xin món " + itemName + "!";
+                    sendMessageAuto(introMsg, null);
+
                     // Reload UI
                     setTimeout(() => loadHistory(currentReceiverId), 500);
                     setTimeout(loadInboxList, 500);
+                    setTimeout(() => loadActiveDeals(currentReceiverId), 500);
                 } else {
                     alert("Lỗi: " + data.message);
                 }
