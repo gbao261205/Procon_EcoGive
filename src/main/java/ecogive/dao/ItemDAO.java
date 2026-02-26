@@ -244,6 +244,47 @@ public class ItemDAO {
         return list;
     }
 
+    public List<Item> findTradableItemsByGiverId(long giverId) throws SQLException {
+        List<Item> list = new ArrayList<>();
+        String sql = "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude, u.username " +
+                     "FROM items i " +
+                     "JOIN users u ON i.giver_id = u.user_id " +
+                     "WHERE i.giver_id = ? AND (i.status = 'AVAILABLE' OR i.status = 'PENDING') ORDER BY i.post_date DESC";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, giverId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Item item = mapRow(rs);
+                item.setGiverName(rs.getString("username"));
+                list.add(item);
+            }
+        } catch (Exception e) { throw new SQLException(e); }
+        return list;
+    }
+
+    public List<Item> findItemsByGiverAndStatus(long giverId, String status) throws SQLException {
+        List<Item> list = new ArrayList<>();
+        String sql = "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude, c.name AS category_name " +
+                "FROM items i " +
+                "LEFT JOIN categories c ON i.category_id = c.category_id " +
+                "WHERE i.giver_id = ? AND i.status = ? ORDER BY i.post_date DESC";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, giverId);
+            ps.setString(2, status);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Item item = mapRow(rs);
+                item.setCategoryName(rs.getString("category_name"));
+                list.add(item);
+            }
+        } catch (Exception e) { throw new SQLException(e); }
+        return list;
+    }
+
     public List<Item> findItemsByReceiverId(long receiverId) {
         List<Item> list = new ArrayList<>();
         String sql = "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude " +

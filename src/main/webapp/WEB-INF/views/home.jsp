@@ -67,7 +67,7 @@
         .custom-popup-img {
             width: 100%;
             height: 160px;
-            object-fit: cover;
+            object-fit: contain;
             background-color: #f8fafc;
         }
         .custom-popup-body { padding: 16px; }
@@ -692,7 +692,7 @@
                         <option value="" disabled selected>-- Chọn món đồ --</option>
                         <!-- Items will be loaded here -->
                     </select>
-                    <p class="text-xs text-slate-500 mt-2">* Chỉ hiện các món đang AVAILABLE</p>
+                    <p class="text-xs text-slate-500 mt-2">Có thể trao đổi các vật phẩm đã được đăng tin hay đang chờ duyệt</p>
                 </div>
 
                 <!-- Tab Content: New -->
@@ -1799,20 +1799,42 @@
     }
 
     async function loadMyItemsForTrade() {
+        const select = document.getElementById('tradeOfferSelect');
+        select.innerHTML = '<option value="" disabled selected>-- Đang tải... --</option>';
+
+        if (!currentUserId) {
+            select.innerHTML = '<option value="" disabled selected>-- Vui lòng đăng nhập --</option>';
+            return;
+        }
+
         try {
-            // Cần thêm API lấy danh sách đồ của user hiện tại (AVAILABLE)
-            // Tạm thời giả lập hoặc dùng API items với filter giverId
-            // const res = await fetch('${pageContext.request.contextPath}/api/items?giverId=' + currentUserId + '&status=AVAILABLE');
-            // const items = await res.json();
+            // THÊM \ TRƯỚC ${currentUserId} ĐỂ JSP KHÔNG XÓA BIẾN NÀY
+            const res = await fetch(`${pageContext.request.contextPath}/api/items?giverId=\${currentUserId}&forTrade=true`);
 
-            // Vì chưa có API riêng, ta sẽ dùng API items chung và lọc client-side (không tối ưu nhưng nhanh)
-            // Hoặc tốt nhất là thêm action vào ItemApiServlet
+            if (!res.ok) {
+                throw new Error(`HTTP error! status: \${res.status}`);
+            }
 
-            // Tạm thời hardcode để test UI
-            const select = document.getElementById('tradeOfferSelect');
+            const items = await res.json();
             select.innerHTML = '<option value="" disabled selected>-- Chọn món đồ --</option>';
-            // items.forEach...
-        } catch(e) { console.error(e); }
+
+            if (items.length > 0) {
+                items.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.itemId;
+
+                    const title = item.title || 'Chưa có tên';
+
+                    option.textContent = `\${title}`;
+                    select.appendChild(option);
+                });
+            } else {
+                select.innerHTML = '<option value="" disabled selected>-- Không có đồ để trao đổi --</option>';
+            }
+        } catch(e) {
+            console.error("Lỗi tải vật phẩm của bạn:", e);
+            select.innerHTML = '<option value="" disabled selected>-- Lỗi tải danh sách --</option>';
+        }
     }
 
     function switchTradeTab(tab) {

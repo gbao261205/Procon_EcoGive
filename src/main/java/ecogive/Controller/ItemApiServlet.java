@@ -36,55 +36,61 @@ public class ItemApiServlet extends HttpServlet {
 
         try {
             List<Item> items;
-            
-            // Kiểm tra xem có tham số bounds không
-            String minLatStr = req.getParameter("minLat");
-            String maxLatStr = req.getParameter("maxLat");
-            String minLngStr = req.getParameter("minLng");
-            String maxLngStr = req.getParameter("maxLng");
-            String categoryIdStr = req.getParameter("categoryId");
-            
-            // --- MỚI: Tham số cho phân trang và sắp xếp theo khoảng cách ---
-            String latStr = req.getParameter("lat");
-            String lngStr = req.getParameter("lng");
-            String pageStr = req.getParameter("page");
-            String limitStr = req.getParameter("limit");
-            // ---------------------------------------------------------------
 
-            if (minLatStr != null && maxLatStr != null && minLngStr != null && maxLngStr != null) {
-                // Case 1: Lấy theo Viewport (Bản đồ)
-                double minLat = Double.parseDouble(minLatStr);
-                double maxLat = Double.parseDouble(maxLatStr);
-                double minLng = Double.parseDouble(minLngStr);
-                double maxLng = Double.parseDouble(maxLngStr);
-                
-                Integer categoryId = null;
-                if (categoryIdStr != null && !categoryIdStr.isEmpty()) {
-                    try {
-                        categoryId = Integer.parseInt(categoryIdStr);
-                    } catch (NumberFormatException e) {}
-                }
-
-                items = itemDAO.findAvailableInBounds(minLat, minLng, maxLat, maxLng, categoryId);
-            } else if (latStr != null && lngStr != null) {
-                // Case 2: Lấy theo khoảng cách và phân trang (Danh sách cuộn)
-                double lat = Double.parseDouble(latStr);
-                double lng = Double.parseDouble(lngStr);
-                int page = (pageStr != null) ? Integer.parseInt(pageStr) : 1;
-                int limit = (limitStr != null) ? Integer.parseInt(limitStr) : 10;
-                int offset = (page - 1) * limit;
-                
-                Integer categoryId = null;
-                if (categoryIdStr != null && !categoryIdStr.isEmpty()) {
-                    try {
-                        categoryId = Integer.parseInt(categoryIdStr);
-                    } catch (NumberFormatException e) {}
-                }
-                
-                items = itemDAO.findAvailableSortedByDistance(lat, lng, limit, offset, categoryId);
+            String giverIdStr = req.getParameter("giverId");
+            String forTradeStr = req.getParameter("forTrade");
+            
+            if (giverIdStr != null && !giverIdStr.isEmpty() && "true".equalsIgnoreCase(forTradeStr)) {
+                // Case 0: Lấy vật phẩm có thể trao đổi của người dùng (AVAILABLE hoặc PENDING)
+                int giverId = Integer.parseInt(giverIdStr);
+                items = itemDAO.findTradableItemsByGiverId(giverId);
             } else {
-                // Case 3: Fallback (Lấy tất cả - không khuyến khích nếu dữ liệu lớn)
-                items = itemDAO.findAllAvailable();
+                // Các trường hợp còn lại
+                String minLatStr = req.getParameter("minLat");
+                String maxLatStr = req.getParameter("maxLat");
+                String minLngStr = req.getParameter("minLng");
+                String maxLngStr = req.getParameter("maxLng");
+                String categoryIdStr = req.getParameter("categoryId");
+                String latStr = req.getParameter("lat");
+                String lngStr = req.getParameter("lng");
+                String pageStr = req.getParameter("page");
+                String limitStr = req.getParameter("limit");
+
+                if (minLatStr != null && maxLatStr != null && minLngStr != null && maxLngStr != null) {
+                    // Case 1: Lấy theo Viewport (Bản đồ)
+                    double minLat = Double.parseDouble(minLatStr);
+                    double maxLat = Double.parseDouble(maxLatStr);
+                    double minLng = Double.parseDouble(minLngStr);
+                    double maxLng = Double.parseDouble(maxLngStr);
+                    
+                    Integer categoryId = null;
+                    if (categoryIdStr != null && !categoryIdStr.isEmpty()) {
+                        try {
+                            categoryId = Integer.parseInt(categoryIdStr);
+                        } catch (NumberFormatException e) {}
+                    }
+
+                    items = itemDAO.findAvailableInBounds(minLat, minLng, maxLat, maxLng, categoryId);
+                } else if (latStr != null && lngStr != null) {
+                    // Case 2: Lấy theo khoảng cách và phân trang (Danh sách cuộn)
+                    double lat = Double.parseDouble(latStr);
+                    double lng = Double.parseDouble(lngStr);
+                    int page = (pageStr != null) ? Integer.parseInt(pageStr) : 1;
+                    int limit = (limitStr != null) ? Integer.parseInt(limitStr) : 10;
+                    int offset = (page - 1) * limit;
+                    
+                    Integer categoryId = null;
+                    if (categoryIdStr != null && !categoryIdStr.isEmpty()) {
+                        try {
+                            categoryId = Integer.parseInt(categoryIdStr);
+                        } catch (NumberFormatException e) {}
+                    }
+                    
+                    items = itemDAO.findAvailableSortedByDistance(lat, lng, limit, offset, categoryId);
+                } else {
+                    // Case 3: Fallback (Lấy tất cả - không khuyến khích nếu dữ liệu lớn)
+                    items = itemDAO.findAllAvailable();
+                }
             }
 
             String json = gson.toJson(items);
