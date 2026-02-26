@@ -109,25 +109,25 @@
     <div class="w-full h-full md:w-[90%] md:h-[90%] lg:w-[85%] lg:h-[85%] glass-card md:rounded-[2rem] shadow-glass flex flex-col overflow-hidden relative z-10 transition-all duration-500">
 
         <!-- HEADER: Transparent & Minimal -->
-        <header class="h-16 px-6 flex justify-between items-center shrink-0 border-b border-white/50 bg-white/40 backdrop-blur-sm">
+        <header class="h-16 px-4 md:px-6 flex justify-between items-center shrink-0 border-b border-white/50 bg-white/40 backdrop-blur-sm">
             <div class="flex items-center gap-3">
                 <a href="${pageContext.request.contextPath}/home" class="group flex items-center gap-2 transition-transform hover:scale-105">
                     <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-emerald-400 flex items-center justify-center text-white shadow-glow">
                         <span class="material-symbols-rounded text-[24px]">spa</span>
                     </div>
-                    <div>
+                    <div class="hidden sm:block">
                         <h1 class="text-lg font-extrabold tracking-tight text-slate-800 leading-none">EcoGive</h1>
                         <span class="text-[10px] font-bold text-primary uppercase tracking-widest">Messenger</span>
                     </div>
                 </a>
             </div>
 
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2 md:gap-4">
                 <a href="${pageContext.request.contextPath}/home" class="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-white/50 hover:bg-white text-sm font-bold text-slate-600 hover:text-primary transition-all shadow-sm border border-white/60">
                     <span class="material-symbols-rounded text-[18px]">home</span>
                     <span>Trang chủ</span>
                 </a>
-                <div class="flex items-center gap-3 pl-4 border-l border-slate-300/50">
+                <div class="flex items-center gap-3 md:pl-4 md:border-l border-slate-300/50">
                     <div class="text-right hidden md:block">
                         <div class="text-sm font-bold text-slate-800">${sessionScope.currentUser.username}</div>
                         <div class="text-[10px] font-semibold text-primary">Online</div>
@@ -145,8 +145,8 @@
         <div class="flex-1 flex overflow-hidden relative">
 
             <!-- LEFT COLUMN: INBOX LIST (Glassy Sidebar) -->
-            <div id="inboxPanel" class="w-full md:w-80 lg:w-96 bg-white/40 backdrop-blur-md border-r border-white/50 flex flex-col h-full z-20 absolute md:static transition-transform duration-300 transform translate-x-0">
-                <div class="p-5 pb-2">
+            <div id="inboxPanel" class="w-full md:w-80 lg:w-96 bg-white/40 backdrop-blur-md border-r border-white/50 flex flex-col h-full absolute md:static top-0 left-0 transition-transform duration-300 ease-in-out transform translate-x-0 z-20">
+                <div class="p-4 md:p-5 pb-2">
                     <h2 class="font-bold text-slate-800 text-xl mb-4 flex items-center gap-2">
                         Tin nhắn <span class="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full" id="msgCount">0</span>
                     </h2>
@@ -167,12 +167,12 @@
             </div>
 
             <!-- RIGHT COLUMN: CHAT DETAIL -->
-            <div id="chatDetailPanel" class="flex-1 flex flex-col bg-white/30 backdrop-blur-sm h-full w-full absolute md:static z-30 md:z-0 transform translate-x-full md:translate-x-0 transition-transform duration-300">
+            <div id="chatDetailPanel" class="flex-1 flex flex-col bg-white/30 backdrop-blur-sm h-full w-full absolute md:static top-0 left-0 z-10 md:z-0 transition-transform duration-300 ease-in-out transform translate-x-full md:translate-x-0">
 
                 <!-- Chat Header -->
-                <div class="h-16 px-6 border-b border-white/50 bg-white/60 backdrop-blur-md flex justify-between items-center shrink-0 shadow-sm z-10">
-                    <div class="flex items-center gap-4 overflow-hidden">
-                        <button onclick="backToInbox()" class="md:hidden w-8 h-8 flex items-center justify-center rounded-full bg-white text-slate-600 shadow-sm hover:text-primary transition">
+                <div class="h-16 px-4 md:px-6 border-b border-white/50 bg-white/60 backdrop-blur-md flex justify-between items-center shrink-0 shadow-sm z-10">
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <button onclick="backToInbox()" class="md:hidden w-10 h-10 flex items-center justify-center rounded-full bg-white/50 text-slate-600 shadow-sm hover:text-primary transition">
                             <span class="material-symbols-rounded">arrow_back</span>
                         </button>
 
@@ -578,9 +578,12 @@
             input.disabled = false; input.focus();
             document.getElementById('btnSend').disabled = false;
 
+            // --- RESPONSIVE LOGIC ---
             if (window.innerWidth < 768) {
                 document.getElementById('inboxPanel').classList.add('-translate-x-full');
                 document.getElementById('chatDetailPanel').classList.remove('translate-x-full');
+                document.getElementById('chatDetailPanel').classList.add('z-30');
+                document.getElementById('inboxPanel').classList.remove('z-20');
             }
 
             document.getElementById('quickReplies').classList.remove('hidden');
@@ -665,11 +668,15 @@
         }
 
         function backToInbox() {
+            // --- RESPONSIVE LOGIC ---
             if (window.innerWidth < 768) {
                 document.getElementById('inboxPanel').classList.remove('-translate-x-full');
                 document.getElementById('chatDetailPanel').classList.add('translate-x-full');
+                document.getElementById('chatDetailPanel').classList.remove('z-30');
+                document.getElementById('inboxPanel').classList.add('z-20');
             }
             currentReceiverId = null;
+            searchFriends(); // To remove active state
         }
 
         async function loadHistory(userId) {
