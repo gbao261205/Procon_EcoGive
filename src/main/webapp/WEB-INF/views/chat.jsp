@@ -215,7 +215,7 @@
                         <!-- Action Buttons -->
                         <button id="btnGiverConfirm" onclick="confirmTransaction('giver_confirm')" class="hidden group bg-gradient-to-r from-primary to-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-full hover:shadow-lg hover:shadow-emerald-200/50 transform hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-1.5">
                             <span class="material-symbols-rounded text-[16px] group-hover:animate-bounce">card_giftcard</span>
-                            <span class="hidden sm:inline">Xác nhận cho</span><span class="sm:hidden">Cho</span>
+                            <span class="hidden sm:inline">Xác nhận đã tặng</span><span class="sm:hidden">Cho</span>
                         </button>
                         <button id="btnReceiverConfirm" onclick="confirmTransaction('receiver_confirm')" class="hidden group bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-xs font-bold px-4 py-2 rounded-full hover:shadow-lg hover:shadow-blue-200/50 transform hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-1.5">
                             <span class="material-symbols-rounded text-[16px] group-hover:animate-bounce">check_circle</span>
@@ -225,7 +225,7 @@
                         <!-- Nút Hủy Giao Dịch -->
                         <button id="btnCancelTrans" onclick="confirmTransaction('cancel')" class="hidden group bg-white text-red-500 text-xs font-bold px-3 py-2 rounded-full border border-red-200 hover:bg-red-50 hover:shadow-md transition-all duration-300 flex items-center gap-1.5" title="Hủy giao dịch">
                             <span class="material-symbols-rounded text-[16px]">cancel</span>
-                            <span class="hidden sm:inline">Hủy</span>
+                            <span class="hidden sm:inline">Hủy giao dịch</span>
                         </button>
 
                         <!-- Nút Xin Lại (Mới) -->
@@ -273,7 +273,7 @@
                 <div id="quickReplies" class="px-6 py-3 flex gap-2 overflow-x-auto hidden no-scrollbar shrink-0 mask-linear-fade">
                     <button id="qrGiver" onclick="confirmTransaction('giver_confirm')"
                             class="hidden whitespace-nowrap bg-emerald-100/80 hover:bg-emerald-200 text-emerald-800 text-xs font-bold px-4 py-2 rounded-full border border-emerald-200 transition shadow-sm backdrop-blur-sm">
-                        🎁 Xác nhận cho
+                        🎁 Xác nhận đã tặng
                     </button>
                     <button id="qrReceiver1" onclick="confirmTransaction('receiver_confirm')"
                             class="hidden whitespace-nowrap bg-blue-100/80 hover:bg-blue-200 text-blue-800 text-xs font-bold px-4 py-2 rounded-full border border-blue-200 transition shadow-sm backdrop-blur-sm">
