@@ -11,6 +11,7 @@ import ecogive.dao.ItemDAO;
 import ecogive.dao.TransactionDAO;
 import ecogive.util.CloudinaryService;
 import ecogive.util.DatabaseConnection;
+import ecogive.util.NotificationService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
@@ -136,13 +137,28 @@ public class TradeServlet extends HttpServlet {
         trans.setExchangeDate(LocalDateTime.now());
 
         if (transactionDAO.insert(trans)) {
-            // Gửi thông báo Real-time cho chủ sở hữu Item B
-            // --- SỬA ĐỔI: Dùng SYSTEM_GIFT thay vì SYSTEM_TRADE_PROPOSAL ---
-            String sysMsg = "SYSTEM_GIFT:Bạn nhận được đề nghị trao đổi mới (ID: " + trans.getTransactionId() + ")";
-            saveSystemMessage(user.getUserId(), targetItem.getGiverId(), sysMsg, null);
+            // --- CẬP NHẬT: Gửi thông báo và email ---
+            String content = "Bạn nhận được đề nghị trao đổi mới cho vật phẩm: " + targetItem.getTitle();
             
-            // Gọi WebSocket để báo ngay lập tức
-            ChatEndpoint.sendSystemMessage(String.valueOf(targetItem.getGiverId()), sysMsg);
+            // 1. Gửi tin nhắn SYSTEM_TRADE_PROPOSAL để kích hoạt UI trên Web
+            String proposalMsg = "SYSTEM_TRADE_PROPOSAL:" + trans.getTransactionId();
+            saveSystemMessage(user.getUserId(), targetItem.getGiverId(), proposalMsg, null);
+            ChatEndpoint.sendSystemMessage(String.valueOf(targetItem.getGiverId()), proposalMsg);
+
+            // 2. Gửi thêm tin nhắn SYSTEM_GIFT để hiển thị text thông báo (cho Android/Web)
+            String textMsg = "SYSTEM_GIFT:" + content;
+            saveSystemMessage(user.getUserId(), targetItem.getGiverId(), textMsg, null);
+            ChatEndpoint.sendSystemMessage(String.valueOf(targetItem.getGiverId()), textMsg);
+
+            // 3. Gửi Notification + Email
+            NotificationService.sendNotification(
+                targetItem.getGiverId(), 
+                content, 
+                "TRADE_REQUEST", 
+                (long) trans.getTransactionId(), 
+                "Đề nghị trao đổi mới cho vật phẩm: " + targetItem.getTitle()
+            );
+            // ----------------------------------------
 
             response.addProperty("status", "success");
             response.addProperty("message", "Đã gửi đề nghị trao đổi!");

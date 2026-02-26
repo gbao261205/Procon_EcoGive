@@ -8,6 +8,7 @@ import ecogive.Model.User;
 import ecogive.dao.ItemDAO;
 import ecogive.dao.TransactionDAO;
 import ecogive.util.DatabaseConnection;
+import ecogive.util.NotificationService;
 import com.google.gson.Gson;
 
 import jakarta.servlet.ServletException;
@@ -88,11 +89,23 @@ public class RequestItemServlet extends HttpServlet {
                 }
 
                 if (transSuccess) {
-                    // --- THÊM: Gửi tin nhắn thông báo cho người tặng ---
-                    if (!exists && trans != null) { // Chỉ gửi khi tạo mới yêu cầu
-                        String sysMsg = "SYSTEM_GIFT:Người dùng " + currentUser.getUsername() + " muốn xin vật phẩm '" + item.getTitle() + "' của bạn.";
+                    // --- CẬP NHẬT: Gửi thông báo và email ---
+                    if (!exists && trans != null) {
+                        String content = "Người dùng " + currentUser.getUsername() + " muốn xin vật phẩm '" + item.getTitle() + "' của bạn.";
+                        String sysMsg = "SYSTEM_GIFT:" + content;
+                        
+                        // 1. Lưu tin nhắn chat (để hiện trong khung chat)
                         saveSystemMessage(currentUser.getUserId(), item.getGiverId(), sysMsg, null);
                         ChatEndpoint.sendSystemMessage(String.valueOf(item.getGiverId()), sysMsg);
+
+                        // 2. Gửi Notification + Email
+                        NotificationService.sendNotification(
+                            item.getGiverId(), 
+                            content, 
+                            "GIFT_REQUEST", 
+                            (long) trans.getTransactionId(), 
+                            "Yêu cầu xin vật phẩm mới: " + item.getTitle()
+                        );
                     }
                     // --------------------------------------------------
 
