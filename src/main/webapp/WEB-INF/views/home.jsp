@@ -701,9 +701,9 @@
                     <textarea id="tradeOfferDesc" placeholder="Mô tả..." rows="2" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary outline-none resize-none"></textarea>
                     <!-- Simple file input for now -->
                     <div class="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center hover:bg-slate-50 transition cursor-pointer relative">
-                        <input type="file" id="tradeOfferPhoto" class="absolute inset-0 opacity-0 cursor-pointer">
+                        <input type="file" id="tradeOfferPhoto" class="absolute inset-0 opacity-0 cursor-pointer" onchange="updateFileName(this)">
                         <span class="material-symbols-outlined text-slate-400 text-2xl">add_a_photo</span>
-                        <p class="text-xs text-slate-500 mt-1">Chọn ảnh</p>
+                        <p class="text-xs text-slate-500 mt-1" id="tradeFileName">Chọn ảnh</p>
                     </div>
                 </div>
             </div>
@@ -1827,6 +1827,12 @@
             document.getElementById('contentNew').classList.remove('hidden');
             document.getElementById('contentExisting').classList.add('hidden');
         }
+    }
+
+    // --- HÀM MỚI: Cập nhật tên file ảnh ---
+    function updateFileName(input) {
+        const fileName = input.files.length > 0 ? input.files[0].name : "Chọn ảnh";
+        document.getElementById('tradeFileName').innerText = fileName;
     }
 
     async function submitTradeProposal() {

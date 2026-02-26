@@ -16,6 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @ServerEndpoint("/chat/{userId}")
 public class ChatEndpoint {
+    // Map lưu session của người dùng đang online: Key = userId (String), Value = Session
     private static final Map<String, Session> userSessions = new ConcurrentHashMap<>();
     private static final Gson gson = new Gson();
 
@@ -67,7 +68,40 @@ public class ChatEndpoint {
         System.err.println("Chat Error: " + throwable.getMessage());
     }
 
-    // --- HÀM LƯU DB ĐÃ CẬP NHẬT ---
+    // --- PUBLIC STATIC METHODS CHO SERVLET GỌI ---
+
+    /**
+     * Gửi tin nhắn hệ thống (Text) tới một user cụ thể
+     */
+    public static void sendSystemMessage(String receiverId, String message) {
+        Session session = userSessions.get(receiverId);
+        if (session != null && session.isOpen()) {
+            try {
+                JsonObject response = new JsonObject();
+                response.addProperty("senderId", "SYSTEM"); // Đánh dấu là hệ thống
+                response.addProperty("content", message);
+                session.getBasicRemote().sendText(gson.toJson(response));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * Gửi tin nhắn JSON tùy chỉnh (Dùng cho sự kiện Trade: TRADE_READY, TRADE_EXECUTE...)
+     */
+    public static void sendJsonMessage(String receiverId, JsonObject jsonMessage) {
+        Session session = userSessions.get(receiverId);
+        if (session != null && session.isOpen()) {
+            try {
+                session.getBasicRemote().sendText(gson.toJson(jsonMessage));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    // --- DATABASE HELPER ---
     private void saveMessageToDB(long senderId, long receiverId, String content, String imageUrl) {
         String sql = "INSERT INTO messages (sender_id, receiver_id, content, image_url) VALUES (?, ?, ?, ?)";
 
@@ -77,10 +111,9 @@ public class ChatEndpoint {
             ps.setLong(1, senderId);
             ps.setLong(2, receiverId);
             ps.setString(3, content);
-            ps.setString(4, imageUrl); // Có thể là null
+            ps.setString(4, imageUrl);
             ps.executeUpdate();
 
-            System.out.println("Saved message from " + senderId + " to " + receiverId + (imageUrl != null ? " with image" : ""));
         } catch (SQLException e) {
             e.printStackTrace();
             System.err.println("Lỗi lưu tin nhắn vào DB: " + e.getMessage());

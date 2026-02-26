@@ -64,7 +64,6 @@ public class ItemDAO {
         return list;
     }
 
-    // --- MỚI: Tìm kiếm theo vùng hiển thị (Viewport) và Category ---
     public List<Item> findAvailableInBounds(double minLat, double minLng, double maxLat, double maxLng, Integer categoryId) throws SQLException {
         String polygonWKT = String.format("POLYGON((%f %f, %f %f, %f %f, %f %f, %f %f))",
                 minLng, minLat,
@@ -107,16 +106,11 @@ public class ItemDAO {
         return list;
     }
 
-    // Giữ lại phương thức cũ để tương thích ngược (nếu cần)
     public List<Item> findAvailableInBounds(double minLat, double minLng, double maxLat, double maxLng) throws SQLException {
         return findAvailableInBounds(minLat, minLng, maxLat, maxLng, null);
     }
-    // --------------------------------------------------
     
-    // --- MỚI: Tìm kiếm theo khoảng cách và phân trang ---
     public List<Item> findAvailableSortedByDistance(double lat, double lng, int limit, int offset, Integer categoryId) throws SQLException {
-        // Sử dụng ST_Distance_Sphere để tính khoảng cách (đơn vị mét)
-        // Sắp xếp tăng dần theo khoảng cách
         StringBuilder sql = new StringBuilder(
             "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude, u.username, " +
             "ST_Distance_Sphere(i.location, ST_GeomFromText(?)) AS distance " +
@@ -160,14 +154,12 @@ public class ItemDAO {
         return list;
     }
     
-    // Overload cho tương thích cũ
     public List<Item> findAvailableSortedByDistance(double lat, double lng, int limit, int offset) throws SQLException {
         return findAvailableSortedByDistance(lat, lng, limit, offset, null);
     }
-    // ----------------------------------------------------
 
     public List<Item> findAll() throws SQLException {
-        return findAll(1000, 0, null); // Default fallback
+        return findAll(1000, 0, null); 
     }
 
     public List<Item> findAll(int limit, int offset, String statusFilter) throws SQLException {
@@ -177,6 +169,9 @@ public class ItemDAO {
         
         if (statusFilter != null && !statusFilter.isEmpty()) {
             sql.append(" WHERE status = ? ");
+        } else {
+            // SỬA ĐỔI: Mặc định không lấy TRADE_PENDING nếu không có filter cụ thể
+            sql.append(" WHERE status != 'TRADE_PENDING' ");
         }
         
         sql.append(" ORDER BY post_date DESC LIMIT ? OFFSET ?");
@@ -207,6 +202,8 @@ public class ItemDAO {
         StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM items");
         if (statusFilter != null && !statusFilter.isEmpty()) {
             sql.append(" WHERE status = ?");
+        } else {
+            sql.append(" WHERE status != 'TRADE_PENDING'");
         }
 
         try (Connection conn = DatabaseConnection.getConnection();
@@ -227,7 +224,6 @@ public class ItemDAO {
         return 0;
     }
 
-    // --- SỬA ĐỔI: Lấy thêm tên danh mục ---
     public List<Item> findItemsByGiverId(long giverId) {
         List<Item> list = new ArrayList<>();
         String sql = "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude, c.name AS category_name " +
@@ -247,7 +243,6 @@ public class ItemDAO {
         } catch (Exception e) { e.printStackTrace(); }
         return list;
     }
-    // --------------------------------------
 
     public List<Item> findItemsByReceiverId(long receiverId) {
         List<Item> list = new ArrayList<>();
@@ -327,9 +322,7 @@ public class ItemDAO {
         }
     }
     
-    // --- MỚI: Tìm kiếm theo tên (Fuzzy Search - Tách từ) ---
     public List<Item> searchByTitle(String keyword) throws SQLException {
-        // Tách từ khóa thành mảng các từ
         String[] words = keyword.trim().split("\\s+");
         
         StringBuilder sql = new StringBuilder(
@@ -337,7 +330,6 @@ public class ItemDAO {
             "FROM items WHERE status = 'AVAILABLE'"
         );
         
-        // Thêm điều kiện LIKE cho mỗi từ
         for (int i = 0; i < words.length; i++) {
             sql.append(" AND title LIKE ?");
         }
@@ -348,7 +340,6 @@ public class ItemDAO {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
             
-            // Gán tham số cho từng từ
             for (int i = 0; i < words.length; i++) {
                 stmt.setString(i + 1, "%" + words[i] + "%");
             }
@@ -364,7 +355,6 @@ public class ItemDAO {
         return list;
     }
 
-    // --- MỚI: Tìm kiếm theo tên danh mục (Fuzzy Search) ---
     public List<Item> searchByCategoryName(String categoryName) throws SQLException {
         String[] words = categoryName.trim().split("\\s+");
         
@@ -399,7 +389,6 @@ public class ItemDAO {
         }
         return list;
     }
-    // ----------------------------------------
 
     public boolean delete(long itemId) throws SQLException {
         String sql = "DELETE FROM items WHERE item_id = ?";

@@ -35,6 +35,8 @@
                         'float': 'float 6s ease-in-out infinite',
                         'slide-up': 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
                         'scale-in': 'scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'pulse-glow': 'pulseGlow 2s infinite',
+                        'spin-slow': 'spin 3s linear infinite',
                     },
                     keyframes: {
                         float: {
@@ -48,6 +50,10 @@
                         scaleIn: {
                             '0%': { transform: 'scale(0.9)', opacity: '0' },
                             '100%': { transform: 'scale(1)', opacity: '1' },
+                        },
+                        pulseGlow: {
+                            '0%, 100%': { boxShadow: '0 0 10px rgba(5, 151, 106, 0.5)' },
+                            '50%': { boxShadow: '0 0 25px rgba(5, 151, 106, 0.9)' },
                         }
                     }
                 }
@@ -87,6 +93,23 @@
                 radial-gradient(at 50% 0%, hsla(180,80%,70%,1) 0, transparent 50%),
                 radial-gradient(at 100% 0%, hsla(153,96%,45%,1) 0, transparent 50%);
             background-size: 100% 100%;
+        }
+
+        /* Trade Machine Animations */
+        .trade-item-move-right { animation: moveRight 1.5s ease-in-out forwards; }
+        .trade-item-move-left { animation: moveLeft 1.5s ease-in-out forwards; }
+
+        @keyframes moveRight {
+            0% { transform: translateX(0) scale(1); }
+            40% { transform: translateX(100px) scale(0.5); opacity: 0; }
+            60% { transform: translateX(200px) scale(0.5); opacity: 0; }
+            100% { transform: translateX(300px) scale(1); opacity: 1; }
+        }
+        @keyframes moveLeft {
+            0% { transform: translateX(0) scale(1); }
+            40% { transform: translateX(-100px) scale(0.5); opacity: 0; }
+            60% { transform: translateX(-200px) scale(0.5); opacity: 0; }
+            100% { transform: translateX(-300px) scale(1); opacity: 1; }
         }
     </style>
 </head>
@@ -234,9 +257,20 @@
                             <span class="hidden sm:inline" id="btnBatchLabel">N giao dịch</span>
                         </button>
 
-                        <!-- Nút Info -->
+                        <!-- Nút Trade Machine (MỚI) -->
+                        <button id="btnTradeMachine" onclick="openTradeMachine()" class="hidden group bg-purple-500 text-white text-xs font-bold px-4 py-2 rounded-full hover:bg-purple-600 hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-1.5">
+                            <span class="material-symbols-rounded text-[16px]">swap_horiz</span>
+                            <span class="hidden sm:inline">Máy Trao Đổi</span>
+                        </button>
+
+                        <!-- Nút Info (Luôn hiện) -->
                         <button onclick="showUserProfile()" class="w-9 h-9 rounded-full bg-white text-slate-400 hover:text-primary hover:bg-emerald-50 transition flex items-center justify-center shadow-sm border border-slate-100" title="Thông tin người dùng">
                             <span class="material-symbols-rounded text-[20px]">info</span>
+                        </button>
+
+                        <!-- Nút Xóa (Luôn hiện) -->
+                        <button onclick="deleteConversation()" class="w-9 h-9 rounded-full bg-white text-red-400 hover:text-red-600 hover:bg-red-50 transition flex items-center justify-center shadow-sm border border-slate-100" title="Xóa cuộc trò chuyện">
+                            <span class="material-symbols-rounded text-[20px]">delete</span>
                         </button>
                     </div>
                 </div>
@@ -298,6 +332,76 @@
     <!-- Hidden File Input -->
     <input type="file" id="imageInput" hidden accept="image/*" onchange="uploadImage()">
 
+    <!-- TRADE MACHINE MODAL (MỚI) -->
+    <div id="tradeMachineModal" class="fixed inset-0 hidden bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-4 z-[100]">
+        <div class="w-full max-w-4xl h-[80vh] bg-slate-800 rounded-3xl shadow-2xl border border-slate-700 relative flex flex-col overflow-hidden">
+            <!-- Header -->
+            <div class="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-800/50">
+                <h2 class="text-xl font-bold text-green-400 flex items-center gap-2">
+                    <span class="material-symbols-rounded">recycling</span> Máy Trao Đổi
+                </h2>
+                <button onclick="document.getElementById('tradeMachineModal').classList.add('hidden')" class="text-slate-400 hover:text-white transition">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
+            </div>
+
+            <!-- Machine Body -->
+            <div class="flex-1 flex items-center justify-center p-8 relative">
+                <!-- Left Pedestal (User A - Bên trái) -->
+                <div class="w-1/3 flex flex-col items-center gap-4 z-10">
+                    <div class="text-white font-bold text-lg" id="tradeUserAName">User A</div>
+                    <div class="w-40 h-40 bg-slate-700 rounded-2xl border-4 border-slate-600 flex items-center justify-center relative overflow-hidden shadow-lg group">
+                        <img id="tradeItemAImg" src="" class="w-full h-full object-cover transition-transform duration-1000">
+                        <div class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                            <span class="text-white text-xs font-bold" id="tradeItemAName">Item A</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div id="tradeStatusA" class="w-4 h-4 rounded-full bg-red-500 shadow-[0_0_10px_red]"></div>
+                        <span class="text-slate-400 text-xs">Trạng thái</span>
+                    </div>
+                    <button id="btnTradeConfirmA" onclick="confirmTradeReady()" class="bg-slate-600 hover:bg-green-600 text-white px-6 py-2 rounded-full font-bold transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">Xác nhận</button>
+                </div>
+
+                <!-- Center Machine -->
+                <div class="w-1/3 flex flex-col items-center justify-center relative z-0">
+                    <!-- Pipes -->
+                    <div class="absolute top-1/2 left-0 w-1/2 h-4 bg-slate-600 -translate-y-1/2 -z-10"></div>
+                    <div class="absolute top-1/2 right-0 w-1/2 h-4 bg-slate-600 -translate-y-1/2 -z-10"></div>
+
+                    <!-- Core -->
+                    <div id="tradeCore" class="w-32 h-32 bg-slate-700 rounded-full border-8 border-slate-600 flex items-center justify-center shadow-2xl relative">
+                        <span class="material-symbols-rounded text-6xl text-slate-500 animate-spin-slow">settings</span>
+                        <div class="absolute inset-0 rounded-full border-4 border-transparent border-t-green-500 animate-spin"></div>
+                    </div>
+                </div>
+
+                <!-- Right Pedestal (User B - Bên phải) -->
+                <div class="w-1/3 flex flex-col items-center gap-4 z-10">
+                    <div class="text-white font-bold text-lg" id="tradeUserBName">User B</div>
+                    <div class="w-40 h-40 bg-slate-700 rounded-2xl border-4 border-slate-600 flex items-center justify-center relative overflow-hidden shadow-lg group">
+                        <img id="tradeItemBImg" src="" class="w-full h-full object-cover transition-transform duration-1000">
+                        <div class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                            <span class="text-white text-xs font-bold" id="tradeItemBName">Item B</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div id="tradeStatusB" class="w-4 h-4 rounded-full bg-red-500 shadow-[0_0_10px_red]"></div>
+                        <span class="text-slate-400 text-xs">Trạng thái</span>
+                    </div>
+                    <button id="btnTradeConfirmB" onclick="confirmTradeReady()" class="bg-slate-600 hover:bg-green-600 text-white px-6 py-2 rounded-full font-bold transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">Xác nhận</button>
+                </div>
+            </div>
+
+            <!-- Success Overlay -->
+            <div id="tradeSuccessOverlay" class="absolute inset-0 bg-black/80 flex flex-col items-center justify-center z-50 hidden">
+                <h1 class="text-5xl font-extrabold text-green-400 mb-4 animate-bounce">Trao đổi thành công!</h1>
+                <p class="text-slate-300">Vật phẩm đã được chuyển giao.</p>
+                <button onclick="location.reload()" class="mt-8 bg-green-600 text-white px-8 py-3 rounded-full font-bold hover:bg-green-500 transition shadow-lg shadow-green-500/50">Hoàn tất</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Batch Confirm Modal -->
     <div id="batchConfirmModal" class="fixed inset-0 hidden bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-[80]">
         <div class="bg-white/95 backdrop-blur-xl p-6 rounded-3xl w-full max-w-md shadow-2xl border border-white/50 relative animate-scale-in">
@@ -314,54 +418,6 @@
             <div class="flex gap-3">
                 <button onclick="document.getElementById('batchConfirmModal').classList.add('hidden')" class="flex-1 bg-slate-100 text-slate-600 py-3 rounded-xl font-bold hover:bg-slate-200 transition">Đóng</button>
                 <button onclick="submitBatchConfirm()" class="flex-1 bg-gradient-to-r from-primary to-emerald-500 text-white py-3 rounded-xl font-bold hover:shadow-lg transition">Xác nhận</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Item Info Modal -->
-    <div id="itemInfoModal" class="fixed inset-0 hidden bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-[90]">
-        <div class="bg-white/95 backdrop-blur-xl rounded-3xl w-full max-w-md shadow-2xl border border-white/50 relative animate-scale-in overflow-hidden flex flex-col max-h-[85vh]">
-            <!-- Header Image -->
-            <div class="h-48 bg-slate-100 relative shrink-0">
-                <img id="infoImg" src="" class="w-full h-full object-cover">
-                <button onclick="document.getElementById('itemInfoModal').classList.add('hidden')" class="absolute top-4 right-4 bg-black/30 hover:bg-black/50 text-white p-2 rounded-full backdrop-blur transition">
-                    <span class="material-symbols-rounded text-xl">close</span>
-                </button>
-                <div class="absolute bottom-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-primary shadow-sm flex items-center gap-1">
-                    <span class="material-symbols-rounded text-sm">eco</span>
-                    <span id="infoPoints">0</span> EcoPoints
-                </div>
-            </div>
-
-            <!-- Content -->
-            <div class="p-6 overflow-y-auto custom-scrollbar">
-                <h2 id="infoTitle" class="text-xl font-extrabold text-slate-800 mb-2 leading-tight">Tên sản phẩm</h2>
-
-                <div class="flex items-center gap-2 mb-4 text-xs font-bold text-slate-500">
-                    <span class="bg-slate-100 px-2 py-1 rounded border border-slate-200" id="infoCategory">Danh mục</span>
-                    <span class="bg-emerald-50 text-emerald-700 px-2 py-1 rounded border border-emerald-100 flex items-center gap-1">
-                        <span class="material-symbols-rounded text-sm">person</span> <span id="infoGiver">Người tặng</span>
-                    </span>
-                </div>
-
-                <div class="space-y-4">
-                    <div>
-                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Mô tả</h4>
-                        <p id="infoDesc" class="text-sm text-slate-600 leading-relaxed">...</p>
-                    </div>
-                    <div>
-                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Địa chỉ nhận</h4>
-                        <div class="flex items-start gap-2 text-sm text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                            <span class="material-symbols-rounded text-slate-400 mt-0.5">location_on</span>
-                            <span id="infoAddress">...</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Footer -->
-            <div class="p-4 border-t border-slate-100 bg-slate-50/50 shrink-0">
-                <button onclick="document.getElementById('itemInfoModal').classList.add('hidden')" class="w-full bg-slate-200 text-slate-700 font-bold py-3 rounded-xl hover:bg-slate-300 transition">Đóng</button>
             </div>
         </div>
     </div>
@@ -450,14 +506,6 @@
         </div>
     </div>
 
-    <!-- Lightbox Modal -->
-    <div id="lightboxModal" class="fixed inset-0 hidden bg-black/90 backdrop-blur-md z-[100] flex items-center justify-center p-4" onclick="this.classList.add('hidden')">
-        <img id="lightboxImg" src="" class="max-w-full max-h-full rounded-lg shadow-2xl animate-scale-in object-contain">
-        <button class="absolute top-4 right-4 text-white/70 hover:text-white p-2 rounded-full bg-black/20 hover:bg-black/40 transition">
-            <span class="material-symbols-rounded text-3xl">close</span>
-        </button>
-    </div>
-
     <!-- JAVASCRIPT LOGIC -->
     <script>
         // --- KHỞI TẠO ---
@@ -469,6 +517,10 @@
         let isOwnerOfCurrentItem = false;
         let allInboxUsers = [];
         let activeDeals = []; // Danh sách các giao dịch đang hoạt động
+
+        // Trade Variables
+        let currentTradeTransactionId = null;
+        let myTradeSide = 'A'; // Mặc định, sẽ được set khi mở máy
 
         const urlParams = new URLSearchParams(window.location.search);
         const paramPartnerId = urlParams.get('partnerId');
@@ -487,19 +539,39 @@
 
             chatSocket.onopen = () => console.log("Connected to Chat WS");
 
-            chatSocket.onmessage = (e) => {
+            chatSocket.onmessage = async (e) => {
                 const data = JSON.parse(e.data);
+
+                // Xử lý tin nhắn hệ thống
                 if (data.content && data.content.startsWith("SYSTEM_GIFT:")) {
                     const msgText = data.content.replace("SYSTEM_GIFT:", "");
                     appendSystemMessage(msgText);
 
-                    // Reload để cập nhật trạng thái nút
-                    if (currentDiscussingItemId) {
+                    if (currentReceiverId) {
+                        await loadActiveDeals(currentReceiverId);
                         loadHistory(currentReceiverId);
                     }
                     loadInboxList();
-                    loadActiveDeals(currentReceiverId); // Reload deals
                     return;
+                }
+
+                // Xử lý tin nhắn đề nghị trao đổi
+                if (data.content && data.content.startsWith("SYSTEM_TRADE_PROPOSAL:")) {
+                    const transId = data.content.split(":")[1];
+                    appendTradeProposal(transId, data.senderId, "PENDING_TRADE"); // Ban đầu luôn là PENDING
+                    return;
+                }
+
+                // Xử lý sự kiện Trade
+                if (data.type === "TRADE_READY") {
+                    const partnerSide = (myTradeSide === 'A') ? 'B' : 'A';
+                    const statusEl = document.getElementById('tradeStatus' + partnerSide);
+                    if (statusEl) {
+                        statusEl.classList.remove('bg-red-500', 'shadow-[0_0_10px_red]');
+                        statusEl.classList.add('bg-green-500', 'shadow-[0_0_10px_green]');
+                    }
+                } else if (data.type === "TRADE_EXECUTE") {
+                    executeTradeAnimation();
                 }
 
                 if (data.senderId == currentReceiverId) {
@@ -544,7 +616,7 @@
                 return;
             }
 
-            users.forEach(u => {
+            users.forEach(function(u) {
                 const isActive = (u.userId == currentReceiverId);
                 const activeClass = isActive
                     ? 'bg-white shadow-md border-l-4 border-primary transform scale-[1.02]'
@@ -558,25 +630,30 @@
                 if (lastMsg.startsWith("SYSTEM_GIFT:")) lastMsg = "🎁 Thông báo hệ thống";
                 if (lastMsg.startsWith("SYSTEM_TRADE_PROPOSAL:")) lastMsg = "🔄 Đề nghị trao đổi";
 
-                listEl.innerHTML += `
-                    <div onclick="selectUserChat(\${u.userId}, '\${u.username}', '\${itemId}', '\${itemName}', '\${giverId}')"
-                         class="cursor-pointer p-3 rounded-xl transition-all duration-300 mb-2 \${activeClass} group">
-                        <div class="flex items-center gap-3">
-                            <div class="relative shrink-0">
-                                <img src="https://api.dicebear.com/9.x/notionists-neutral/svg?seed=\${u.username}"
-                                     class="w-12 h-12 rounded-full bg-white shadow-sm object-cover border border-white">
-                                <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full shadow-sm"></span>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="flex justify-between items-center mb-0.5">
-                                    <div class="font-bold text-sm text-slate-800 truncate group-hover:text-primary transition-colors">\${u.username}</div>
-                                    <div class="text-[10px] text-slate-400 font-medium">Vừa xong</div>
-                                </div>
-                                <div class="text-xs text-slate-500 truncate font-medium opacity-80">\${lastMsg}</div>
-                                \${itemName ? `<div class="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100/80 text-[10px] font-bold text-slate-600 max-w-full truncate border border-slate-200/50"><span class="material-symbols-rounded text-[12px] text-primary">inventory_2</span> \${itemName}</div>` : ''}
-                            </div>
-                        </div>
-                    </div>`;
+                const itemBadge = itemName
+                    ? '<div class="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100/80 text-[10px] font-bold text-slate-600 max-w-full truncate border border-slate-200/50">'
+                    + '<span class="material-symbols-rounded text-[12px] text-primary">inventory_2</span> ' + itemName + '</div>'
+                    : '';
+
+                listEl.innerHTML +=
+                    '<div onclick="selectUserChat(\'' + u.userId + '\', \'' + u.username + '\', \'' + itemId + '\', \'' + itemName + '\', \'' + giverId + '\')"'
+                    + ' class="cursor-pointer p-3 rounded-xl transition-all duration-300 mb-2 ' + activeClass + ' group">'
+                    + '<div class="flex items-center gap-3">'
+                    + '<div class="relative shrink-0">'
+                    + '<img src="https://api.dicebear.com/9.x/notionists-neutral/svg?seed=' + u.username + '"'
+                    + ' class="w-12 h-12 rounded-full bg-white shadow-sm object-cover border border-white">'
+                    + '<span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full shadow-sm"></span>'
+                    + '</div>'
+                    + '<div class="flex-1 min-w-0">'
+                    + '<div class="flex justify-between items-center mb-0.5">'
+                    + '<div class="font-bold text-sm text-slate-800 truncate group-hover:text-primary transition-colors">' + u.username + '</div>'
+                    + '<div class="text-[10px] text-slate-400 font-medium">Vừa xong</div>'
+                    + '</div>'
+                    + '<div class="text-xs text-slate-500 truncate font-medium opacity-80">' + lastMsg + '</div>'
+                    + itemBadge
+                    + '</div>'
+                    + '</div>'
+                    + '</div>';
             });
         }
 
@@ -596,37 +673,14 @@
 
             document.getElementById('quickReplies').classList.remove('hidden');
 
-            // Reset buttons
-            const btnGiver = document.getElementById('btnGiverConfirm');
-            const btnReceiver = document.getElementById('btnReceiverConfirm');
-            const btnCancel = document.getElementById('btnCancelTrans');
-            const btnRequestAgain = document.getElementById('btnRequestAgain');
-            const btnBatchAction = document.getElementById('btnBatchAction');
-
-            btnGiver.classList.add('hidden');
-            btnReceiver.classList.add('hidden');
-            btnCancel.classList.add('hidden');
-            btnRequestAgain.classList.add('hidden');
-            btnBatchAction.classList.add('hidden');
-
-            const qrGiver = document.getElementById('qrGiver');
-            const qrReceiver1 = document.getElementById('qrReceiver1');
-            const qrReceiver2 = document.getElementById('qrReceiver2');
-            qrGiver.classList.add('hidden');
-            qrReceiver1.classList.add('hidden');
-            qrReceiver2.classList.add('hidden');
-
-            // Load Active Deals
             await loadActiveDeals(userId);
 
-            // Nếu có paramItemId (từ trang chủ), ưu tiên chọn item đó
             if (paramItemId && activeDeals.some(d => d.itemId == paramItemId)) {
                 itemId = paramItemId;
                 const deal = activeDeals.find(d => d.itemId == paramItemId);
                 itemName = deal.itemName;
                 giverId = deal.giverId;
             } else if (activeDeals.length > 0) {
-                // Nếu không có param, mặc định chọn deal đầu tiên (mới nhất)
                 const deal = activeDeals[0];
                 itemId = deal.itemId;
                 itemName = deal.itemName;
@@ -660,15 +714,12 @@
                     contextDiv.classList.remove('hidden');
                     singleInfo.classList.remove('hidden');
                     multiDropdown.classList.add('hidden');
-
                     document.getElementById('chatItemName').innerText = activeDeals[0].itemName;
                 } else {
                     contextDiv.classList.remove('hidden');
                     singleInfo.classList.add('hidden');
                     multiDropdown.classList.remove('hidden');
-
                     document.getElementById('multiItemCount').innerText = activeDeals.length + " giao dịch";
-
                     dealList.innerHTML = '';
                     activeDeals.forEach(d => {
                         dealList.innerHTML += `
@@ -686,18 +737,12 @@
         function switchItemContext(itemId, itemName, giverId) {
             currentDiscussingItemId = itemId;
 
-            // Update UI Text
             if (activeDeals.length <= 1) {
                 document.getElementById('chatItemName').innerText = itemName;
             }
 
-            if (giverId && giverId != 'undefined') {
-                isOwnerOfCurrentItem = (Number(giverId) === currentUserId);
-            } else {
-                isOwnerOfCurrentItem = false;
-            }
+            isOwnerOfCurrentItem = (Number(giverId) === currentUserId);
 
-            // Update Quick Replies
             if (isOwnerOfCurrentItem) {
                 document.getElementById('qrGiver').classList.remove('hidden');
                 document.getElementById('qrReceiver2').classList.add('hidden');
@@ -706,7 +751,6 @@
                 document.getElementById('qrReceiver2').classList.remove('hidden');
             }
 
-            // Reload history to update buttons based on this item's status
             loadHistory(currentReceiverId);
         }
 
@@ -731,42 +775,53 @@
 
                 msgs.forEach(m => {
                     if (m.content && m.content.startsWith("SYSTEM_GIFT:")) {
-                        // Chỉ lấy system msg của item đang chọn
-                        // Tuy nhiên, message hiện tại chưa lưu itemId, nên ta phải dựa vào nội dung hoặc chấp nhận lấy cái cuối cùng
-                        // Tạm thời lấy cái cuối cùng, nhưng logic nút bấm sẽ dựa vào activeDeals
                         lastSystemMsg = m.content;
                         let cleanText = m.content.replace("SYSTEM_GIFT:", "");
                         appendSystemMessage(cleanText);
                     } else if (m.content && m.content.startsWith("SYSTEM_TRADE_PROPOSAL:")) {
                         const transId = m.content.split(":")[1];
-                        appendTradeProposal(transId);
+                        // --- SỬA ĐỔI: Dùng tradeStatus từ API ---
+                        appendTradeProposal(transId, m.senderId, m.tradeStatus);
                     } else {
                         appendMessage(m.content, m.imageUrl, m.senderId === currentUserId ? 'outgoing' : 'incoming');
                     }
                 });
 
-                // --- LOGIC HIỂN THỊ NÚT BẤM (DỰA VÀO ACTIVE DEALS) ---
-                const btnGiver = document.getElementById('btnGiverConfirm');
-                const btnReceiver = document.getElementById('btnReceiverConfirm');
-                const btnCancel = document.getElementById('btnCancelTrans');
-                const btnRequestAgain = document.getElementById('btnRequestAgain');
-                const btnBatchAction = document.getElementById('btnBatchAction');
+                updateActionButtons(lastSystemMsg);
+                chatBox.scrollTop = chatBox.scrollHeight;
+            } catch(e) {
+                chatBox.innerHTML = '<div class="text-center text-red-500 text-sm mt-4 font-medium">Không thể tải tin nhắn</div>';
+            }
+        }
 
-                // Tìm deal hiện tại trong danh sách activeDeals
-                const currentDeal = activeDeals.find(d => d.itemId == currentDiscussingItemId);
+        function updateActionButtons(lastSystemMsg) {
+            const btnGiver = document.getElementById('btnGiverConfirm');
+            const btnReceiver = document.getElementById('btnReceiverConfirm');
+            const btnCancel = document.getElementById('btnCancelTrans');
+            const btnRequestAgain = document.getElementById('btnRequestAgain');
+            const btnBatchAction = document.getElementById('btnBatchAction');
+            const btnTradeMachine = document.getElementById('btnTradeMachine');
 
-                // Reset
-                btnGiver.classList.add('hidden');
-                btnReceiver.classList.add('hidden');
-                btnCancel.classList.add('hidden');
-                btnRequestAgain.classList.add('hidden');
-                btnBatchAction.classList.add('hidden');
+            btnGiver.classList.add('hidden');
+            btnReceiver.classList.add('hidden');
+            btnCancel.classList.add('hidden');
+            btnRequestAgain.classList.add('hidden');
+            btnBatchAction.classList.add('hidden');
+            btnTradeMachine.classList.add('hidden');
 
-                if (currentDeal) {
-                    const status = currentDeal.status; // PENDING, CONFIRMED
+            const currentDeal = activeDeals.find(d => d.itemId == currentDiscussingItemId);
 
+            if (currentDeal) {
+                const status = currentDeal.status;
+                const type = currentDeal.type;
+                currentTradeTransactionId = currentDeal.transactionId;
+
+                if (type === 'TRADE') {
+                    if (status === 'TRADE_ACCEPTED' || status === 'CONFIRMED_BY_A' || status === 'CONFIRMED_BY_B') {
+                        btnTradeMachine.classList.remove('hidden');
+                    }
+                } else {
                     if (isOwnerOfCurrentItem) {
-                        // NGƯỜI CHO
                         if (status === 'PENDING') {
                             btnGiver.classList.remove('hidden');
                             btnCancel.classList.add('hidden');
@@ -774,281 +829,28 @@
                             btnCancel.classList.remove('hidden');
                         }
                     } else {
-                        // NGƯỜI NHẬN
                         if (status === 'CONFIRMED') {
-                            // Nếu có nhiều hơn 1 giao dịch đang CONFIRMED -> Hiện nút Batch
                             const confirmedDeals = activeDeals.filter(d => d.status === 'CONFIRMED');
                             if (confirmedDeals.length > 1) {
                                 btnBatchAction.classList.remove('hidden');
                                 document.getElementById('btnBatchLabel').innerText = confirmedDeals.length + " giao dịch";
-                                btnCancel.classList.add('hidden'); // Ẩn nút hủy đơn lẻ
+                                btnCancel.classList.add('hidden');
                             } else {
                                 btnReceiver.classList.remove('hidden');
-                                btnCancel.classList.remove('hidden');
+                                btnCancel.classList.add('hidden');
                             }
                         } else if (status === 'PENDING') {
-                            btnCancel.classList.remove('hidden'); // Hủy yêu cầu
-                        }
-                    }
-                } else {
-                    // Không tìm thấy deal active -> Có thể đã COMPLETED hoặc CANCELED
-                    // Kiểm tra lastSystemMsg để biết
-                    if (lastSystemMsg.includes("CANCELED") || lastSystemMsg.includes("đã bị hủy")) {
-                         if (!isOwnerOfCurrentItem) {
-                            btnRequestAgain.classList.remove('hidden');
+                            btnCancel.classList.remove('hidden');
                         }
                     }
                 }
-
-                chatBox.scrollTop = chatBox.scrollHeight;
-            } catch(e) {
-                chatBox.innerHTML = '<div class="text-center text-red-500 text-sm mt-4 font-medium">Không thể tải tin nhắn</div>';
-            }
-        }
-
-        // --- BATCH CONFIRM LOGIC ---
-        function openBatchModal() {
-            const modal = document.getElementById('batchConfirmModal');
-            const list = document.getElementById('batchList');
-            list.innerHTML = '';
-
-            // Lọc các giao dịch CONFIRMED
-            const confirmedDeals = activeDeals.filter(d => d.status === 'CONFIRMED');
-
-            confirmedDeals.forEach(d => {
-                list.innerHTML += `
-                    <div class="flex items-center gap-2 p-2 bg-slate-50 rounded-xl border border-slate-100 transition hover:bg-slate-100">
-                        <label class="flex items-center gap-3 flex-1 cursor-pointer">
-                            <input type="checkbox" value="\${d.itemId}" class="w-5 h-5 text-primary rounded focus:ring-primary border-gray-300 batch-checkbox" checked>
-                            <div class="flex-1">
-                                <div class="font-bold text-slate-800">\${d.itemName}</div>
-                                <div class="text-xs text-slate-500">ID: \${d.itemId}</div>
-                            </div>
-                        </label>
-                        <button onclick="showItemInfo(\${d.itemId})" class="p-2 text-slate-400 hover:text-primary rounded-full hover:bg-white transition" title="Xem chi tiết">
-                            <span class="material-symbols-rounded">info</span>
-                        </button>
-                    </div>
-                `;
-            });
-
-            modal.classList.remove('hidden');
-        }
-
-        async function submitBatchConfirm() {
-            const checkboxes = document.querySelectorAll('.batch-checkbox:checked');
-            if (checkboxes.length === 0) {
-                alert("Vui lòng chọn ít nhất 1 món đồ!");
-                return;
-            }
-
-            const itemIds = Array.from(checkboxes).map(cb => cb.value);
-
-            // Lặp qua từng item để confirm (Tạm thời gọi API nhiều lần, sau này có thể tối ưu backend nhận mảng)
-            for (const itemId of itemIds) {
-                await confirmSingleItem(itemId);
-            }
-
-            document.getElementById('batchConfirmModal').classList.add('hidden');
-            alert("Đã xác nhận nhận " + itemIds.length + " món đồ!");
-
-            // Reload
-            loadActiveDeals(currentReceiverId);
-            loadHistory(currentReceiverId);
-        }
-
-        async function confirmSingleItem(itemId) {
-            try {
-                const fd = new URLSearchParams();
-                fd.append('itemId', itemId);
-                fd.append('receiverId', currentUserId);
-                fd.append('action', 'receiver_confirm');
-
-                const res = await fetch('${pageContext.request.contextPath}/api/confirm-transaction', { method: 'POST', body: fd });
-                const data = await res.json();
-
-                if (data.status === 'success') {
-                    // Gửi thông báo socket
-                    const sysMsg = "SYSTEM_GIFT:Người nhận đã xác nhận nhận đồ (" + data.itemName + "). Trạng thái: COMPLETED.";
-                    if (chatSocket && currentReceiverId) {
-                        chatSocket.send(JSON.stringify({ receiverId: currentReceiverId, content: sysMsg }));
+            } else {
+                if (lastSystemMsg && (lastSystemMsg.includes("CANCELED") || lastSystemMsg.includes("đã bị hủy"))) {
+                     if (!isOwnerOfCurrentItem) {
+                        btnRequestAgain.classList.remove('hidden');
                     }
-                    appendSystemMessage(sysMsg.replace("SYSTEM_GIFT:", ""));
                 }
-            } catch (e) { console.error(e); }
-        }
-
-        // --- ITEM INFO LOGIC (MỚI) ---
-        async function showItemInfo(specificItemId) {
-            // Use specific ID if provided, otherwise use global current ID
-            const targetId = specificItemId || currentDiscussingItemId;
-
-            if (!targetId) {
-                alert("Vui lòng chọn một cuộc hội thoại có vật phẩm!");
-                return;
             }
-
-            try {
-                const res = await fetch('${pageContext.request.contextPath}/api/chat?action=item_detail&itemId=' + targetId);
-                const item = await res.json();
-
-                if (item.error) {
-                    alert("Không tìm thấy thông tin vật phẩm.");
-                    return;
-                }
-
-                document.getElementById('infoTitle').innerText = item.title;
-                document.getElementById('infoDesc').innerText = item.description || "Không có mô tả";
-                document.getElementById('infoAddress').innerText = item.address || "Chưa cập nhật địa chỉ";
-                document.getElementById('infoPoints').innerText = item.ecoPoints || 0;
-                document.getElementById('infoGiver').innerText = item.giverName || "Ẩn danh";
-                document.getElementById('infoCategory').innerText = item.categoryName || "Chung";
-
-                // Xử lý ảnh
-                let imgUrl = item.imageUrl;
-                if (imgUrl && !imgUrl.startsWith('http')) {
-                    imgUrl = '${pageContext.request.contextPath}/images?path=' + encodeURIComponent(imgUrl);
-                }
-                document.getElementById('infoImg').src = imgUrl || 'https://placehold.co/400x300';
-
-                document.getElementById('itemInfoModal').classList.remove('hidden');
-
-            } catch (e) {
-                console.error(e);
-                alert("Lỗi tải thông tin vật phẩm.");
-            }
-        }
-
-        // --- USER PROFILE LOGIC (MỚI) ---
-        async function showUserProfile() {
-            if (!currentReceiverId) {
-                alert("Vui lòng chọn một người dùng!");
-                return;
-            }
-
-            try {
-                const res = await fetch('${pageContext.request.contextPath}/api/chat?action=user_info&userId=' + currentReceiverId);
-                const user = await res.json();
-
-                if (user.error) {
-                    alert("Không tìm thấy thông tin người dùng.");
-                    return;
-                }
-
-                document.getElementById('profileName').innerText = user.username;
-                document.getElementById('profileEmail').innerText = user.email;
-                document.getElementById('profilePoints').innerText = user.ecoPoints || 0;
-                document.getElementById('profileReputation').innerText = user.reputationScore || 0;
-                document.getElementById('profileGivenCount').innerText = user.givenCount || 0;
-
-                // Format date
-                const joinDate = new Date(user.joinDate);
-                document.getElementById('profileJoinDate').innerText = joinDate.toLocaleDateString('vi-VN');
-
-                document.getElementById('profileAvatar').src = "https://api.dicebear.com/9.x/notionists-neutral/svg?seed=" + user.username;
-                document.getElementById('profileLink').href = "${pageContext.request.contextPath}/profile?userId=" + user.userId;
-
-                document.getElementById('userProfileModal').classList.remove('hidden');
-
-            } catch (e) {
-                console.error(e);
-                alert("Lỗi tải thông tin người dùng.");
-            }
-        }
-
-        // --- IMAGE UPLOAD ---
-        async function uploadImage() {
-            const input = document.getElementById('imageInput');
-            if (input.files.length === 0) return;
-
-            const file = input.files[0];
-            const formData = new FormData();
-            formData.append("image", file);
-
-            try {
-                const res = await fetch('${pageContext.request.contextPath}/api/chat/upload-image', {
-                    method: 'POST',
-                    body: formData
-                });
-                const data = await res.json();
-
-                if (data.status === 'success') {
-                    sendMessageAuto("", data.imageUrl);
-                } else {
-                    alert("Lỗi upload ảnh: " + data.message);
-                }
-            } catch (e) {
-                alert("Lỗi kết nối khi upload ảnh");
-            } finally {
-                input.value = '';
-            }
-        }
-
-        function openLightbox(src) {
-            document.getElementById('lightboxImg').src = src;
-            document.getElementById('lightboxModal').classList.remove('hidden');
-        }
-
-        // --- SEND MESSAGE ---
-        function sendMessage() {
-            const inp = document.getElementById('chatInput');
-            if (inp.value.trim()) {
-                sendMessageAuto(inp.value.trim(), null);
-                inp.value = '';
-                inp.focus();
-            }
-        }
-
-        function sendQuickReply(text) {
-            sendMessageAuto(text, null);
-        }
-
-        function sendMessageAuto(txt, imgUrl) {
-            if (chatSocket && currentReceiverId) {
-                const msgData = { receiverId: currentReceiverId, content: txt };
-                if (imgUrl) msgData.imageUrl = imgUrl;
-
-                chatSocket.send(JSON.stringify(msgData));
-
-                if (txt && txt.startsWith("SYSTEM_GIFT:")) appendSystemMessage(txt.replace("SYSTEM_GIFT:", ""));
-                else appendMessage(txt, imgUrl, 'outgoing');
-
-                setTimeout(loadInboxList, 500);
-            }
-        }
-
-        function appendMessage(txt, imgUrl, type) {
-            const box = document.getElementById('chatMessages');
-            const isOutgoing = type === 'outgoing';
-            const wrapperCls = isOutgoing ? 'justify-end' : 'justify-start';
-
-            const bubbleCls = isOutgoing
-                ? 'bg-gradient-to-br from-primary to-emerald-500 text-white rounded-tr-none shadow-lg shadow-emerald-200/50'
-                : 'bg-white/80 backdrop-blur-sm border border-white text-slate-700 rounded-tl-none shadow-sm';
-
-            let contentHtml = '';
-
-            if (imgUrl) {
-                let displayUrl = imgUrl;
-                if (!imgUrl.startsWith('http')) {
-                    displayUrl = '${pageContext.request.contextPath}/images?path=' + encodeURIComponent(imgUrl);
-                }
-                contentHtml += `<img src="\${displayUrl}" onclick="openLightbox(this.src)" class="max-w-full w-48 h-auto rounded-lg mb-1 cursor-pointer hover:opacity-90 transition border border-white/20">`;
-            }
-
-            if (txt) {
-                contentHtml += `<div>\${txt}</div>`;
-            }
-
-            const html = `
-                <div class="flex \${wrapperCls} mb-3 animate-slide-up">
-                    <div class="max-w-[75%] px-4 py-3 rounded-2xl text-sm font-medium leading-relaxed \${bubbleCls}">
-                        \${contentHtml}
-                    </div>
-                </div>`;
-
-            box.insertAdjacentHTML('beforeend', html);
-            box.scrollTop = box.scrollHeight;
         }
 
         function appendSystemMessage(txt) {
@@ -1063,25 +865,193 @@
             box.scrollTop = box.scrollHeight;
         }
 
-        // --- APPEND TRADE PROPOSAL (MỚI) ---
-        function appendTradeProposal(transId) {
+        // --- SỬA ĐỔI: Thêm tham số tradeStatus ---
+        function appendTradeProposal(transId, proposerId, tradeStatus) {
             const box = document.getElementById('chatMessages');
-            const html = `
-                <div class="flex justify-center my-6 animate-scale-in">
-                    <div class="bg-white/90 backdrop-blur-sm p-4 rounded-2xl border border-primary/30 shadow-lg max-w-xs w-full">
-                        <div class="flex items-center gap-2 mb-3 text-primary font-bold border-b border-slate-100 pb-2">
-                            <span class="material-symbols-rounded">swap_horiz</span>
-                            Đề nghị trao đổi
-                        </div>
-                        <p class="text-xs text-slate-600 mb-4">Đối phương muốn trao đổi vật phẩm với bạn.</p>
-                        <div class="flex gap-2">
-                            <button class="flex-1 bg-slate-100 text-slate-600 text-xs font-bold py-2 rounded-lg hover:bg-slate-200 transition">Từ chối</button>
-                            <button class="flex-1 bg-primary text-white text-xs font-bold py-2 rounded-lg hover:bg-primary-hover transition shadow-md">Chấp nhận</button>
-                        </div>
-                    </div>
-                </div>`;
+            const isMyProposal = (currentUserId == proposerId);
+            let contentHtml = '';
+
+            if (isMyProposal) {
+                let statusText = "Bạn đã gửi đề nghị trao đổi. Đang chờ phản hồi...";
+                if (tradeStatus === 'TRADE_ACCEPTED') statusText = "Đối phương đã chấp nhận trao đổi.";
+                if (tradeStatus === 'CANCELED') statusText = "Đề nghị trao đổi đã bị từ chối.";
+                contentHtml = `<p class="text-xs text-slate-500 italic text-center">\${statusText}</p>`;
+            } else {
+                if (tradeStatus === 'PENDING_TRADE') {
+                    contentHtml = `
+                        <div class="bg-white/90 backdrop-blur-sm p-4 rounded-2xl border border-primary/30 shadow-lg max-w-xs w-full">
+                            <div class="flex items-center gap-2 mb-3 text-primary font-bold border-b border-slate-100 pb-2">
+                                <span class="material-symbols-rounded">swap_horiz</span>
+                                Đề nghị trao đổi
+                            </div>
+                            <p class="text-xs text-slate-600 mb-4">Đối phương muốn trao đổi vật phẩm với bạn.</p>
+                            <div class="flex gap-2">
+                                <button onclick="respondTrade(\${transId}, 'reject')" class="flex-1 bg-slate-100 text-slate-600 text-xs font-bold py-2 rounded-lg hover:bg-slate-200 transition">Từ chối</button>
+                                <button onclick="respondTrade(\${transId}, 'accept')" class="flex-1 bg-primary text-white text-xs font-bold py-2 rounded-lg hover:bg-primary-hover transition shadow-md">Chấp nhận</button>
+                            </div>
+                        </div>`;
+                } else {
+                    let statusText = "";
+                    if (tradeStatus === 'TRADE_ACCEPTED') statusText = "Bạn đã chấp nhận trao đổi.";
+                    if (tradeStatus === 'CANCELED') statusText = "Bạn đã từ chối trao đổi.";
+                    contentHtml = `<p class="text-xs text-slate-500 italic text-center">\${statusText}</p>`;
+                }
+            }
+
+            const html = `<div class="flex justify-center my-6 animate-scale-in">\${contentHtml}</div>`;
             box.insertAdjacentHTML('beforeend', html);
             box.scrollTop = box.scrollHeight;
+        }
+
+        async function respondTrade(transId, action) {
+            try {
+                const res = await fetch('${pageContext.request.contextPath}/api/trade?action=' + action + '&transactionId=' + transId, { method: 'POST' });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    alert(data.message);
+                    await loadActiveDeals(currentReceiverId);
+                    loadHistory(currentReceiverId);
+                } else {
+                    alert("Lỗi: " + data.message);
+                }
+            } catch(e) { alert("Lỗi kết nối"); }
+        }
+
+        // --- TRADE MACHINE LOGIC ---
+        async function openTradeMachine() {
+            if (!currentTradeTransactionId) return;
+
+            document.getElementById('tradeMachineModal').classList.remove('hidden');
+
+            document.getElementById('tradeStatusA').className = "w-4 h-4 rounded-full bg-red-500 shadow-[0_0_10px_red]";
+            document.getElementById('tradeStatusB').className = "w-4 h-4 rounded-full bg-red-500 shadow-[0_0_10px_red]";
+
+            myTradeSide = 'A';
+            document.getElementById('tradeUserAName').innerText = "Bạn";
+            document.getElementById('tradeUserBName').innerText = document.getElementById('chatTitle').innerText;
+
+            document.getElementById('btnTradeConfirmA').disabled = false;
+            document.getElementById('btnTradeConfirmB').disabled = true;
+            document.getElementById('btnTradeConfirmB').classList.add('opacity-50', 'cursor-not-allowed');
+        }
+
+        async function confirmTradeReady() {
+            if (!currentTradeTransactionId) return;
+
+            const myStatusEl = document.getElementById('tradeStatus' + myTradeSide);
+            myStatusEl.classList.remove('bg-red-500', 'shadow-[0_0_10px_red]');
+            myStatusEl.classList.add('bg-green-500', 'shadow-[0_0_10px_green]');
+
+            document.getElementById('btnTradeConfirm' + myTradeSide).disabled = true;
+            document.getElementById('btnTradeConfirm' + myTradeSide).innerText = "Đã sẵn sàng";
+
+            try {
+                const res = await fetch('${pageContext.request.contextPath}/api/trade?action=confirm_ready&transactionId=' + currentTradeTransactionId, { method: 'POST' });
+                const data = await res.json();
+
+                if (data.status !== 'success') {
+                    alert("Lỗi: " + data.message);
+                }
+            } catch(e) { alert("Lỗi kết nối"); }
+        }
+
+        function executeTradeAnimation() {
+            const imgA = document.getElementById('tradeItemAImg');
+            const imgB = document.getElementById('tradeItemBImg');
+
+            imgA.classList.add('trade-item-move-right');
+            imgB.classList.add('trade-item-move-left');
+
+            setTimeout(() => {
+                document.getElementById('tradeSuccessOverlay').classList.remove('hidden');
+            }, 1600);
+        }
+
+        // --- COMMON FUNCTIONS ---
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const content = input.value.trim();
+            if (!content) return;
+
+            const msg = {
+                receiverId: currentReceiverId,
+                content: content
+            };
+            chatSocket.send(JSON.stringify(msg));
+            appendMessage(content, null, 'outgoing');
+            input.value = '';
+        }
+
+        function sendMessageAuto(content, imgUrl) {
+            if (!currentReceiverId) return;
+            const msg = {
+                receiverId: currentReceiverId,
+                content: content,
+                imageUrl: imgUrl
+            };
+            chatSocket.send(JSON.stringify(msg));
+            appendMessage(content, imgUrl, 'outgoing');
+        }
+
+        function sendQuickReply(text) {
+            document.getElementById('chatInput').value = text;
+            sendMessage();
+        }
+
+        function appendMessage(content, imgUrl, type) {
+            const chatBox = document.getElementById('chatMessages');
+            const isOut = (type === 'outgoing');
+
+            let imgHtml = '';
+            if (imgUrl) {
+                imgHtml = `<img src="\${imgUrl}" class="rounded-lg max-w-[200px] mb-1 cursor-pointer hover:opacity-90 transition" onclick="openLightbox(this.src)">`;
+            }
+
+            let textHtml = '';
+            if (content) {
+                textHtml = `<div class="\${isOut ? 'text-white' : 'text-slate-700'}">\${content}</div>`;
+            }
+
+            const html = `
+                <div class="flex w-full \${isOut ? 'justify-end' : 'justify-start'} animate-slide-up">
+                    <div class="max-w-[75%] \${isOut ? 'bg-gradient-to-br from-primary to-emerald-500 rounded-2xl rounded-tr-none shadow-lg shadow-emerald-100' : 'bg-white rounded-2xl rounded-tl-none shadow-sm border border-slate-100'} p-3 text-sm font-medium leading-relaxed">
+                        \${imgHtml}
+                        \${textHtml}
+                        <div class="text-[10px] \${isOut ? 'text-emerald-100' : 'text-slate-400'} mt-1 text-right opacity-80">Vừa xong</div>
+                    </div>
+                </div>`;
+
+            chatBox.insertAdjacentHTML('beforeend', html);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        async function uploadImage() {
+            const fileInput = document.getElementById('imageInput');
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append("file", file);
+
+            try {
+                const res = await fetch('${pageContext.request.contextPath}/api/chat-upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+
+                if (data.url) {
+                    sendMessageAuto("", data.url);
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Lỗi upload ảnh");
+            }
+        }
+
+        function openLightbox(src) {
+            document.getElementById('lightboxImg').src = src;
+            document.getElementById('lightboxModal').classList.remove('hidden');
         }
 
         document.getElementById('chatInput').addEventListener('keypress', (e) => { if(e.key==='Enter') sendMessage(); });
@@ -1119,7 +1089,6 @@
                     if (action === 'cancel') {
                         sysMsg = "SYSTEM_GIFT:Giao dịch về sản phẩm " + data.itemName + " đã bị hủy!";
                     } else if (action === 'giver_confirm') {
-                        // SỬA ĐỔI: Dùng tên người dùng hiện tại (Giver)
                         sysMsg = "SYSTEM_GIFT:" + currentUserName + " đã xác nhận giao đồ. Bạn hãy xác nhận khi nhận được nhé!";
                     } else {
                         sysMsg = "SYSTEM_GIFT:Người nhận đã xác nhận nhận đồ. Trạng thái: COMPLETED. Giao dịch hoàn tất!";
@@ -1131,10 +1100,8 @@
                     }
                     appendSystemMessage(sysMsg.replace("SYSTEM_GIFT:", ""));
 
-                    // Reload lại lịch sử để cập nhật nút bấm
-                    setTimeout(() => loadHistory(currentReceiverId), 500);
-                    setTimeout(loadInboxList, 500);
-                    setTimeout(() => loadActiveDeals(currentReceiverId), 500); // Reload deals
+                    await loadActiveDeals(currentReceiverId);
+                    loadHistory(currentReceiverId);
                 } else {
                     alert("❌ Lỗi: " + data.message);
                 }
@@ -1153,22 +1120,18 @@
                 const data = await res.json();
 
                 if (data.status === 'success') {
-                    // Gửi tin nhắn thông báo
                     const sysMsg = "SYSTEM_GIFT:Người nhận muốn xin lại món đồ này.";
                     if (chatSocket && currentReceiverId) {
                         chatSocket.send(JSON.stringify({ receiverId: currentReceiverId, content: sysMsg }));
                     }
                     appendSystemMessage("Người nhận muốn xin lại món đồ này.");
 
-                    // Gửi tin nhắn mở đầu (MỚI)
                     const itemName = data.itemName || "món đồ này";
                     const introMsg = "Tôi muốn xin món " + itemName + "!";
                     sendMessageAuto(introMsg, null);
 
-                    // Reload UI
-                    setTimeout(() => loadHistory(currentReceiverId), 500);
-                    setTimeout(loadInboxList, 500);
-                    setTimeout(() => loadActiveDeals(currentReceiverId), 500);
+                    await loadActiveDeals(currentReceiverId);
+                    loadHistory(currentReceiverId);
                 } else {
                     alert("Lỗi: " + data.message);
                 }
@@ -1201,6 +1164,63 @@
                     alert("Lỗi: " + data.message);
                 }
             } catch (e) { alert("Lỗi kết nối"); }
+        }
+
+        // --- USER PROFILE LOGIC (MỚI) ---
+        async function showUserProfile() {
+            if (!currentReceiverId) {
+                alert("Vui lòng chọn một người dùng!");
+                return;
+            }
+
+            try {
+                const res = await fetch('${pageContext.request.contextPath}/api/chat?action=user_info&userId=' + currentReceiverId);
+                const user = await res.json();
+
+                if (user.error) {
+                    alert("Không tìm thấy thông tin người dùng.");
+                    return;
+                }
+
+                document.getElementById('profileName').innerText = user.username;
+                document.getElementById('profileEmail').innerText = user.email;
+                document.getElementById('profilePoints').innerText = user.ecoPoints || 0;
+                document.getElementById('profileReputation').innerText = user.reputationScore || 0;
+                document.getElementById('profileGivenCount').innerText = user.givenCount || 0;
+
+                const joinDate = new Date(user.joinDate);
+                document.getElementById('profileJoinDate').innerText = joinDate.toLocaleDateString('vi-VN');
+
+                document.getElementById('profileAvatar').src = "https://api.dicebear.com/9.x/notionists-neutral/svg?seed=" + user.username;
+                document.getElementById('profileLink').href = "${pageContext.request.contextPath}/profile?userId=" + user.userId;
+
+                document.getElementById('userProfileModal').classList.remove('hidden');
+
+            } catch (e) {
+                console.error(e);
+                alert("Lỗi tải thông tin người dùng.");
+            }
+        }
+
+        // --- DELETE CONVERSATION (MỚI) ---
+        async function deleteConversation() {
+            if (!currentReceiverId) return;
+            if (!confirm("Bạn có chắc chắn muốn xóa toàn bộ cuộc trò chuyện này không? Hành động này không thể hoàn tác.")) return;
+
+            try {
+                const res = await fetch('${pageContext.request.contextPath}/api/chat?action=delete_conversation&partnerId=' + currentReceiverId, { method: 'POST' });
+                const data = await res.json();
+
+                if (data.status === 'success') {
+                    alert(data.message);
+                    document.getElementById('chatMessages').innerHTML = '<div class="flex flex-col items-center justify-center h-full text-slate-400 gap-2 opacity-60"><p class="text-sm font-semibold tracking-wide">Cuộc trò chuyện đã bị xóa</p></div>';
+                    loadInboxList();
+                } else {
+                    alert("Lỗi: " + data.message);
+                }
+            } catch(e) {
+                alert("Lỗi kết nối khi xóa tin nhắn.");
+            }
         }
     </script>
 

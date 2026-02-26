@@ -20,6 +20,15 @@ public class ChatApiServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        handleRequest(req, resp);
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        handleRequest(req, resp);
+    }
+
+    private void handleRequest(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         resp.setContentType("application/json");
         resp.setCharacterEncoding("UTF-8");
 
@@ -92,7 +101,7 @@ public class ChatApiServlet extends HttpServlet {
                 resp.getWriter().write(new Gson().toJson(inboxList));
             }
 
-            // 2. CHAT HISTORY (Có check lỗi image_url)
+            // 2. CHAT HISTORY
             else if ("history".equals(action)) {
                 long partnerId = Long.parseLong(req.getParameter("partnerId"));
                 long myId = currentUser.getUserId();
@@ -108,7 +117,6 @@ public class ChatApiServlet extends HttpServlet {
 
                 ResultSet rs = ps.executeQuery();
                 
-                // Check column exist
                 boolean hasImageColumn = false;
                 try {
                     rs.findColumn("image_url");
@@ -119,11 +127,32 @@ public class ChatApiServlet extends HttpServlet {
                 while(rs.next()) {
                     JsonObject msg = new JsonObject();
                     msg.addProperty("senderId", rs.getLong("sender_id"));
-                    msg.addProperty("content", rs.getString("content"));
+                    String content = rs.getString("content");
+                    msg.addProperty("content", content);
+                    
                     if (hasImageColumn) {
                         msg.addProperty("imageUrl", rs.getString("image_url"));
                     }
                     msg.addProperty("createdAt", rs.getString("created_at"));
+
+                    // --- LOGIC MỚI: Kiểm tra trạng thái Trade nếu là tin nhắn đề nghị ---
+                    if (content != null && content.startsWith("SYSTEM_TRADE_PROPOSAL:")) {
+                        try {
+                            long transId = Long.parseLong(content.split(":")[1]);
+                            String statusSql = "SELECT status FROM transactions WHERE transaction_id = ?";
+                            try (PreparedStatement psStatus = conn.prepareStatement(statusSql)) {
+                                psStatus.setLong(1, transId);
+                                try (ResultSet rsStatus = psStatus.executeQuery()) {
+                                    if (rsStatus.next()) {
+                                        msg.addProperty("tradeStatus", rsStatus.getString("status"));
+                                    }
+                                }
+                            }
+                        } catch (Exception e) {
+                            // Ignore error parsing
+                        }
+                    }
+
                     history.add(msg);
                 }
                 resp.getWriter().write(new Gson().toJson(history));
@@ -134,11 +163,11 @@ public class ChatApiServlet extends HttpServlet {
                 long partnerId = Long.parseLong(req.getParameter("partnerId"));
                 long myId = currentUser.getUserId();
 
-                String sql = "SELECT t.transaction_id, t.item_id, i.title, i.giver_id, t.status " +
+                String sql = "SELECT t.transaction_id, t.item_id, i.title, i.giver_id, t.status, t.transaction_type " +
                              "FROM transactions t " +
                              "JOIN items i ON t.item_id = i.item_id " +
                              "WHERE ((t.receiver_id = ? AND i.giver_id = ?) OR (t.receiver_id = ? AND i.giver_id = ?)) " +
-                             "AND t.status IN ('PENDING', 'CONFIRMED') " +
+                             "AND t.status IN ('PENDING', 'CONFIRMED', 'PENDING_TRADE', 'TRADE_ACCEPTED', 'CONFIRMED_BY_A', 'CONFIRMED_BY_B') " +
                              "ORDER BY t.transaction_id DESC";
 
                 PreparedStatement ps = conn.prepareStatement(sql);
@@ -156,6 +185,7 @@ public class ChatApiServlet extends HttpServlet {
                     deal.addProperty("itemName", rs.getString("title"));
                     deal.addProperty("giverId", rs.getLong("giver_id"));
                     deal.addProperty("status", rs.getString("status"));
+                    deal.addProperty("type", rs.getString("transaction_type"));
                     deals.add(deal);
                 }
                 resp.getWriter().write(new Gson().toJson(deals));
@@ -219,6 +249,26 @@ public class ChatApiServlet extends HttpServlet {
                 } else {
                     resp.setStatus(404);
                 }
+            }
+            
+            // 6. DELETE CONVERSATION
+            else if ("delete_conversation".equals(action)) {
+                long partnerId = Long.parseLong(req.getParameter("partnerId"));
+                long myId = currentUser.getUserId();
+
+                String sql = "DELETE FROM messages WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)";
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ps.setLong(1, myId);
+                ps.setLong(2, partnerId);
+                ps.setLong(3, partnerId);
+                ps.setLong(4, myId);
+                
+                int rows = ps.executeUpdate();
+                
+                JsonObject respObj = new JsonObject();
+                respObj.addProperty("status", "success");
+                respObj.addProperty("message", "Đã xóa " + rows + " tin nhắn.");
+                resp.getWriter().write(new Gson().toJson(respObj));
             }
 
         } catch (Exception e) {
