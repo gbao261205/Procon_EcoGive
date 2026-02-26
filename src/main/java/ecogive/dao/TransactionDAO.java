@@ -6,6 +6,8 @@ import ecogive.util.DatabaseConnection;
 
 import java.sql.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TransactionDAO {
 
@@ -25,9 +27,7 @@ public class TransactionDAO {
         return null;
     }
     
-    // Tìm transaction đang active (chưa hoàn thành/hủy) giữa item và receiver
     public Transaction findActiveTransaction(long itemId, long receiverId) throws SQLException {
-        // Ưu tiên tìm cái đang PENDING hoặc CONFIRMED hoặc các trạng thái TRADE
         String sql = "SELECT * FROM transactions WHERE item_id = ? AND receiver_id = ? " +
                      "AND status IN ('PENDING', 'CONFIRMED', 'PENDING_TRADE', 'TRADE_ACCEPTED', 'CONFIRMED_BY_A', 'CONFIRMED_BY_B') " +
                      "ORDER BY transaction_id DESC LIMIT 1";
@@ -47,10 +47,7 @@ public class TransactionDAO {
         return null;
     }
 
-    // --- MỚI: Tìm giao dịch TRADE giữa 2 bên bất kỳ ---
     public Transaction findActiveTradeTransactionByParties(long itemId, long user1Id, long user2Id) throws SQLException {
-        // Tìm giao dịch TRADE liên quan đến itemId này và receiver_id là user1Id HOẶC user2Id
-        // (Vì trong TRADE, receiver_id là người đề nghị đổi, còn người kia là chủ item gốc)
         String sql = "SELECT * FROM transactions WHERE item_id = ? " +
                      "AND (receiver_id = ? OR receiver_id = ?) " +
                      "AND transaction_type = 'TRADE' " +
@@ -85,7 +82,6 @@ public class TransactionDAO {
         }
     }
     
-    // Người cho xác nhận -> CONFIRMED
     public boolean confirmByGiver(long transactionId) throws SQLException {
         String sql = "UPDATE transactions SET status = 'CONFIRMED', giver_confirmed_date = NOW() WHERE transaction_id = ?";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -97,7 +93,6 @@ public class TransactionDAO {
         }
     }
     
-    // Người nhận xác nhận -> COMPLETED
     public boolean confirmByReceiver(long transactionId) throws SQLException {
         String sql = "UPDATE transactions SET status = 'COMPLETED' WHERE transaction_id = ?";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -109,7 +104,6 @@ public class TransactionDAO {
         }
     }
 
-    // Hủy giao dịch
     public boolean cancelTransaction(long transactionId) throws SQLException {
         String sql = "UPDATE transactions SET status = 'CANCELED' WHERE transaction_id = ?";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -121,7 +115,6 @@ public class TransactionDAO {
         }
     }
 
-    // Kiểm tra tồn tại
     public boolean checkExists(long itemId, long receiverId) throws SQLException {
         String sql = "SELECT 1 FROM transactions WHERE item_id = ? AND receiver_id = ? AND status NOT IN ('COMPLETED', 'CANCELED')";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -144,7 +137,6 @@ public class TransactionDAO {
         t.setExchangeDate(rs.getTimestamp("exchange_date").toLocalDateTime());
         t.setStatus(TransactionStatus.valueOf(rs.getString("status")));
         
-        // Map các cột mới
         t.setTransactionType(rs.getString("transaction_type"));
         long offerId = rs.getLong("offer_item_id");
         if (!rs.wasNull()) {
@@ -172,7 +164,6 @@ public class TransactionDAO {
             stmt.setString(3, transaction.getStatus().name());
             stmt.setTimestamp(4, Timestamp.valueOf(transaction.getExchangeDate()));
             
-            // Set giá trị mới
             stmt.setString(5, transaction.getTransactionType() != null ? transaction.getTransactionType() : "GIVE");
             if (transaction.getOfferItemId() != null) {
                 stmt.setLong(6, transaction.getOfferItemId());
@@ -201,5 +192,56 @@ public class TransactionDAO {
             return confirmByGiver(trans.getTransactionId());
         }
         return false;
+    }
+
+    public List<Transaction> findOtherPendingRequests(long itemId, long acceptedReceiverId) throws SQLException {
+        List<Transaction> transactions = new ArrayList<>();
+        String sql = "SELECT * FROM transactions WHERE item_id = ? AND receiver_id != ? AND status IN ('PENDING', 'PENDING_TRADE')";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setLong(1, itemId);
+            stmt.setLong(2, acceptedReceiverId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    transactions.add(mapRow(rs));
+                }
+            }
+        } catch (Exception e) {
+            throw new SQLException("Error finding other pending requests: " + e.getMessage(), e);
+        }
+        return transactions;
+    }
+
+    public void cancelOtherTransactions(long itemId, long acceptedTransactionId) throws SQLException {
+        String sql = "UPDATE transactions SET status = 'CANCELED' WHERE item_id = ? AND transaction_id != ? AND status IN ('PENDING', 'PENDING_TRADE')";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setLong(1, itemId);
+            stmt.setLong(2, acceptedTransactionId);
+            stmt.executeUpdate();
+        } catch (Exception e) {
+            throw new SQLException("Error canceling other transactions: " + e.getMessage(), e);
+        }
+    }
+    
+    public List<Transaction> findOverdueConfirmedTransactions(int days) throws SQLException {
+        List<Transaction> transactions = new ArrayList<>();
+        // Find 'GIVE' transactions that were confirmed by the giver more than 'days' ago but are not yet completed.
+        String sql = "SELECT * FROM transactions " +
+                     "WHERE status = 'CONFIRMED' " +
+                     "AND transaction_type = 'GIVE' " +
+                     "AND giver_confirmed_date < NOW() - INTERVAL ? DAY";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, days);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    transactions.add(mapRow(rs));
+                }
+            }
+        } catch (Exception e) {
+            throw new SQLException("Error finding overdue confirmed transactions: " + e.getMessage(), e);
+        }
+        return transactions;
     }
 }

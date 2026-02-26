@@ -7,6 +7,7 @@ import ecogive.Model.TransactionStatus;
 import ecogive.Model.User;
 import ecogive.dao.ItemDAO;
 import ecogive.dao.TransactionDAO;
+import ecogive.util.DatabaseConnection;
 import com.google.gson.Gson;
 
 import jakarta.servlet.ServletException;
@@ -17,6 +18,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -69,9 +72,10 @@ public class RequestItemServlet extends HttpServlet {
                 System.out.println("Transaction exists? " + exists);
                 
                 boolean transSuccess = true;
+                Transaction trans = null;
 
                 if (!exists) {
-                    Transaction trans = new Transaction();
+                    trans = new Transaction();
                     trans.setItemId(itemId);
                     trans.setReceiverId(currentUser.getUserId());
                     trans.setExchangeDate(LocalDateTime.now());
@@ -80,9 +84,18 @@ public class RequestItemServlet extends HttpServlet {
                     System.out.println("Created new transaction: " + transSuccess);
                 } else {
                     System.out.println("Transaction already exists (PENDING/CONFIRMED), skipping insert.");
+                    // Nếu đã tồn tại thì coi như thành công, không tạo mới nhưng vẫn báo thành công
                 }
 
                 if (transSuccess) {
+                    // --- THÊM: Gửi tin nhắn thông báo cho người tặng ---
+                    if (!exists && trans != null) { // Chỉ gửi khi tạo mới yêu cầu
+                        String sysMsg = "SYSTEM_GIFT:Người dùng " + currentUser.getUsername() + " muốn xin vật phẩm '" + item.getTitle() + "' của bạn.";
+                        saveSystemMessage(currentUser.getUserId(), item.getGiverId(), sysMsg, null);
+                        ChatEndpoint.sendSystemMessage(String.valueOf(item.getGiverId()), sysMsg);
+                    }
+                    // --------------------------------------------------
+
                     result.put("status", "success");
                     result.put("message", "Đã gửi yêu cầu! Hãy chat với người tặng.");
                     result.put("itemName", item.getTitle()); // Trả về tên vật phẩm
@@ -98,5 +111,19 @@ public class RequestItemServlet extends HttpServlet {
         }
 
         resp.getWriter().write(gson.toJson(result));
+    }
+
+    private void saveSystemMessage(long senderId, long receiverId, String content, String imageUrl) {
+        String sql = "INSERT INTO messages (sender_id, receiver_id, content, image_url) VALUES (?, ?, ?, ?)";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, senderId);
+            ps.setLong(2, receiverId);
+            ps.setString(3, content);
+            ps.setString(4, imageUrl);
+            ps.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

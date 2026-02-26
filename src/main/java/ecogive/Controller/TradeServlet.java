@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @WebServlet("/api/trade")
 @MultipartConfig(
@@ -174,14 +175,25 @@ public class TradeServlet extends HttpServlet {
 
         // --- SỬA ĐỔI: Dùng TRADE_ACCEPTED thay vì TRADE_APPROVED ---
         if (transactionDAO.updateStatus(transactionId, TransactionStatus.TRADE_ACCEPTED)) {
-            // KHÓA ITEM (Set PENDING) để không ai khác lấy được
-            itemDAO.updateStatus(trans.getItemId(), ItemStatus.PENDING); // Item B
+            // KHÓA ITEM (Set TRADE_PENDING) để không ai khác lấy được và ẩn khỏi map
+            itemDAO.updateStatus(trans.getItemId(), ItemStatus.TRADE_PENDING); // Item B
             if (trans.getOfferItemId() != null) {
                 Item itemA = itemDAO.findById(trans.getOfferItemId());
                 if (itemA.getStatus() == ItemStatus.AVAILABLE) {
-                    itemDAO.updateStatus(trans.getOfferItemId(), ItemStatus.PENDING); // Item A
+                    itemDAO.updateStatus(trans.getOfferItemId(), ItemStatus.TRADE_PENDING); // Item A
                 }
             }
+
+            // --- MỚI: Hủy các yêu cầu khác và thông báo ---
+            List<Transaction> otherRequests = transactionDAO.findOtherPendingRequests(trans.getItemId(), trans.getReceiverId());
+            transactionDAO.cancelOtherTransactions(trans.getItemId(), trans.getTransactionId());
+            
+            for (Transaction t : otherRequests) {
+                String cancelMsg = "SYSTEM_GIFT:Vật phẩm bạn quan tâm đã được chủ sở hữu trao đổi với người khác.";
+                saveSystemMessage(user.getUserId(), t.getReceiverId(), cancelMsg, null);
+                ChatEndpoint.sendSystemMessage(String.valueOf(t.getReceiverId()), cancelMsg);
+            }
+            // ---------------------------------------------
 
             String sysMsg = "SYSTEM_GIFT:Đã chấp nhận! Hai bên hãy tiến hành trao đổi.";
             saveSystemMessage(user.getUserId(), trans.getReceiverId(), sysMsg, null);
