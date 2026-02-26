@@ -137,7 +137,8 @@ public class TradeServlet extends HttpServlet {
 
         if (transactionDAO.insert(trans)) {
             // Gửi thông báo Real-time cho chủ sở hữu Item B
-            String sysMsg = "SYSTEM_TRADE_PROPOSAL:" + trans.getTransactionId();
+            // --- SỬA ĐỔI: Dùng SYSTEM_GIFT thay vì SYSTEM_TRADE_PROPOSAL ---
+            String sysMsg = "SYSTEM_GIFT:Bạn nhận được đề nghị trao đổi mới (ID: " + trans.getTransactionId() + ")";
             saveSystemMessage(user.getUserId(), targetItem.getGiverId(), sysMsg, null);
             
             // Gọi WebSocket để báo ngay lập tức
@@ -276,8 +277,8 @@ public class TradeServlet extends HttpServlet {
                     itemDAO.updateStatus(trans.getOfferItemId(), ItemStatus.COMPLETED);
                 }
                 
-                // --- SỬ DỤNG SYSTEM_TRADE (MÀU TÍM) ---
-                String sysMsg = "SYSTEM_TRADE:Trao đổi thành công! Giao dịch hoàn tất.";
+                // --- SỬA ĐỔI: Dùng SYSTEM_GIFT thay vì SYSTEM_TRADE ---
+                String sysMsg = "SYSTEM_GIFT:Trao đổi thành công! Giao dịch hoàn tất.";
                 
                 // Lưu vào DB (sender là SYSTEM hoặc User? Ở đây đang lưu sender = User)
                 // Lưu ý: hàm saveSystemMessage của class này dòng 290 đang insert vào bảng messages
@@ -296,8 +297,8 @@ public class TradeServlet extends HttpServlet {
 
                 response.addProperty("message", "Trao đổi thành công!");
             } else {
-                // --- THÊM: Gửi thông báo cho đối phương biết mình đã sẵn sàng ---
-                String readyMsg = "SYSTEM_TRADE:Đối tác đã xác nhận sẵn sàng. Chờ bạn xác nhận!";
+                // --- SỬA ĐỔI: Dùng SYSTEM_GIFT thay vì SYSTEM_TRADE ---
+                String readyMsg = "SYSTEM_GIFT:Đối tác đã xác nhận sẵn sàng. Chờ bạn xác nhận!";
                 ChatEndpoint.sendSystemMessage(String.valueOf(partnerId), readyMsg);
                 
                 response.addProperty("message", "Đã xác nhận. Chờ đối phương...");
