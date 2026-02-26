@@ -55,14 +55,28 @@ public class ConfirmTransactionServlet extends HttpServlet {
             Item item = itemDAO.findById(itemId);
             if (item == null) throw new Exception("Không tìm thấy vật phẩm ID=" + itemId);
 
-            // Tìm transaction cụ thể giữa item và receiver này
-            Transaction trans = transactionDAO.findActiveTransaction(itemId, receiverId);
+            Transaction trans;
+            
+            // --- SỬA ĐỔI: Logic tìm kiếm giao dịch ---
+            if ("complete_trade".equals(action)) {
+                // Nếu là TRADE, tìm giao dịch giữa 2 bên bất kể vai trò
+                trans = transactionDAO.findActiveTradeTransactionByParties(itemId, currentUser.getUserId(), receiverId);
+            } else {
+                // Nếu là GIVE hoặc CANCEL, dùng logic cũ (tìm theo receiver cụ thể)
+                trans = transactionDAO.findActiveTransaction(itemId, receiverId);
+            }
             
             if (trans == null) {
-                throw new Exception("Không tìm thấy giao dịch hợp lệ.");
+                // Thử tìm ngược lại nếu là CANCEL (để hỗ trợ hủy linh hoạt hơn)
+                if ("cancel".equals(action)) {
+                     trans = transactionDAO.findActiveTransaction(itemId, currentUser.getUserId());
+                }
+                
+                if (trans == null) {
+                    throw new Exception("Không tìm thấy giao dịch hợp lệ.");
+                }
             }
 
-            // --- LOGIC MỚI: TÁCH BIỆT GIVE VÀ TRADE ---
             String type = trans.getTransactionType(); // "GIVE" hoặc "TRADE"
 
             if ("cancel".equals(action)) {
@@ -79,6 +93,13 @@ public class ConfirmTransactionServlet extends HttpServlet {
                     if ("TRADE".equals(type) && trans.getOfferItemId() != null) {
                         itemDAO.updateStatus(trans.getOfferItemId(), ItemStatus.AVAILABLE);
                     }
+                    
+                    // Gửi thông báo hủy cho đối tác
+                    String partnerId = (currentUser.getUserId() == item.getGiverId()) 
+                        ? String.valueOf(trans.getReceiverId()) 
+                        : String.valueOf(item.getGiverId());
+                    ChatEndpoint.sendSystemMessage(partnerId, "SYSTEM_GIFT:Giao dịch đã bị hủy bởi đối tác.");
+
                     response.addProperty("status", "success");
                     response.addProperty("message", "Đã hủy giao dịch.");
                     response.addProperty("newStatus", "CANCELED");
@@ -88,76 +109,68 @@ public class ConfirmTransactionServlet extends HttpServlet {
 
             } else if ("TRADE".equals(type)) {
                 // --- XỬ LÝ LUỒNG TRAO ĐỔI (TRADE) ---
-                // Quy tắc: Cả 2 bên (Người đề nghị và Chủ món đồ) đều phải bấm xác nhận "Đã hoàn tất"
-                // Ở đây ta dùng 2 trạng thái phụ: CONFIRMED_BY_A (người tạo trans), CONFIRMED_BY_B (người nhận trans)
-                // Hoặc đơn giản hóa: Ai bấm cũng được tính là hoàn tất 1 phần? 
-                // Để đơn giản và chặt chẽ: Ta dùng action "complete_trade"
-                
                 if (!"complete_trade".equals(action)) {
                      throw new Exception("Hành động không hợp lệ cho giao dịch Trao đổi.");
                 }
 
                 // Kiểm tra xem user hiện tại là bên nào
-                boolean isProposer = (currentUser.getUserId() == trans.getReceiverId()); // Người đề nghị đổi (Receiver trong bảng trans)
+                boolean isProposer = (currentUser.getUserId() == trans.getReceiverId()); // Người đề nghị đổi
                 boolean isOwner = (currentUser.getUserId() == item.getGiverId());       // Chủ item gốc
 
                 if (!isProposer && !isOwner) {
                      throw new Exception("Bạn không tham gia cuộc trao đổi này.");
                 }
 
-
-                // Cập nhật trạng thái xác nhận của từng bên
-                // Giả sử ta dùng status CONFIRMED_BY_A (Proposer) và CONFIRMED_BY_B (Owner)
                 TransactionStatus currentStatus = trans.getStatus();
                 TransactionStatus nextStatus = currentStatus;
+                boolean isFullyCompleted = false;
                 
                 if (currentStatus == TransactionStatus.TRADE_ACCEPTED) {
-                    // Chưa ai xác nhận
+                    // Chưa ai xác nhận -> Chuyển sang trạng thái xác nhận 1 phần
                     nextStatus = isProposer ? TransactionStatus.CONFIRMED_BY_A : TransactionStatus.CONFIRMED_BY_B;
                     transactionDAO.updateStatus(trans.getTransactionId(), nextStatus);
                     
-                    // --- THÊM NOTIFICATION ---
-                    String partnerId = isProposer 
-                        ? String.valueOf(item.getGiverId()) 
-                        : String.valueOf(trans.getReceiverId());
-                    
-                    String sysMsg = "SYSTEM_TRADE:Đối tác đã xác nhận hoàn tất. Đang chờ bạn xác nhận!";
+                    // Thông báo cho đối tác
+                    String partnerId = isProposer ? String.valueOf(item.getGiverId()) : String.valueOf(trans.getReceiverId());
+                    String sysMsg = "SYSTEM_TRADE:Đối tác đã xác nhận hoàn tất trao đổi. Đang chờ bạn xác nhận!";
                     ChatEndpoint.sendSystemMessage(partnerId, sysMsg);
                     
-                    response.addProperty("message", "Đã xác nhận hoàn tất. Chờ phía bên kia xác nhận.");
+                    response.addProperty("message", "Đã xác nhận. Đang chờ đối tác xác nhận.");
                 } else if ((currentStatus == TransactionStatus.CONFIRMED_BY_A && isOwner) ||
                            (currentStatus == TransactionStatus.CONFIRMED_BY_B && isProposer)) {
-                    // Một bên đã xong, giờ bên còn lại xác nhận nốt -> COMPLETE
+                    // Một bên đã xong, giờ bên còn lại xác nhận nốt -> TRADE_COMPLETED
                     nextStatus = TransactionStatus.COMPLETED;
                     boolean success = transactionDAO.updateStatus(trans.getTransactionId(), TransactionStatus.COMPLETED);
                     if (success) {
                         // Hoàn tất cả 2 item
-                        itemDAO.updateStatus(itemId, ItemStatus.COMPLETED); // Item gốc
+                        itemDAO.updateStatus(itemId, ItemStatus.TRADE_COMPLETED); // Item gốc
                         if (trans.getOfferItemId() != null) {
-                            itemDAO.updateStatus(trans.getOfferItemId(), ItemStatus.COMPLETED); // Item đổi
+                            itemDAO.updateStatus(trans.getOfferItemId(), ItemStatus.TRADE_COMPLETED); // Item đổi
                         }
                         
-                        // --- THÊM NOTIFICATION CHO CẢ 2 BÊN ---
-                        String msgComplete = "SYSTEM_TRADE:Giao dịch trao đổi thành công! Cảm ơn hai bạn.";
+                        // Thông báo hoàn tất cho cả 2
+                        String msgComplete = "SYSTEM_TRADE:Chúc mừng! Giao dịch trao đổi đã thành công tốt đẹp.";
                         ChatEndpoint.sendSystemMessage(String.valueOf(trans.getReceiverId()), msgComplete);
                         ChatEndpoint.sendSystemMessage(String.valueOf(item.getGiverId()), msgComplete);
 
-                        // Cộng điểm (nếu có logic point cho trade)
-                         response.addProperty("message", "Trao đổi thành công tốt đẹp!");
+                        isFullyCompleted = true;
+                        response.addProperty("message", "Trao đổi thành công tốt đẹp!");
                     }
-                } else if (currentStatus == TransactionStatus.COMPLETED) {
+                } else if (currentStatus == TransactionStatus.COMPLETED || currentStatus == TransactionStatus.COMPLETED) {
                     response.addProperty("message", "Giao dịch đã hoàn tất rồi.");
+                    isFullyCompleted = true;
                 } else {
-                    response.addProperty("message", "Đã xác nhận. Đang chờ đối tác.");
+                    // Trường hợp người dùng bấm lại nút xác nhận khi đã xác nhận rồi (nhưng đối tác chưa)
+                    response.addProperty("message", "Bạn đã xác nhận rồi. Đang chờ đối tác.");
                 }
                 
                 response.addProperty("status", "success");
                 response.addProperty("newStatus", nextStatus.toString());
+                response.addProperty("isCompleted", isFullyCompleted);
 
             } else {
-                // --- XỬ LÝ LUỒNG TẶNG (GIVE) - GIỮ NGUYÊN LOGIC CŨ ---
+                // --- XỬ LÝ LUỒNG TẶNG (GIVE) ---
                 if ("giver_confirm".equals(action)) {
-                    // ... (Người cho xác nhận)
                     if (item.getGiverId() != currentUser.getUserId()) {
                         throw new Exception("Bạn không phải chủ món đồ.");
                     }
@@ -175,7 +188,6 @@ public class ConfirmTransactionServlet extends HttpServlet {
                     }
 
                 } else if ("receiver_confirm".equals(action)) {
-                    // ... (Người nhận xác nhận lấy)
                     if (trans.getReceiverId() != currentUser.getUserId()) {
                         throw new Exception("Bạn không phải người nhận.");
                     }

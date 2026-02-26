@@ -43,20 +43,38 @@ public class RateTransactionServlet extends HttpServlet {
             String comment = req.getParameter("comment");
             long reviewerId = currentUser.getUserId();
 
-            // 1. Tìm transaction liên quan (đã COMPLETED vì người dùng đã xác nhận nhận hàng trước đó)
-            String findTransSql = "SELECT t.transaction_id, t.item_id, i.giver_id " +
+            // 1. Tìm transaction liên quan (đã COMPLETED)
+            // Logic mới: Tìm transaction mà user hiện tại tham gia (là receiver hoặc giver)
+            String findTransSql = "SELECT t.transaction_id, t.item_id, t.receiver_id, i.giver_id " +
                     "FROM transactions t " +
                     "JOIN items i ON t.item_id = i.item_id " +
-                    "WHERE t.item_id = ? AND t.receiver_id = ? AND t.status = 'COMPLETED'";
+                    "WHERE t.item_id = ? AND (t.receiver_id = ? OR i.giver_id = ?) AND t.status = 'COMPLETED'";
 
             PreparedStatement psFind = conn.prepareStatement(findTransSql);
             psFind.setLong(1, itemId);
             psFind.setLong(2, reviewerId);
+            psFind.setLong(3, reviewerId);
             ResultSet rs = psFind.executeQuery();
 
             if (rs.next()) {
                 long transactionId = rs.getLong("transaction_id");
                 long giverId = rs.getLong("giver_id");
+                long receiverId = rs.getLong("receiver_id");
+                
+                // Xác định người bị đánh giá (là người kia)
+                long ratedUserId = (reviewerId == receiverId) ? giverId : receiverId;
+
+                // Kiểm tra xem đã đánh giá chưa (tránh spam)
+                String checkRated = "SELECT 1 FROM reviews WHERE transaction_id = ? AND reviewer_id = ?";
+                PreparedStatement psCheck = conn.prepareStatement(checkRated);
+                psCheck.setLong(1, transactionId);
+                psCheck.setLong(2, reviewerId);
+                if (psCheck.executeQuery().next()) {
+                     response.addProperty("status", "error");
+                     response.addProperty("message", "Bạn đã đánh giá giao dịch này rồi.");
+                     resp.getWriter().write(gson.toJson(response));
+                     return;
+                }
 
                 conn.setAutoCommit(false);
                 try {
@@ -65,18 +83,18 @@ public class RateTransactionServlet extends HttpServlet {
                     PreparedStatement psReview = conn.prepareStatement(insertReview);
                     psReview.setLong(1, transactionId);
                     psReview.setLong(2, reviewerId);
-                    psReview.setLong(3, giverId);
+                    psReview.setLong(3, ratedUserId);
                     psReview.setInt(4, rating);
-                    psReview.setString(5, comment);
+                    psReview.setString(5, comment); // Có thể null
                     psReview.executeUpdate();
 
-                    // 3. Update Reputation Score cho Giver (Tính trung bình cộng)
+                    // 3. Update Reputation Score cho Rated User (Tính trung bình cộng)
                     String updateScore = "UPDATE users u SET reputation_score = " +
                             "(SELECT AVG(rating) FROM reviews r WHERE r.rated_user_id = ?) " +
                             "WHERE u.user_id = ?";
                     PreparedStatement psScore = conn.prepareStatement(updateScore);
-                    psScore.setLong(1, giverId);
-                    psScore.setLong(2, giverId);
+                    psScore.setLong(1, ratedUserId);
+                    psScore.setLong(2, ratedUserId);
                     psScore.executeUpdate();
 
                     conn.commit();

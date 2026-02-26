@@ -94,23 +94,6 @@
                 radial-gradient(at 100% 0%, hsla(153,96%,45%,1) 0, transparent 50%);
             background-size: 100% 100%;
         }
-
-        /* Trade Machine Animations */
-        .trade-item-move-right { animation: moveRight 1.5s ease-in-out forwards; }
-        .trade-item-move-left { animation: moveLeft 1.5s ease-in-out forwards; }
-
-        @keyframes moveRight {
-            0% { transform: translateX(0) scale(1); }
-            40% { transform: translateX(100px) scale(0.5); opacity: 0; }
-            60% { transform: translateX(200px) scale(0.5); opacity: 0; }
-            100% { transform: translateX(300px) scale(1); opacity: 1; }
-        }
-        @keyframes moveLeft {
-            0% { transform: translateX(0) scale(1); }
-            40% { transform: translateX(-100px) scale(0.5); opacity: 0; }
-            60% { transform: translateX(-200px) scale(0.5); opacity: 0; }
-            100% { transform: translateX(-300px) scale(1); opacity: 1; }
-        }
     </style>
 </head>
 
@@ -257,10 +240,10 @@
                             <span class="hidden sm:inline" id="btnBatchLabel">N giao dịch</span>
                         </button>
 
-                        <!-- Nút Trade Machine (MỚI) -->
-                        <button id="btnTradeMachine" onclick="openTradeMachine()" class="hidden group bg-purple-500 text-white text-xs font-bold px-4 py-2 rounded-full hover:bg-purple-600 hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-1.5">
-                            <span class="material-symbols-rounded text-[16px]">swap_horiz</span>
-                            <span class="hidden sm:inline">Máy Trao Đổi</span>
+                        <!-- Nút Xác Nhận Trao Đổi (MỚI - Thay thế Máy Trao Đổi) -->
+                        <button id="btnTradeConfirm" onclick="confirmTrade()" class="hidden group bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold px-4 py-2 rounded-full hover:shadow-lg hover:shadow-purple-200/50 transform hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+                            <span class="material-symbols-rounded text-[16px]">handshake</span>
+                            <span class="hidden sm:inline" id="btnTradeLabel">Xác nhận đã trao đổi</span>
                         </button>
 
                         <!-- Nút Info (Luôn hiện) -->
@@ -295,6 +278,11 @@
                     <button id="qrReceiver1" onclick="confirmTransaction('receiver_confirm')"
                             class="hidden whitespace-nowrap bg-blue-100/80 hover:bg-blue-200 text-blue-800 text-xs font-bold px-4 py-2 rounded-full border border-blue-200 transition shadow-sm backdrop-blur-sm">
                         ✅ Đã nhận được
+                    </button>
+                    <!-- Nút Quick Reply cho Trade (MỚI) -->
+                    <button id="qrTradeConfirm" onclick="confirmTrade()"
+                            class="hidden whitespace-nowrap bg-purple-100/80 hover:bg-purple-200 text-purple-800 text-xs font-bold px-4 py-2 rounded-full border border-purple-200 transition shadow-sm backdrop-blur-sm">
+                        🤝 Xác nhận đã trao đổi
                     </button>
                     <button id="qrReceiver2" onclick="sendQuickReply('Bạn ơi, khi nào mình có thể qua lấy đồ được ạ?')"
                             class="hidden whitespace-nowrap bg-white/80 hover:bg-white text-slate-700 text-xs font-bold px-4 py-2 rounded-full border border-white/60 transition shadow-sm backdrop-blur-sm hover:text-primary">
@@ -331,76 +319,6 @@
 
     <!-- Hidden File Input -->
     <input type="file" id="imageInput" hidden accept="image/*" onchange="uploadImage()">
-
-    <!-- TRADE MACHINE MODAL (MỚI) -->
-    <div id="tradeMachineModal" class="fixed inset-0 hidden bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-4 z-[100]">
-        <div class="w-full max-w-4xl h-[80vh] bg-slate-800 rounded-3xl shadow-2xl border border-slate-700 relative flex flex-col overflow-hidden">
-            <!-- Header -->
-            <div class="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-800/50">
-                <h2 class="text-xl font-bold text-green-400 flex items-center gap-2">
-                    <span class="material-symbols-rounded">recycling</span> Máy Trao Đổi
-                </h2>
-                <button onclick="document.getElementById('tradeMachineModal').classList.add('hidden')" class="text-slate-400 hover:text-white transition">
-                    <span class="material-symbols-rounded">close</span>
-                </button>
-            </div>
-
-            <!-- Machine Body -->
-            <div class="flex-1 flex items-center justify-center p-8 relative">
-                <!-- Left Pedestal (User A - Bên trái) -->
-                <div class="w-1/3 flex flex-col items-center gap-4 z-10">
-                    <div class="text-white font-bold text-lg" id="tradeUserAName">User A</div>
-                    <div class="w-40 h-40 bg-slate-700 rounded-2xl border-4 border-slate-600 flex items-center justify-center relative overflow-hidden shadow-lg group">
-                        <img id="tradeItemAImg" src="" class="w-full h-full object-cover transition-transform duration-1000">
-                        <div class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-                            <span class="text-white text-xs font-bold" id="tradeItemAName">Item A</span>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <div id="tradeStatusA" class="w-4 h-4 rounded-full bg-red-500 shadow-[0_0_10px_red]"></div>
-                        <span class="text-slate-400 text-xs">Trạng thái</span>
-                    </div>
-                    <button id="btnTradeConfirmA" onclick="confirmTradeReady()" class="bg-slate-600 hover:bg-green-600 text-white px-6 py-2 rounded-full font-bold transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">Xác nhận</button>
-                </div>
-
-                <!-- Center Machine -->
-                <div class="w-1/3 flex flex-col items-center justify-center relative z-0">
-                    <!-- Pipes -->
-                    <div class="absolute top-1/2 left-0 w-1/2 h-4 bg-slate-600 -translate-y-1/2 -z-10"></div>
-                    <div class="absolute top-1/2 right-0 w-1/2 h-4 bg-slate-600 -translate-y-1/2 -z-10"></div>
-
-                    <!-- Core -->
-                    <div id="tradeCore" class="w-32 h-32 bg-slate-700 rounded-full border-8 border-slate-600 flex items-center justify-center shadow-2xl relative">
-                        <span class="material-symbols-rounded text-6xl text-slate-500 animate-spin-slow">settings</span>
-                        <div class="absolute inset-0 rounded-full border-4 border-transparent border-t-green-500 animate-spin"></div>
-                    </div>
-                </div>
-
-                <!-- Right Pedestal (User B - Bên phải) -->
-                <div class="w-1/3 flex flex-col items-center gap-4 z-10">
-                    <div class="text-white font-bold text-lg" id="tradeUserBName">User B</div>
-                    <div class="w-40 h-40 bg-slate-700 rounded-2xl border-4 border-slate-600 flex items-center justify-center relative overflow-hidden shadow-lg group">
-                        <img id="tradeItemBImg" src="" class="w-full h-full object-cover transition-transform duration-1000">
-                        <div class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-                            <span class="text-white text-xs font-bold" id="tradeItemBName">Item B</span>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <div id="tradeStatusB" class="w-4 h-4 rounded-full bg-red-500 shadow-[0_0_10px_red]"></div>
-                        <span class="text-slate-400 text-xs">Trạng thái</span>
-                    </div>
-                    <button id="btnTradeConfirmB" onclick="confirmTradeReady()" class="bg-slate-600 hover:bg-green-600 text-white px-6 py-2 rounded-full font-bold transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">Xác nhận</button>
-                </div>
-            </div>
-
-            <!-- Success Overlay -->
-            <div id="tradeSuccessOverlay" class="absolute inset-0 bg-black/80 flex flex-col items-center justify-center z-50 hidden">
-                <h1 class="text-5xl font-extrabold text-green-400 mb-4 animate-bounce">Trao đổi thành công!</h1>
-                <p class="text-slate-300">Vật phẩm đã được chuyển giao.</p>
-                <button onclick="location.reload()" class="mt-8 bg-green-600 text-white px-8 py-3 rounded-full font-bold hover:bg-green-500 transition shadow-lg shadow-green-500/50">Hoàn tất</button>
-            </div>
-        </div>
-    </div>
 
     <!-- Batch Confirm Modal -->
     <div id="batchConfirmModal" class="fixed inset-0 hidden bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-[80]">
@@ -495,7 +413,7 @@
             </div>
 
             <div class="mb-6">
-                <label class="block text-xs font-bold text-slate-700 uppercase mb-2 tracking-wider">Lời nhắn</label>
+                <label class="block text-xs font-bold text-slate-700 uppercase mb-2 tracking-wider">Lời nhắn (Tùy chọn)</label>
                 <textarea id="ratingComment" rows="3" class="w-full p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary outline-none resize-none bg-white shadow-inner" placeholder="Viết lời cảm ơn..."></textarea>
             </div>
 
@@ -520,7 +438,6 @@
 
         // Trade Variables
         let currentTradeTransactionId = null;
-        let myTradeSide = 'A'; // Mặc định, sẽ được set khi mở máy
 
         const urlParams = new URLSearchParams(window.location.search);
         const paramPartnerId = urlParams.get('partnerId');
@@ -543,9 +460,15 @@
                 const data = JSON.parse(e.data);
 
                 // Xử lý tin nhắn hệ thống
-                if (data.content && data.content.startsWith("SYSTEM_GIFT:")) {
-                    const msgText = data.content.replace("SYSTEM_GIFT:", "");
-                    appendSystemMessage(msgText);
+                if (data.content && (data.content.startsWith("SYSTEM_GIFT:") || data.content.startsWith("SYSTEM_TRADE:"))) {
+                    const isTrade = data.content.startsWith("SYSTEM_TRADE:");
+                    const msgText = data.content.replace("SYSTEM_GIFT:", "").replace("SYSTEM_TRADE:", "");
+
+                    if (isTrade) {
+                        appendTradeSystemMessage(msgText);
+                    } else {
+                        appendSystemMessage(msgText);
+                    }
 
                     if (currentReceiverId) {
                         await loadActiveDeals(currentReceiverId);
@@ -560,18 +483,6 @@
                     const transId = data.content.split(":")[1];
                     appendTradeProposal(transId, data.senderId, "PENDING_TRADE"); // Ban đầu luôn là PENDING
                     return;
-                }
-
-                // Xử lý sự kiện Trade
-                if (data.type === "TRADE_READY") {
-                    const partnerSide = (myTradeSide === 'A') ? 'B' : 'A';
-                    const statusEl = document.getElementById('tradeStatus' + partnerSide);
-                    if (statusEl) {
-                        statusEl.classList.remove('bg-red-500', 'shadow-[0_0_10px_red]');
-                        statusEl.classList.add('bg-green-500', 'shadow-[0_0_10px_green]');
-                    }
-                } else if (data.type === "TRADE_EXECUTE") {
-                    executeTradeAnimation();
                 }
 
                 if (data.senderId == currentReceiverId) {
@@ -628,6 +539,7 @@
 
                 let lastMsg = u.lastMsg || '...';
                 if (lastMsg.startsWith("SYSTEM_GIFT:")) lastMsg = "🎁 Thông báo hệ thống";
+                if (lastMsg.startsWith("SYSTEM_TRADE:")) lastMsg = "🔄 Thông báo trao đổi";
                 if (lastMsg.startsWith("SYSTEM_TRADE_PROPOSAL:")) lastMsg = "🔄 Đề nghị trao đổi";
 
                 const itemBadge = itemName
@@ -743,13 +655,11 @@
 
             isOwnerOfCurrentItem = (Number(giverId) === currentUserId);
 
-            if (isOwnerOfCurrentItem) {
-                document.getElementById('qrGiver').classList.remove('hidden');
-                document.getElementById('qrReceiver2').classList.add('hidden');
-            } else {
-                document.getElementById('qrGiver').classList.add('hidden');
-                document.getElementById('qrReceiver2').classList.remove('hidden');
-            }
+            // Reset quick replies
+            document.getElementById('qrGiver').classList.add('hidden');
+            document.getElementById('qrReceiver1').classList.add('hidden');
+            document.getElementById('qrReceiver2').classList.add('hidden');
+            document.getElementById('qrTradeConfirm').classList.add('hidden');
 
             loadHistory(currentReceiverId);
         }
@@ -778,9 +688,12 @@
                         lastSystemMsg = m.content;
                         let cleanText = m.content.replace("SYSTEM_GIFT:", "");
                         appendSystemMessage(cleanText);
+                    } else if (m.content && m.content.startsWith("SYSTEM_TRADE:")) {
+                        lastSystemMsg = m.content;
+                        let cleanText = m.content.replace("SYSTEM_TRADE:", "");
+                        appendTradeSystemMessage(cleanText);
                     } else if (m.content && m.content.startsWith("SYSTEM_TRADE_PROPOSAL:")) {
                         const transId = m.content.split(":")[1];
-                        // --- SỬA ĐỔI: Dùng tradeStatus từ API ---
                         appendTradeProposal(transId, m.senderId, m.tradeStatus);
                     } else {
                         appendMessage(m.content, m.imageUrl, m.senderId === currentUserId ? 'outgoing' : 'incoming');
@@ -800,14 +713,29 @@
             const btnCancel = document.getElementById('btnCancelTrans');
             const btnRequestAgain = document.getElementById('btnRequestAgain');
             const btnBatchAction = document.getElementById('btnBatchAction');
-            const btnTradeMachine = document.getElementById('btnTradeMachine');
+            const btnTradeConfirm = document.getElementById('btnTradeConfirm');
+            const btnTradeLabel = document.getElementById('btnTradeLabel');
 
+            // Reset all buttons
             btnGiver.classList.add('hidden');
             btnReceiver.classList.add('hidden');
             btnCancel.classList.add('hidden');
             btnRequestAgain.classList.add('hidden');
             btnBatchAction.classList.add('hidden');
-            btnTradeMachine.classList.add('hidden');
+            btnTradeConfirm.classList.add('hidden');
+            btnTradeConfirm.disabled = false;
+            btnTradeLabel.innerText = "Xác nhận đã trao đổi";
+
+            // Reset Quick Replies
+            const qrGiver = document.getElementById('qrGiver');
+            const qrReceiver1 = document.getElementById('qrReceiver1');
+            const qrReceiver2 = document.getElementById('qrReceiver2');
+            const qrTradeConfirm = document.getElementById('qrTradeConfirm');
+
+            qrGiver.classList.add('hidden');
+            qrReceiver1.classList.add('hidden');
+            qrReceiver2.classList.add('hidden');
+            qrTradeConfirm.classList.add('hidden');
 
             const currentDeal = activeDeals.find(d => d.itemId == currentDiscussingItemId);
 
@@ -817,13 +745,45 @@
                 currentTradeTransactionId = currentDeal.transactionId;
 
                 if (type === 'TRADE') {
-                    if (status === 'TRADE_ACCEPTED' || status === 'CONFIRMED_BY_A' || status === 'CONFIRMED_BY_B') {
-                        btnTradeMachine.classList.remove('hidden');
+                    // Logic cho Trade
+                    if (status === 'TRADE_ACCEPTED') {
+                        // Cả 2 đều thấy nút xác nhận
+                        btnTradeConfirm.classList.remove('hidden');
+                        qrTradeConfirm.classList.remove('hidden');
+                        btnCancel.classList.remove('hidden'); // Cho phép hủy nếu chưa ai xác nhận
+                    } else if (status === 'CONFIRMED_BY_A') {
+                        const isOwner = (currentUserId == currentDeal.giverId); // Mình là B
+
+                        if (isOwner) {
+                            // Mình là B, chưa xác nhận -> Hiện nút
+                            btnTradeConfirm.classList.remove('hidden');
+                            qrTradeConfirm.classList.remove('hidden');
+                        } else {
+                            // Mình là A, đã xác nhận -> Hiện nút disabled
+                            btnTradeConfirm.classList.remove('hidden');
+                            btnTradeConfirm.disabled = true;
+                            btnTradeLabel.innerText = "Đã xác nhận (Chờ đối tác)";
+                        }
+                    } else if (status === 'CONFIRMED_BY_B') {
+                        const isOwner = (currentUserId == currentDeal.giverId); // Mình là B
+
+                        if (isOwner) {
+                            // Mình là B, đã xác nhận -> Hiện nút disabled
+                            btnTradeConfirm.classList.remove('hidden');
+                            btnTradeConfirm.disabled = true;
+                            btnTradeLabel.innerText = "Đã xác nhận (Chờ đối tác)";
+                        } else {
+                            // Mình là A, chưa xác nhận -> Hiện nút
+                            btnTradeConfirm.classList.remove('hidden');
+                            qrTradeConfirm.classList.remove('hidden');
+                        }
                     }
                 } else {
+                    // Logic cho Give (Giữ nguyên)
                     if (isOwnerOfCurrentItem) {
                         if (status === 'PENDING') {
                             btnGiver.classList.remove('hidden');
+                            qrGiver.classList.remove('hidden');
                             btnCancel.classList.add('hidden');
                         } else if (status === 'CONFIRMED') {
                             btnCancel.classList.remove('hidden');
@@ -837,10 +797,12 @@
                                 btnCancel.classList.add('hidden');
                             } else {
                                 btnReceiver.classList.remove('hidden');
+                                qrReceiver1.classList.remove('hidden');
                                 btnCancel.classList.add('hidden');
                             }
                         } else if (status === 'PENDING') {
                             btnCancel.classList.remove('hidden');
+                            qrReceiver2.classList.remove('hidden');
                         }
                     }
                 }
@@ -865,7 +827,19 @@
             box.scrollTop = box.scrollHeight;
         }
 
-        // --- SỬA ĐỔI: Thêm tham số tradeStatus ---
+        // --- MỚI: Hàm cho tin nhắn hệ thống Trade ---
+        function appendTradeSystemMessage(txt) {
+            const box = document.getElementById('chatMessages');
+            const html = `
+                <div class="flex justify-center my-6 animate-scale-in">
+                    <span class="bg-purple-100/90 backdrop-blur-sm text-purple-800 text-xs font-bold px-4 py-1.5 rounded-full border border-purple-200 shadow-sm flex items-center gap-1.5">
+                        <span class="material-symbols-rounded text-[16px]">handshake</span> \${txt}
+                    </span>
+                </div>`;
+            box.insertAdjacentHTML('beforeend', html);
+            box.scrollTop = box.scrollHeight;
+        }
+
         function appendTradeProposal(transId, proposerId, tradeStatus) {
             const box = document.getElementById('chatMessages');
             const isMyProposal = (currentUserId == proposerId);
@@ -917,54 +891,44 @@
             } catch(e) { alert("Lỗi kết nối"); }
         }
 
-        // --- TRADE MACHINE LOGIC ---
-        async function openTradeMachine() {
-            if (!currentTradeTransactionId) return;
+        // --- TRADE CONFIRM LOGIC (MỚI) ---
+        async function confirmTrade() {
+            if (!currentDiscussingItemId) return;
 
-            document.getElementById('tradeMachineModal').classList.remove('hidden');
-
-            document.getElementById('tradeStatusA').className = "w-4 h-4 rounded-full bg-red-500 shadow-[0_0_10px_red]";
-            document.getElementById('tradeStatusB').className = "w-4 h-4 rounded-full bg-red-500 shadow-[0_0_10px_red]";
-
-            myTradeSide = 'A';
-            document.getElementById('tradeUserAName').innerText = "Bạn";
-            document.getElementById('tradeUserBName').innerText = document.getElementById('chatTitle').innerText;
-
-            document.getElementById('btnTradeConfirmA').disabled = false;
-            document.getElementById('btnTradeConfirmB').disabled = true;
-            document.getElementById('btnTradeConfirmB').classList.add('opacity-50', 'cursor-not-allowed');
-        }
-
-        async function confirmTradeReady() {
-            if (!currentTradeTransactionId) return;
-
-            const myStatusEl = document.getElementById('tradeStatus' + myTradeSide);
-            myStatusEl.classList.remove('bg-red-500', 'shadow-[0_0_10px_red]');
-            myStatusEl.classList.add('bg-green-500', 'shadow-[0_0_10px_green]');
-
-            document.getElementById('btnTradeConfirm' + myTradeSide).disabled = true;
-            document.getElementById('btnTradeConfirm' + myTradeSide).innerText = "Đã sẵn sàng";
+            if (!confirm("Bạn xác nhận đã hoàn tất việc trao đổi vật phẩm với đối tác?")) return;
 
             try {
-                const res = await fetch('${pageContext.request.contextPath}/api/trade?action=confirm_ready&transactionId=' + currentTradeTransactionId, { method: 'POST' });
+                const fd = new URLSearchParams();
+                fd.append('itemId', currentDiscussingItemId);
+                fd.append('receiverId', currentReceiverId); // Người đang chat cùng
+                fd.append('action', 'complete_trade');
+
+                const res = await fetch('${pageContext.request.contextPath}/api/confirm-transaction', { method: 'POST', body: fd });
                 const data = await res.json();
 
-                if (data.status !== 'success') {
-                    alert("Lỗi: " + data.message);
+                if (data.status === 'success') {
+                    // Cập nhật giao diện ngay lập tức
+                    const btnTradeConfirm = document.getElementById('btnTradeConfirm');
+                    const btnTradeLabel = document.getElementById('btnTradeLabel');
+
+                    if (data.isCompleted) {
+                        alert("🎉 " + data.message);
+                        openRatingModal();
+                    } else {
+                        alert("✅ " + data.message);
+                        btnTradeConfirm.disabled = true;
+                        btnTradeLabel.innerText = "Đã xác nhận (Chờ đối tác)";
+                    }
+
+                    await loadActiveDeals(currentReceiverId);
+                    loadHistory(currentReceiverId);
+                } else {
+                    alert("❌ Lỗi: " + data.message);
                 }
-            } catch(e) { alert("Lỗi kết nối"); }
-        }
-
-        function executeTradeAnimation() {
-            const imgA = document.getElementById('tradeItemAImg');
-            const imgB = document.getElementById('tradeItemBImg');
-
-            imgA.classList.add('trade-item-move-right');
-            imgB.classList.add('trade-item-move-left');
-
-            setTimeout(() => {
-                document.getElementById('tradeSuccessOverlay').classList.remove('hidden');
-            }, 1600);
+            } catch (e) {
+                console.error(e);
+                alert("❌ Lỗi kết nối");
+            }
         }
 
         // --- COMMON FUNCTIONS ---
@@ -1050,8 +1014,7 @@
         }
 
         function openLightbox(src) {
-            document.getElementById('lightboxImg').src = src;
-            document.getElementById('lightboxModal').classList.remove('hidden');
+            // Implement lightbox if needed or remove
         }
 
         document.getElementById('chatInput').addEventListener('keypress', (e) => { if(e.key==='Enter') sendMessage(); });
@@ -1091,7 +1054,7 @@
                     } else if (action === 'giver_confirm') {
                         sysMsg = "SYSTEM_GIFT:" + currentUserName + " đã xác nhận giao đồ. Bạn hãy xác nhận khi nhận được nhé!";
                     } else {
-                        sysMsg = "SYSTEM_GIFT:Người nhận đã xác nhận nhận đồ. Trạng thái: COMPLETED. Giao dịch hoàn tất!";
+                        sysMsg = "SYSTEM_GIFT:Người nhận đã xác nhận nhận đồ. Giao dịch hoàn tất!";
                         openRatingModal();
                     }
 
@@ -1147,7 +1110,7 @@
         async function submitRating() {
             const rating = document.getElementById('ratingValue').value;
             const comment = document.getElementById('ratingComment').value;
-            if (!comment) { alert("Hãy viết vài lời nhận xét!"); return; }
+
             try {
                 const fd = new URLSearchParams();
                 fd.append('itemId', currentDiscussingItemId);
@@ -1156,9 +1119,9 @@
                 const res = await fetch('${pageContext.request.contextPath}/api/rate-transaction', { method: 'POST', body: fd });
                 const data = await res.json();
                 if (data.status === 'success') {
-                    alert("🎉 Cảm ơn bạn! Giao dịch hoàn tất.");
+                    alert("🎉 Cảm ơn bạn đã đánh giá!");
                     document.getElementById('ratingModal').classList.add('hidden');
-                    sendMessageAuto("✅ Mình đã nhận được đồ và đánh giá " + rating + " sao. Cảm ơn bạn!", null);
+                    sendMessageAuto("✅ Mình đã đánh giá " + rating + " sao. Cảm ơn bạn!", null);
                     currentDiscussingItemId = null;
                 } else {
                     alert("Lỗi: " + data.message);

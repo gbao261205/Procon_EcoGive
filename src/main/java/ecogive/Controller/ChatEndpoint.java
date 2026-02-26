@@ -31,9 +31,21 @@ public class ChatEndpoint {
         try {
             // 1. Parse tin nhắn từ Client
             JsonObject jsonMsg = gson.fromJson(message, JsonObject.class);
-            String receiverIdStr = jsonMsg.has("receiverId") ? jsonMsg.get("receiverId").getAsString() : null;
-            String content = jsonMsg.has("content") ? jsonMsg.get("content").getAsString() : "";
-            String imageUrl = jsonMsg.has("imageUrl") ? jsonMsg.get("imageUrl").getAsString() : null;
+            
+            String receiverIdStr = null;
+            if (jsonMsg.has("receiverId") && !jsonMsg.get("receiverId").isJsonNull()) {
+                receiverIdStr = jsonMsg.get("receiverId").getAsString();
+            }
+
+            String content = "";
+            if (jsonMsg.has("content") && !jsonMsg.get("content").isJsonNull()) {
+                content = jsonMsg.get("content").getAsString();
+            }
+
+            String imageUrl = null;
+            if (jsonMsg.has("imageUrl") && !jsonMsg.get("imageUrl").isJsonNull()) {
+                imageUrl = jsonMsg.get("imageUrl").getAsString();
+            }
 
             if (receiverIdStr == null) return;
 

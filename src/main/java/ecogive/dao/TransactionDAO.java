@@ -47,6 +47,32 @@ public class TransactionDAO {
         return null;
     }
 
+    // --- MỚI: Tìm giao dịch TRADE giữa 2 bên bất kỳ ---
+    public Transaction findActiveTradeTransactionByParties(long itemId, long user1Id, long user2Id) throws SQLException {
+        // Tìm giao dịch TRADE liên quan đến itemId này và receiver_id là user1Id HOẶC user2Id
+        // (Vì trong TRADE, receiver_id là người đề nghị đổi, còn người kia là chủ item gốc)
+        String sql = "SELECT * FROM transactions WHERE item_id = ? " +
+                     "AND (receiver_id = ? OR receiver_id = ?) " +
+                     "AND transaction_type = 'TRADE' " +
+                     "AND status IN ('PENDING_TRADE', 'TRADE_ACCEPTED', 'CONFIRMED_BY_A', 'CONFIRMED_BY_B') " +
+                     "ORDER BY transaction_id DESC LIMIT 1";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setLong(1, itemId);
+            stmt.setLong(2, user1Id);
+            stmt.setLong(3, user2Id);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapRow(rs);
+                }
+            }
+        } catch (Exception e) {
+            throw new SQLException(e);
+        }
+        return null;
+    }
+
     public boolean updateStatus(long transactionId, TransactionStatus status) throws SQLException {
         String sql = "UPDATE transactions SET status = ? WHERE transaction_id = ?";
         try (Connection conn = DatabaseConnection.getConnection();
