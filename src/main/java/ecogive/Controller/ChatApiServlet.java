@@ -51,6 +51,11 @@ public class ChatApiServlet extends HttpServlet {
                 String sql = "SELECT u.user_id, u.username, " +
                         "(SELECT content FROM messages m WHERE (m.sender_id = u.user_id AND m.receiver_id = ?) " +
                         "OR (m.sender_id = ? AND m.receiver_id = u.user_id) ORDER BY m.created_at DESC LIMIT 1) as last_msg, " +
+                        
+                        // --- MỚI: Lấy thời gian tin nhắn cuối cùng để sắp xếp ---
+                        "(SELECT created_at FROM messages m WHERE (m.sender_id = u.user_id AND m.receiver_id = ?) " +
+                        "OR (m.sender_id = ? AND m.receiver_id = u.user_id) ORDER BY m.created_at DESC LIMIT 1) as last_msg_time, " +
+                        // --------------------------------------------------------
 
                         "(SELECT CONCAT(t.item_id, '|||', i.title, '|||', i.giver_id) " +
                         " FROM transactions t JOIN items i ON t.item_id = i.item_id " +
@@ -67,12 +72,14 @@ public class ChatApiServlet extends HttpServlet {
                         "   SELECT i.giver_id FROM transactions t JOIN items i ON t.item_id = i.item_id WHERE t.receiver_id = ? " +
                         "   UNION " +
                         "   SELECT t.receiver_id FROM transactions t JOIN items i ON t.item_id = i.item_id WHERE i.giver_id = ? " +
-                        ")";
+                        ") " +
+                        "ORDER BY last_msg_time DESC"; // Sắp xếp theo thời gian
 
                 PreparedStatement ps = conn.prepareStatement(sql);
                 long uid = currentUser.getUserId();
                 
-                for(int i=1; i<=8; i++) ps.setLong(i, uid);
+                // Set tham số (tổng cộng 10 tham số uid)
+                for(int i=1; i<=10; i++) ps.setLong(i, uid);
 
                 ResultSet rs = ps.executeQuery();
                 JsonArray inboxList = new JsonArray();
@@ -84,6 +91,12 @@ public class ChatApiServlet extends HttpServlet {
                     String lastMsg = rs.getString("last_msg");
                     if (lastMsg == null) lastMsg = "Bắt đầu cuộc trò chuyện...";
                     obj.addProperty("lastMsg", lastMsg);
+                    
+                    // Có thể trả về lastMsgTime nếu cần hiển thị thời gian
+                    Timestamp ts = rs.getTimestamp("last_msg_time");
+                    if (ts != null) {
+                        obj.addProperty("lastMsgTime", ts.toString());
+                    }
 
                     String itemInfo = rs.getString("item_info");
                     if (itemInfo != null) {

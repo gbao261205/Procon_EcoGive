@@ -184,6 +184,8 @@
 
                         <div class="min-w-0 flex-1">
                             <div id="chatTitle" class="font-bold text-slate-800 text-base truncate">Chọn hội thoại</div>
+                            <!-- Online Status (Hidden by default) -->
+                            <div id="chatStatus" class="text-[10px] font-medium text-slate-500 hidden">Truy cập gần đây</div>
 
                             <!-- Item Context (Dropdown or Single) -->
                             <div id="chatItemContext" class="hidden mt-0.5">
@@ -486,12 +488,44 @@
                 }
 
                 if (data.senderId == currentReceiverId) {
-                    appendMessage(data.content, data.imageUrl, 'incoming');
+                    appendMessage(data.content, data.imageUrl, 'incoming', new Date().toISOString());
                 }
                 loadInboxList();
             };
 
             chatSocket.onclose = () => setTimeout(connectWebSocket, 3000);
+        }
+
+        // --- HELPER: FORMAT TIME ---
+        function formatTime(timestamp) {
+            if (!timestamp) return "";
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = now - date;
+            const oneDay = 24 * 60 * 60 * 1000;
+
+            // Nếu trong vòng 24h
+            if (diff < oneDay && now.getDate() === date.getDate()) {
+                return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+            }
+            // Nếu là hôm qua
+            const yesterday = new Date(now);
+            yesterday.setDate(now.getDate() - 1);
+            if (date.getDate() === yesterday.getDate() && date.getMonth() === yesterday.getMonth() && date.getFullYear() === yesterday.getFullYear()) {
+                return "Hôm qua";
+            }
+            // Nếu trong năm nay
+            if (date.getFullYear() === now.getFullYear()) {
+                return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+            }
+            // Khác
+            return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        }
+
+        function formatFullTime(timestamp) {
+            if (!timestamp) return "";
+            const date = new Date(timestamp);
+            return date.toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' });
         }
 
         // --- INBOX LOGIC ---
@@ -536,6 +570,7 @@
                 const itemId = u.itemId || '';
                 const itemName = u.itemName || '';
                 const giverId = u.giverId || '';
+                const timeDisplay = formatTime(u.lastMsgTime);
 
                 let lastMsg = u.lastMsg || '...';
                 if (lastMsg.startsWith("SYSTEM_GIFT:")) lastMsg = "🎁 Thông báo hệ thống";
@@ -554,12 +589,13 @@
                     + '<div class="relative shrink-0">'
                     + '<img src="https://api.dicebear.com/9.x/notionists-neutral/svg?seed=' + u.username + '"'
                     + ' class="w-12 h-12 rounded-full bg-white shadow-sm object-cover border border-white">'
-                    + '<span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full shadow-sm"></span>'
+                    // Ẩn chấm xanh online nếu không chắc chắn
+                    // + '<span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full shadow-sm"></span>'
                     + '</div>'
                     + '<div class="flex-1 min-w-0">'
                     + '<div class="flex justify-between items-center mb-0.5">'
                     + '<div class="font-bold text-sm text-slate-800 truncate group-hover:text-primary transition-colors">' + u.username + '</div>'
-                    + '<div class="text-[10px] text-slate-400 font-medium">Vừa xong</div>'
+                    + '<div class="text-[10px] text-slate-400 font-medium">' + timeDisplay + '</div>'
                     + '</div>'
                     + '<div class="text-xs text-slate-500 truncate font-medium opacity-80">' + lastMsg + '</div>'
                     + itemBadge
@@ -573,6 +609,11 @@
             currentReceiverId = userId;
             document.getElementById('chatTitle').innerText = username;
             document.getElementById('chatHeaderAvatar').innerHTML = `<img src="https://api.dicebear.com/9.x/notionists-neutral/svg?seed=\${username}" class="w-full h-full object-cover">`;
+
+            // Hiển thị trạng thái (Tạm thời là Truy cập gần đây)
+            const statusEl = document.getElementById('chatStatus');
+            statusEl.innerText = "Truy cập gần đây";
+            statusEl.classList.remove('hidden');
 
             const input = document.getElementById('chatInput');
             input.disabled = false; input.focus();
@@ -703,7 +744,7 @@
                         const transId = m.content.split(":")[1];
                         appendTradeProposal(transId, m.senderId, m.tradeStatus);
                     } else {
-                        appendMessage(m.content, m.imageUrl, m.senderId === currentUserId ? 'outgoing' : 'incoming');
+                        appendMessage(m.content, m.imageUrl, m.senderId === currentUserId ? 'outgoing' : 'incoming', m.createdAt);
                     }
                 });
 
@@ -949,7 +990,7 @@
                 content: content
             };
             chatSocket.send(JSON.stringify(msg));
-            appendMessage(content, null, 'outgoing');
+            appendMessage(content, null, 'outgoing', new Date().toISOString());
             input.value = '';
         }
 
@@ -961,7 +1002,7 @@
                 imageUrl: imgUrl
             };
             chatSocket.send(JSON.stringify(msg));
-            appendMessage(content, imgUrl, 'outgoing');
+            appendMessage(content, imgUrl, 'outgoing', new Date().toISOString());
         }
 
         function sendQuickReply(text) {
@@ -969,9 +1010,10 @@
             sendMessage();
         }
 
-        function appendMessage(content, imgUrl, type) {
+        function appendMessage(content, imgUrl, type, timestamp) {
             const chatBox = document.getElementById('chatMessages');
             const isOut = (type === 'outgoing');
+            const timeStr = formatFullTime(timestamp);
 
             let imgHtml = '';
             if (imgUrl) {
@@ -984,11 +1026,13 @@
             }
 
             const html = `
-                <div class="flex w-full \${isOut ? 'justify-end' : 'justify-start'} animate-slide-up">
-                    <div class="max-w-[75%] \${isOut ? 'bg-gradient-to-br from-primary to-emerald-500 rounded-2xl rounded-tr-none shadow-lg shadow-emerald-100' : 'bg-white rounded-2xl rounded-tl-none shadow-sm border border-slate-100'} p-3 text-sm font-medium leading-relaxed">
+                <div class="flex w-full \${isOut ? 'justify-end' : 'justify-start'} animate-slide-up group">
+                    <div class="max-w-[75%] \${isOut ? 'bg-gradient-to-br from-primary to-emerald-500 rounded-2xl rounded-tr-none shadow-lg shadow-emerald-100' : 'bg-white rounded-2xl rounded-tl-none shadow-sm border border-slate-100'} p-3 text-sm font-medium leading-relaxed relative">
                         \${imgHtml}
                         \${textHtml}
-                        <div class="text-[10px] \${isOut ? 'text-emerald-100' : 'text-slate-400'} mt-1 text-right opacity-80">Vừa xong</div>
+                        <div class="text-[10px] \${isOut ? 'text-emerald-100' : 'text-slate-400'} mt-1 text-right opacity-80" title="\${timeStr}">
+                            \${formatTime(timestamp)}
+                        </div>
                     </div>
                 </div>`;
 
