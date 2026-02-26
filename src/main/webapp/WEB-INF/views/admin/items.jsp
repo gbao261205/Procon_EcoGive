@@ -68,6 +68,11 @@
                ${param.status == 'CANCELLED' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-500 hover:text-red-600 hover:bg-slate-200/50'}">
                 <span class="w-2 h-2 rounded-full bg-red-500"></span> Đã hủy
             </a>
+            <a href="${pageContext.request.contextPath}/admin?action=items&status=TRADE_ITEMS"
+               class="px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center gap-2
+               ${param.status == 'TRADE_ITEMS' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-indigo-600 hover:bg-slate-200/50'}">
+                <span class="w-2 h-2 rounded-full bg-indigo-500"></span> Trao đổi
+            </a>
         </div>
 
         <!-- AI Message -->
@@ -177,6 +182,16 @@
                                     <c:when test="${item.status == 'CANCELLED'}">
                                         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-100">
                                             <span class="w-2 h-2 rounded-full bg-red-500"></span> Đã hủy
+                                        </span>
+                                    </c:when>
+                                    <c:when test="${item.status == 'TRADE_PENDING'}">
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                                            <span class="w-2 h-2 rounded-full bg-indigo-500"></span> Đang trao đổi
+                                        </span>
+                                    </c:when>
+                                    <c:when test="${item.status == 'TRADE_COMPLETED'}">
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-pink-50 text-pink-700 border border-pink-100">
+                                            <span class="w-2 h-2 rounded-full bg-pink-500"></span> Trao đổi xong
                                         </span>
                                     </c:when>
                                 </c:choose>
@@ -398,6 +413,8 @@
         else if (d.status === 'AVAILABLE') statusEl.classList.add('text-emerald-600');
         else if (d.status === 'CONFIRMED') statusEl.classList.add('text-blue-600');
         else if (d.status === 'COMPLETED') statusEl.classList.add('text-purple-600');
+        else if (d.status === 'TRADE_PENDING') statusEl.classList.add('text-indigo-600');
+        else if (d.status === 'TRADE_COMPLETED') statusEl.classList.add('text-pink-600');
         else statusEl.classList.add('text-red-600');
 
         // Logic Input State

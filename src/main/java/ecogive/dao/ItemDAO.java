@@ -168,10 +168,11 @@ public class ItemDAO {
         );
         
         if (statusFilter != null && !statusFilter.isEmpty()) {
-            sql.append(" WHERE status = ? ");
-        } else {
-            // SỬA ĐỔI: Mặc định không lấy TRADE_PENDING nếu không có filter cụ thể
-            sql.append(" WHERE status != 'TRADE_PENDING' ");
+            if ("TRADE_ITEMS".equals(statusFilter)) {
+                sql.append(" WHERE status IN ('TRADE_PENDING', 'TRADE_COMPLETED') ");
+            } else {
+                sql.append(" WHERE status = ? ");
+            }
         }
         
         sql.append(" ORDER BY post_date DESC LIMIT ? OFFSET ?");
@@ -181,7 +182,7 @@ public class ItemDAO {
              PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
             
             int paramIndex = 1;
-            if (statusFilter != null && !statusFilter.isEmpty()) {
+            if (statusFilter != null && !statusFilter.isEmpty() && !"TRADE_ITEMS".equals(statusFilter)) {
                 stmt.setString(paramIndex++, statusFilter);
             }
             stmt.setInt(paramIndex++, limit);
@@ -201,15 +202,17 @@ public class ItemDAO {
     public int countAll(String statusFilter) throws SQLException {
         StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM items");
         if (statusFilter != null && !statusFilter.isEmpty()) {
-            sql.append(" WHERE status = ?");
-        } else {
-            sql.append(" WHERE status != 'TRADE_PENDING'");
+            if ("TRADE_ITEMS".equals(statusFilter)) {
+                sql.append(" WHERE status IN ('TRADE_PENDING', 'TRADE_COMPLETED')");
+            } else {
+                sql.append(" WHERE status = ?");
+            }
         }
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
             
-            if (statusFilter != null && !statusFilter.isEmpty()) {
+            if (statusFilter != null && !statusFilter.isEmpty() && !"TRADE_ITEMS".equals(statusFilter)) {
                 stmt.setString(1, statusFilter);
             }
 
