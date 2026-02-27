@@ -2,14 +2,14 @@
 <aside class="w-64 bg-white border-r border-slate-200 hidden md:flex flex-col h-screen fixed left-0 top-0 z-20 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
     <!-- Logo Section -->
     <div class="h-20 flex items-center px-8 border-b border-slate-100">
-        <div class="flex items-center gap-2">
+        <a href="${pageContext.request.contextPath}/home" class="flex items-center gap-2 group hover:opacity-80 transition-all">
             <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
-            <span class="material-symbols-outlined text-emerald-600" style="font-size: 32px;">spa</span>
+            <span class="material-symbols-outlined text-emerald-600 group-hover:scale-110 transition-transform" style="font-size: 32px;">spa</span>
             <div>
                 <h2 class="text-xl font-bold text-slate-800 tracking-tight leading-none">EcoGive</h2>
                 <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Admin Portal</span>
             </div>
-        </div>
+        </a>
     </div>
 
     <!-- Navigation -->
