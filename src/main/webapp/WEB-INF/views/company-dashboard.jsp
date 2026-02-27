@@ -5,10 +5,12 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard Doanh nghiệp - EcoGive</title>
+    <title>Quản lý Doanh nghiệp - EcoGive</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Using Material Symbols Rounded for a friendlier, modern look -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
     <script>
         tailwind.config = {
             theme: {
@@ -16,9 +18,14 @@
                     colors: {
                         primary: '#05976a',
                         'primary-hover': '#047857',
+                        'primary-light': '#e6fcf5',
                     },
                     fontFamily: {
                         sans: ['Inter', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                        'card': '0 0 0 1px rgba(226, 232, 240, 1), 0 2px 4px rgba(0, 0, 0, 0.05)',
                     }
                 }
             }
@@ -26,181 +33,191 @@
     </script>
     <style>
         body { font-family: 'Inter', sans-serif; }
-        /* Custom scrollbar for webkit */
+        .material-symbols-rounded { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
-<body class="bg-gray-50 text-slate-800 antialiased">
+<body class="bg-slate-50 text-slate-600 antialiased">
 
 <div class="flex h-screen overflow-hidden">
     <!-- Sidebar -->
-    <aside class="w-72 bg-white border-r border-gray-200 flex flex-col transition-all duration-300 hidden md:flex z-20">
-        <!-- Logo Area -->
-        <div class="h-16 flex items-center px-8 border-b border-gray-100">
-            <div class="flex items-center gap-2 text-primary font-bold text-2xl tracking-tight">
-                <svg width="23px" height="84px" viewBox="0 0 23 84" version="1.1" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
-                    <g transform="scale(0.022) translate(0, 1400)">
-                        <path d="M531.8 385v483.3h0.1V385h-0.1z" fill="#343535" />
-                        <path d="M670.9 497.1h86v16h-86zM670.9 625.1h86v16h-86zM233.9 241.1h86v16h-86zM384 241.1h86v16h-86zM233.9 369h86v16h-86zM384 369h86v16h-86zM234 497.5h86v16h-86zM384 497.2h86v16h-86z" fill="#39393A" />
-                        <path d="M398.3 704.4c-11.9-11.9-28.4-19.3-46.5-19.3-36.2 0-65.8 29.6-65.8 65.8v117.4h20V750.9c0-12.2 4.8-23.6 13.5-32.3 8.7-8.7 20.2-13.5 32.3-13.5 12.2 0 23.6 4.8 32.3 13.5 8.7 8.7 13.5 20.2 13.5 32.3v117.4h20V750.9c0-18.1-7.4-34.5-19.3-46.5z" fill="#E73B37" />
-                        <path d="M575.8 429v437.9h0.1V429h-0.1zM286.2 868.3h131.6-131.6z" fill="#343535" />
-                        <path d="M896 868.3V385H575.9V111.6H128v756.7H64v44h896v-44h-64z m-364.1 0H172V155.6h359.9v712.7z m320.1-1.5H575.8V429H852v437.8z" fill="#39393A" />
-                    </g>
-                </svg>
+    <aside class="w-72 bg-white border-r border-slate-100 flex flex-col z-20 hidden md:flex shadow-soft">
+        <!-- Logo -->
+        <div class="h-20 flex items-center px-8 border-b border-slate-50">
+            <a href="${pageContext.request.contextPath}/home" class="flex items-center gap-2 text-primary font-bold text-2xl tracking-tight group">
+                <span class="material-symbols-rounded text-3xl group-hover:scale-110 transition-transform">spa</span>
                 EcoGive
-            </div>
+            </a>
         </div>
 
-        <!-- User Profile Summary -->
-        <div class="p-6 border-b border-gray-50 bg-gray-50/50">
-            <div class="flex items-center gap-4">
-                <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-lg border border-primary/20 shadow-sm">
-                    DN
+        <!-- User Info Card -->
+        <div class="p-6">
+            <div class="bg-primary-light/40 p-4 rounded-2xl border border-primary/10 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-full bg-white flex items-center justify-center text-primary shadow-sm shrink-0">
+                    <span class="material-symbols-rounded">business</span>
                 </div>
-                <div>
-                    <h3 class="text-sm font-bold text-slate-900">Doanh Nghiệp</h3>
-                    <p class="text-xs text-slate-500 font-medium">Partner Account</p>
+                <div class="min-w-0">
+                    <h3 class="text-sm font-bold text-slate-800 truncate">Doanh Nghiệp</h3>
+                    <p class="text-xs text-slate-500 font-medium">Partner Portal</p>
                 </div>
             </div>
         </div>
 
         <!-- Navigation -->
-        <nav class="flex-1 overflow-y-auto py-6 px-4 space-y-1">
-            <a href="#" class="flex items-center gap-3 px-4 py-3 text-primary bg-primary/10 rounded-lg font-semibold transition-all shadow-sm border border-primary/10">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+        <nav class="flex-1 px-4 space-y-2 overflow-y-auto">
+            <p class="px-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 mt-2">Quản lý</p>
+
+            <a href="#" class="flex items-center gap-3 px-4 py-3.5 text-primary bg-primary-light rounded-xl font-semibold transition-all shadow-sm ring-1 ring-primary/10">
+                <span class="material-symbols-rounded">recycling</span>
                 Điểm thu gom
             </a>
 
-            <!-- MỚI: Nút Xác thực Doanh nghiệp -->
-            <a href="${pageContext.request.contextPath}/verify-company" class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-50 hover:text-primary rounded-lg font-semibold transition-all">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                Xác thực Doanh nghiệp
+            <a href="${pageContext.request.contextPath}/verify-company" class="flex items-center gap-3 px-4 py-3.5 text-slate-500 hover:bg-slate-50 hover:text-primary rounded-xl font-medium transition-all group">
+                <span class="material-symbols-rounded group-hover:scale-110 transition-transform">verified_user</span>
+                Xác thực tài khoản
             </a>
         </nav>
 
         <!-- Footer -->
-        <div class="p-4 border-t border-gray-100">
-            <a href="${pageContext.request.contextPath}/logout" class="flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg font-medium transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H3"></path></svg>
+        <div class="p-4 border-t border-slate-50">
+            <a href="${pageContext.request.contextPath}/logout" class="flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 rounded-xl font-medium transition-colors">
+                <span class="material-symbols-rounded">logout</span>
                 Đăng xuất
             </a>
         </div>
     </aside>
 
     <!-- Main Content -->
-    <main class="flex-1 flex flex-col overflow-hidden relative bg-gray-50">
+    <main class="flex-1 flex flex-col overflow-hidden relative">
         <!-- Mobile Header -->
-        <header class="md:hidden bg-white border-b border-gray-200 h-16 flex items-center justify-between px-4 shadow-sm z-10">
+        <header class="md:hidden bg-white border-b border-slate-100 h-16 flex items-center justify-between px-4 shadow-sm z-10">
             <div class="font-bold text-primary text-xl flex items-center gap-2">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
-                EcoGive
+                <span class="material-symbols-rounded">spa</span> EcoGive
             </div>
-            <button class="text-slate-500 hover:text-slate-700 p-2 rounded-md hover:bg-gray-100">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            <button class="text-slate-500 p-2 rounded-lg hover:bg-slate-50">
+                <span class="material-symbols-rounded">menu</span>
             </button>
         </header>
 
-        <!-- Scrollable Content Area -->
-        <div class="flex-1 overflow-y-auto p-4 md:p-8">
-            <div class="max-w-7xl mx-auto">
-                <!-- Page Header -->
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <!-- Scrollable Area -->
+        <div class="flex-1 overflow-y-auto p-4 md:p-8 lg:p-10">
+            <div class="max-w-6xl mx-auto">
+
+                <!-- Page Header & Actions -->
+                <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
                     <div>
-                        <h1 class="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Quản lý Điểm thu gom</h1>
-                        <p class="text-slate-500 mt-1 text-sm md:text-base">Xem và quản lý danh sách các địa điểm thu gom rác thải của bạn.</p>
+                        <h1 class="text-3xl font-bold text-slate-800 tracking-tight mb-2">Điểm thu gom</h1>
+                        <p class="text-slate-500">Quản lý danh sách các địa điểm tập kết rác thải tái chế của bạn.</p>
                     </div>
-                    <a href="${pageContext.request.contextPath}/home" class="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold py-2.5 px-5 rounded-lg shadow-lg shadow-primary/30 transition-all transform hover:-translate-y-0.5 active:scale-95">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                        <span>Thêm Điểm Mới</span>
+                    <a href="${pageContext.request.contextPath}/home" class="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-primary/20 transition-all transform hover:-translate-y-1 active:scale-95">
+                        <span class="material-symbols-rounded">add_location_alt</span>
+                        Thêm điểm mới
                     </a>
+                </div>
+
+                <!-- Stats Overview -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                    <!-- Stat Card 1 -->
+                    <div class="bg-white p-6 rounded-2xl shadow-card flex items-center gap-5 transition-transform hover:-translate-y-1 duration-300">
+                        <div class="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                            <span class="material-symbols-rounded text-3xl">location_on</span>
+                        </div>
+                        <div>
+                            <p class="text-slate-400 text-xs font-bold uppercase tracking-wider">Tổng điểm thu gom</p>
+                            <p class="text-3xl font-bold text-slate-800 mt-1"><c:out value="${collectionPoints != null ? collectionPoints.size() : 0}"/></p>
+                        </div>
+                    </div>
+
+                    <!-- Stat Card 2 (Placeholder for future data) -->
+                    <div class="bg-white p-6 rounded-2xl shadow-card flex items-center gap-5 transition-transform hover:-translate-y-1 duration-300">
+                        <div class="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                            <span class="material-symbols-rounded text-3xl">check_circle</span>
+                        </div>
+                        <div>
+                            <p class="text-slate-400 text-xs font-bold uppercase tracking-wider">Trạng thái</p>
+                            <p class="text-lg font-bold text-slate-800 mt-1">Đang hoạt động</p>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Alert Messages -->
                 <c:if test="${not empty sessionScope.errorMessage}">
-                    <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg shadow-sm flex items-start gap-3 animate-fade-in-down" role="alert">
-                        <svg class="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        <div class="flex-1">
-                            <p class="text-sm text-red-700 font-medium">${sessionScope.errorMessage}</p>
-                        </div>
+                    <div class="mb-8 bg-red-50 border border-red-100 text-red-600 p-4 rounded-xl flex items-start gap-3 animate-pulse shadow-sm">
+                        <span class="material-symbols-rounded mt-0.5">error</span>
+                        <div class="flex-1 font-medium text-sm leading-relaxed">${sessionScope.errorMessage}</div>
                         <% session.removeAttribute("errorMessage"); %>
                     </div>
                 </c:if>
 
-                <!-- Content Card -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <!-- Card Header -->
-                    <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-white">
-                        <div class="flex items-center gap-2">
-                            <div class="w-1 h-6 bg-primary rounded-full"></div>
-                            <h3 class="text-lg font-bold text-slate-800">Danh sách điểm thu gom</h3>
-                        </div>
-                        <div class="text-sm text-slate-500 bg-gray-50 px-3 py-1 rounded-full border border-gray-200">
-                            Tổng số: <span class="font-bold text-slate-900"><c:out value="${collectionPoints != null ? collectionPoints.size() : 0}"/></span> điểm
+                <!-- Data Table Card -->
+                <div class="bg-white rounded-3xl shadow-card overflow-hidden">
+                    <div class="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-white">
+                        <h3 class="font-bold text-slate-800 text-lg">Danh sách điểm</h3>
+                        <div class="text-xs font-medium text-slate-400 bg-slate-50 px-3 py-1 rounded-full border border-slate-100">
+                            Cập nhật mới nhất
                         </div>
                     </div>
 
-                    <!-- Table -->
                     <div class="overflow-x-auto">
-                        <table class="w-full text-sm text-left">
-                            <thead class="bg-gray-50/80 text-slate-500 font-semibold uppercase tracking-wider text-xs border-b border-gray-200">
-                                <tr>
-                                    <th class="px-6 py-4">Tên Điểm</th>
-                                    <th class="px-6 py-4">Địa chỉ</th>
-                                    <th class="px-6 py-4">Loại rác</th>
-                                    <th class="px-6 py-4 text-right">Hành động</th>
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50/80 border-b border-slate-100 text-xs uppercase font-bold text-slate-400 tracking-wider">
+                                    <th class="px-8 py-5">Thông tin điểm</th>
+                                    <th class="px-8 py-5">Loại rác tiếp nhận</th>
+                                    <th class="px-8 py-5 text-right">Hành động</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-gray-100">
+                            <tbody class="divide-y divide-slate-50">
                                 <c:choose>
                                     <c:when test="${not empty collectionPoints}">
                                         <c:forEach var="point" items="${collectionPoints}">
-                                            <tr class="group hover:bg-blue-50/30 transition-colors duration-200">
-                                                <td class="px-6 py-4 font-medium text-slate-900">
-                                                    <div class="flex items-center gap-3">
-                                                        <div class="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
-                                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                            <tr class="hover:bg-slate-50/80 transition-colors group">
+                                                <td class="px-8 py-5">
+                                                    <div class="flex items-start gap-4">
+                                                        <div class="w-12 h-12 rounded-xl bg-primary-light text-primary flex items-center justify-center shrink-0 mt-1 border border-primary/10 shadow-sm group-hover:scale-110 transition-transform duration-300">
+                                                            <span class="material-symbols-rounded text-2xl">storefront</span>
                                                         </div>
-                                                        <span class="truncate max-w-[200px]" title="${point.name}">${point.name}</span>
+                                                        <div>
+                                                            <div class="font-bold text-slate-800 text-base mb-1 group-hover:text-primary transition-colors">${point.name}</div>
+                                                            <div class="text-sm text-slate-500 flex items-center gap-1.5">
+                                                                <span class="material-symbols-rounded text-[16px] text-slate-400">map</span>
+                                                                ${point.address}
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </td>
-                                                <td class="px-6 py-4 text-slate-600 max-w-xs truncate" title="${point.address}">
-                                                    ${point.address}
-                                                </td>
-                                                <td class="px-6 py-4">
-                                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border shadow-sm bg-slate-100 text-slate-700 border-slate-200">
-                                                        <span class="mr-1.5 text-base">${point.typeIcon}</span> ${point.typeName}
+                                                <td class="px-8 py-5 align-middle">
+                                                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200 group-hover:bg-white group-hover:shadow-sm transition-all">
+                                                        <span>${point.typeIcon}</span> ${point.typeName}
                                                     </span>
                                                 </td>
-                                                <td class="px-6 py-4 text-right">
-                                                    <div class="flex items-center justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
-                                                        <!-- Delete Form -->
-                                                        <form action="${pageContext.request.contextPath}/dashboard/company" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn xóa điểm này? Hành động này không thể hoàn tác.');" class="inline-block">
-                                                            <input type="hidden" name="action" value="delete">
-                                                            <input type="hidden" name="pointId" value="${point.pointId}">
-                                                            <button type="submit" class="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 border border-red-100 rounded-md transition-colors" title="Xóa điểm này">
-                                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                                                Xóa
-                                                            </button>
-                                                        </form>
-                                                    </div>
+                                                <td class="px-8 py-5 text-right align-middle">
+                                                    <form action="${pageContext.request.contextPath}/dashboard/company" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn xóa điểm này? Hành động này không thể hoàn tác.');" class="inline-block">
+                                                        <input type="hidden" name="action" value="delete">
+                                                        <input type="hidden" name="pointId" value="${point.pointId}">
+                                                        <button type="submit" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-100 transition-all" title="Xóa điểm này">
+                                                            <span class="material-symbols-rounded">delete</span>
+                                                        </button>
+                                                    </form>
                                                 </td>
                                             </tr>
                                         </c:forEach>
                                     </c:when>
                                     <c:otherwise>
                                         <tr>
-                                            <td colspan="4" class="px-6 py-20 text-center">
-                                                <div class="flex flex-col items-center justify-center">
-                                                    <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4 text-gray-300 border border-gray-100">
-                                                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                            <td colspan="3" class="px-8 py-24 text-center">
+                                                <div class="flex flex-col items-center justify-center animate-fade-in">
+                                                    <div class="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mb-6 text-slate-300 border border-slate-100">
+                                                        <span class="material-symbols-rounded text-5xl">location_off</span>
                                                     </div>
-                                                    <h3 class="text-slate-900 font-semibold text-lg mb-2">Chưa có điểm thu gom nào</h3>
-                                                    <p class="text-slate-500 text-sm mb-6 max-w-sm mx-auto">Danh sách của bạn đang trống. Hãy đóng góp cho môi trường bằng cách thêm địa điểm thu gom đầu tiên.</p>
-                                                    <a href="${pageContext.request.contextPath}/home" class="inline-flex items-center gap-2 text-primary hover:text-primary-hover font-semibold text-sm bg-primary/5 hover:bg-primary/10 px-4 py-2 rounded-lg transition-colors">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                                    <h3 class="text-slate-800 font-bold text-xl mb-2">Chưa có điểm thu gom nào</h3>
+                                                    <p class="text-slate-500 text-sm max-w-xs mx-auto mb-8 leading-relaxed">Danh sách của bạn đang trống. Hãy đóng góp cho môi trường bằng cách thêm địa điểm đầu tiên.</p>
+                                                    <a href="${pageContext.request.contextPath}/home" class="inline-flex items-center gap-2 text-primary font-bold hover:underline text-sm bg-primary-light/50 px-4 py-2 rounded-lg hover:bg-primary-light transition-colors">
+                                                        <span class="material-symbols-rounded text-lg">add</span>
                                                         Thêm điểm mới ngay
                                                     </a>
                                                 </div>
@@ -212,12 +229,12 @@
                         </table>
                     </div>
 
-                    <!-- Pagination (Static Placeholder) -->
-                    <div class="px-6 py-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
-                        <span class="text-xs text-slate-500">Hiển thị <span class="font-semibold text-slate-700">1</span> đến <span class="font-semibold text-slate-700"><c:out value="${collectionPoints != null ? collectionPoints.size() : 0}"/></span> kết quả</span>
-                        <div class="flex gap-2">
-                            <button class="px-3 py-1.5 text-xs font-medium border border-gray-300 rounded-md bg-white text-slate-400 cursor-not-allowed shadow-sm" disabled>Trước</button>
-                            <button class="px-3 py-1.5 text-xs font-medium border border-gray-300 rounded-md bg-white text-slate-400 cursor-not-allowed shadow-sm" disabled>Sau</button>
+                    <!-- Pagination (Static for now) -->
+                    <div class="px-8 py-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
+                        <span class="text-xs text-slate-500 font-medium">Hiển thị <span class="text-slate-800"><c:out value="${collectionPoints != null ? collectionPoints.size() : 0}"/></span> kết quả</span>
+                        <div class="flex gap-2 opacity-50 pointer-events-none">
+                            <button class="px-3 py-1.5 text-xs font-bold border border-slate-200 rounded-lg bg-white text-slate-400">Trước</button>
+                            <button class="px-3 py-1.5 text-xs font-bold border border-slate-200 rounded-lg bg-white text-slate-400">Sau</button>
                         </div>
                     </div>
                 </div>
