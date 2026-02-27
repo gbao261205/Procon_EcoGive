@@ -74,14 +74,19 @@ public class CollectionPointApiServlet extends HttpServlet {
         String address;
         double latitude;
         double longitude;
-        String ownerRole; // Thêm trường này
+        String ownerRole; 
+        long ownerId;     // Thêm ownerId
+        String ownerName; // Thêm ownerName
 
         public StationDTO(CollectionPoint p) {
             this.pointId = p.getPointId();
             this.name = p.getName();
-            this.type = p.getTypeCode(); // Đã sửa: dùng getTypeCode() thay vì getType().name()
+            this.type = p.getTypeCode(); 
             this.address = p.getAddress();
-            this.ownerRole = p.getOwnerRole(); // Lấy dữ liệu từ model
+            this.ownerRole = p.getOwnerRole(); 
+            this.ownerId = p.getOwnerId();     // Map ownerId
+            this.ownerName = p.getOwnerName(); // Map ownerName
+
             if (p.getLocation() != null) {
                 this.latitude = p.getLocation().getLatitude();
                 this.longitude = p.getLocation().getLongitude();

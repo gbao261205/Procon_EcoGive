@@ -532,17 +532,54 @@
         async function loadInboxList() {
             try {
                 const res = await fetch('${pageContext.request.contextPath}/api/chat?action=inbox');
-                const users = await res.json();
-                allInboxUsers = users;
-                renderInboxList(allInboxUsers);
+                let users = await res.json();
 
+                // Kiểm tra xem có paramPartnerId từ URL không và chưa có ai đang được chọn
                 if (paramPartnerId && !currentReceiverId) {
-                    const target = users.find(u => u.userId == paramPartnerId);
+                    let target = users.find(u => u.userId == paramPartnerId);
+
+                    // NẾU LÀ NGƯỜI MỚI CHƯA TỪNG CHAT
+                    if (!target) {
+                        try {
+                            // Gọi API lấy thông tin user để lấy tên hiển thị
+                            const userRes = await fetch('${pageContext.request.contextPath}/api/chat?action=user_info&userId=' + paramPartnerId);
+                            const userInfo = await userRes.json();
+
+                            if (!userInfo.error) {
+                                // Tạo một object giả lập cấu trúc inbox item
+                                target = {
+                                    userId: paramPartnerId,
+                                    username: userInfo.username || "Người dùng mới",
+                                    itemId: paramItemId || null,
+                                    itemName: null,
+                                    giverId: null,
+                                    lastMsgTime: new Date().getTime(), // Lấy thời gian hiện tại
+                                    lastMsg: 'Bắt đầu cuộc trò chuyện...'
+                                };
+                                // Thêm người dùng mới này lên đầu danh sách inbox
+                                users.unshift(target);
+                            }
+                        } catch (err) {
+                            console.error("Lỗi khi tải thông tin đối tác chat mới:", err);
+                        }
+                    }
+
+                    allInboxUsers = users;
+                    renderInboxList(allInboxUsers);
+
+                    // Mở khung chat với người này
                     if (target) {
                         selectUserChat(target.userId, target.username, target.itemId, target.itemName, target.giverId);
                     }
+                } else {
+                    // Chạy bình thường nếu không có param trên URL
+                    allInboxUsers = users;
+                    renderInboxList(allInboxUsers);
                 }
-            } catch (e) { console.error(e); }
+
+            } catch (e) {
+                console.error(e);
+            }
         }
 
         function searchFriends() {
