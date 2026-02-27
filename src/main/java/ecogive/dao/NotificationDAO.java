@@ -98,6 +98,17 @@ public class NotificationDAO {
             throw new SQLException(e);
         }
     }
+    
+    public boolean delete(long notificationId) throws SQLException {
+        String sql = "DELETE FROM notifications WHERE notification_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setLong(1, notificationId);
+            return stmt.executeUpdate() > 0;
+        } catch (Exception e) {
+            throw new SQLException(e);
+        }
+    }
 
     private Notification mapRow(ResultSet rs) throws SQLException {
         Notification n = new Notification();

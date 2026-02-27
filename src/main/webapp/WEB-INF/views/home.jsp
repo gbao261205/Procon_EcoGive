@@ -148,8 +148,31 @@
             <span class="material-symbols-outlined text-[20px]">add</span>
         </button>
 
-        <!-- User Profile -->
+        <!-- User Profile & Notifications -->
         <c:if test="${sessionScope.currentUser != null}">
+            <!-- Notification Bell -->
+            <div class="relative" id="noti-container">
+                <button id="noti-button" onclick="toggleNotificationDropdown()" class="w-9 h-9 md:w-10 md:h-10 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-600 flex items-center justify-center transition relative">
+                    <span class="material-symbols-outlined text-[22px]">notifications</span>
+                    <span id="noti-badge" class="absolute top-0 right-0 w-3 h-3 bg-red-500 border-2 border-white rounded-full hidden"></span>
+                </button>
+
+                <!-- Notification Dropdown -->
+                <div id="noti-dropdown" class="hidden absolute right-0 mt-2 w-80 md:w-96 bg-white rounded-xl shadow-2xl border border-slate-100 z-50 origin-top-right animate-scale-in overflow-hidden">
+                    <div class="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                        <h3 class="font-bold text-slate-800 text-sm">Thông báo</h3>
+                        <button onclick="markAllRead()" class="text-xs text-primary font-bold hover:underline">Đã đọc tất cả</button>
+                    </div>
+                    <div id="noti-list" class="max-h-80 overflow-y-auto custom-scrollbar">
+                        <!-- Notifications will be loaded here -->
+                        <div class="text-center py-8 text-slate-400 text-xs">Đang tải...</div>
+                    </div>
+                    <div class="px-4 py-2 border-t border-slate-100 bg-slate-50 text-center">
+                        <a href="${pageContext.request.contextPath}/chat" class="text-xs font-bold text-slate-500 hover:text-primary">Xem tất cả trong tin nhắn</a>
+                    </div>
+                </div>
+            </div>
+
             <div class="relative" id="user-menu-container">
                 <button id="user-menu-button" class="flex items-center gap-3 group cursor-pointer">
                     <div class="text-right hidden md:block">
@@ -776,6 +799,12 @@
         loadItems();
         loadCollectionPoints();
 
+        // --- NOTIFICATION INIT ---
+        if (currentUserId) {
+            loadNotifications();
+            setInterval(loadNotifications, 10000); // Poll every 10s
+        }
+
         map.on('moveend', loadItems);
 
         // User menu dropdown
@@ -792,6 +821,16 @@
             window.addEventListener('click', (e) => {
                 if (userMenuContainer && !userMenuContainer.contains(e.target)) {
                     userMenu.classList.add('hidden');
+                }
+            });
+        }
+
+        // Notification dropdown close on click outside
+        const notiContainer = document.getElementById('noti-container');
+        if (notiContainer) {
+            window.addEventListener('click', (e) => {
+                if (!notiContainer.contains(e.target)) {
+                    document.getElementById('noti-dropdown').classList.add('hidden');
                 }
             });
         }
@@ -1898,6 +1937,75 @@
             console.error(e);
             alert("Lỗi gửi đề nghị");
         }
+    }
+
+    // --- NOTIFICATION LOGIC ---
+    function toggleNotificationDropdown() {
+        const dropdown = document.getElementById('noti-dropdown');
+        dropdown.classList.toggle('hidden');
+    }
+
+    async function loadNotifications() {
+        try {
+            const res = await fetch('${pageContext.request.contextPath}/api/notifications');
+            const data = await res.json();
+
+            const badge = document.getElementById('noti-badge');
+            if (data.unreadCount > 0) {
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+
+            const listEl = document.getElementById('noti-list');
+            listEl.innerHTML = '';
+
+            if (data.notifications.length === 0) {
+                listEl.innerHTML = '<div class="text-center py-8 text-slate-400 text-xs">Không có thông báo nào</div>';
+                return;
+            }
+
+            data.notifications.forEach(n => {
+                const bgClass = n.isRead ? 'bg-white' : 'bg-blue-50';
+                const icon = n.type === 'GIFT_REQUEST' ? 'volunteer_activism' : (n.type === 'TRADE_REQUEST' ? 'swap_horiz' : 'notifications');
+                const color = n.type === 'GIFT_REQUEST' ? 'text-primary' : (n.type === 'TRADE_REQUEST' ? 'text-purple-500' : 'text-slate-500');
+
+                const html = `
+                    <div class="px-4 py-3 border-b border-slate-50 hover:bg-slate-50 transition \${bgClass} group relative">
+                        <div class="flex gap-3">
+                            <div class="w-8 h-8 rounded-full bg-white border border-slate-100 flex items-center justify-center shrink-0 shadow-sm">
+                                <span class="material-symbols-outlined text-lg \${color}">\${icon}</span>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm text-slate-700 leading-snug">\${n.content}</p>
+                                <p class="text-[10px] text-slate-400 mt-1">\${timeAgo(n.createdAt)}</p>
+                            </div>
+                        </div>
+                        <div class="absolute top-2 right-2 hidden group-hover:flex gap-1 bg-white/80 backdrop-blur rounded-lg p-1 shadow-sm">
+                            \${!n.isRead ? `<button onclick="markRead(\${n.id})" class="p-1 hover:bg-blue-100 rounded text-blue-600" title="Đã đọc"><span class="material-symbols-outlined text-[16px]">check</span></button>` : ''}
+                            <button onclick="deleteNoti(\${n.id})" class="p-1 hover:bg-red-100 rounded text-red-600" title="Xóa"><span class="material-symbols-outlined text-[16px]">delete</span></button>
+                        </div>
+                    </div>
+                `;
+                listEl.insertAdjacentHTML('beforeend', html);
+            });
+        } catch(e) { console.error(e); }
+    }
+
+    async function markRead(id) {
+        await fetch('${pageContext.request.contextPath}/api/notifications?action=read&id=' + id, { method: 'POST' });
+        loadNotifications();
+    }
+
+    async function markAllRead() {
+        await fetch('${pageContext.request.contextPath}/api/notifications?action=read_all', { method: 'POST' });
+        loadNotifications();
+    }
+
+    async function deleteNoti(id) {
+        if(!confirm("Xóa thông báo này?")) return;
+        await fetch('${pageContext.request.contextPath}/api/notifications?action=delete&id=' + id, { method: 'POST' });
+        loadNotifications();
     }
 </script>
 </body>
