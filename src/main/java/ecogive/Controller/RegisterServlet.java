@@ -51,16 +51,33 @@ public class RegisterServlet extends HttpServlet {
         }
 
         try {
-            if (userDAO.findByUsername(username) != null) {
-                request.setAttribute("error", "Tên đăng nhập đã tồn tại.");
-                request.getRequestDispatcher("/WEB-INF/views/register.jsp").forward(request, response);
-                return;
+            // Kiểm tra Username
+            User existingUserByUsername = userDAO.findByUsername(username);
+            if (existingUserByUsername != null) {
+                if (existingUserByUsername.isVerified()) {
+                    request.setAttribute("error", "Tên đăng nhập đã tồn tại.");
+                    request.getRequestDispatcher("/WEB-INF/views/register.jsp").forward(request, response);
+                    return;
+                } else {
+                    // Tài khoản tồn tại nhưng chưa xác thực -> Xóa để cho phép đăng ký lại
+                    userDAO.delete(existingUserByUsername.getUserId());
+                }
             }
             
-            if (userDAO.findByEmail(email) != null) {
-                request.setAttribute("error", "Email đã được sử dụng.");
-                request.getRequestDispatcher("/WEB-INF/views/register.jsp").forward(request, response);
-                return;
+            // Kiểm tra Email
+            User existingUserByEmail = userDAO.findByEmail(email);
+            if (existingUserByEmail != null) {
+                if (existingUserByEmail.isVerified()) {
+                    request.setAttribute("error", "Email đã được sử dụng.");
+                    request.getRequestDispatcher("/WEB-INF/views/register.jsp").forward(request, response);
+                    return;
+                } else {
+                    // Tài khoản tồn tại nhưng chưa xác thực -> Xóa để cho phép đăng ký lại
+                    // Cần kiểm tra lại xem user này còn tồn tại không (tránh trường hợp trùng với user vừa xóa ở trên)
+                    if (userDAO.findById(existingUserByEmail.getUserId()) != null) {
+                        userDAO.delete(existingUserByEmail.getUserId());
+                    }
+                }
             }
             
             String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt());
