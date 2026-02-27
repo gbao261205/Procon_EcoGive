@@ -43,7 +43,7 @@ public class ItemDAO {
     }
 
     public List<Item> findAllAvailable() throws SQLException {
-        String sql = "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude, u.username " +
+        String sql = "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude, u.username, u.is_company_verified " +
                 "FROM items i " +
                 "JOIN users u ON i.giver_id = u.user_id " +
                 "WHERE i.status = 'AVAILABLE'";
@@ -56,6 +56,9 @@ public class ItemDAO {
             while (rs.next()) {
                 Item item = mapRow(rs);
                 item.setGiverName(rs.getString("username"));
+                try {
+                    item.setCompanyVerified(rs.getBoolean("is_company_verified"));
+                } catch (SQLException e) { item.setCompanyVerified(false); }
                 list.add(item);
             }
         } catch (Exception e) {
@@ -73,7 +76,7 @@ public class ItemDAO {
                 minLng, minLat);
 
         StringBuilder sql = new StringBuilder(
-                "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude, u.username " +
+                "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude, u.username, u.is_company_verified " +
                 "FROM items i " +
                 "JOIN users u ON i.giver_id = u.user_id " +
                 "WHERE i.status = 'AVAILABLE' " +
@@ -97,6 +100,9 @@ public class ItemDAO {
                 while (rs.next()) {
                     Item item = mapRow(rs);
                     item.setGiverName(rs.getString("username"));
+                    try {
+                        item.setCompanyVerified(rs.getBoolean("is_company_verified"));
+                    } catch (SQLException e) { item.setCompanyVerified(false); }
                     list.add(item);
                 }
             }
@@ -112,7 +118,7 @@ public class ItemDAO {
     
     public List<Item> findAvailableSortedByDistance(double lat, double lng, int limit, int offset, Integer categoryId) throws SQLException {
         StringBuilder sql = new StringBuilder(
-            "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude, u.username, " +
+            "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude, u.username, u.is_company_verified, " +
             "ST_Distance_Sphere(i.location, ST_GeomFromText(?)) AS distance " +
             "FROM items i " +
             "JOIN users u ON i.giver_id = u.user_id " +
@@ -145,6 +151,9 @@ public class ItemDAO {
                 while (rs.next()) {
                     Item item = mapRow(rs);
                     item.setGiverName(rs.getString("username"));
+                    try {
+                        item.setCompanyVerified(rs.getBoolean("is_company_verified"));
+                    } catch (SQLException e) { item.setCompanyVerified(false); }
                     list.add(item);
                 }
             }

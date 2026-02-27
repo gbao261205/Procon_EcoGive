@@ -17,6 +17,7 @@ public class Item {
     private BigDecimal ecoPoints; // Số điểm thưởng cho vật phẩm
     private String categoryName; // Tên danh mục
     private String address; // Địa chỉ chi tiết
+    private boolean isCompanyVerified; // Trạng thái xác thực doanh nghiệp của người tặng
 
     public Item() {
     }
@@ -140,5 +141,13 @@ public class Item {
 
     public void setEcoPoints(BigDecimal ecoPoints) {
         this.ecoPoints = ecoPoints;
+    }
+
+    public boolean isCompanyVerified() {
+        return isCompanyVerified;
+    }
+
+    public void setCompanyVerified(boolean companyVerified) {
+        isCompanyVerified = companyVerified;
     }
 }

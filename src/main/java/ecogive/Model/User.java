@@ -19,6 +19,11 @@ public class User {
     private boolean isVerified;
     private String verificationToken;
 
+    // --- MỚI: Xác thực doanh nghiệp ---
+    private boolean isCompanyVerified;
+    private String companyVerificationStatus; // NONE, PENDING, VERIFIED, REJECTED
+    private String verificationDocument;
+
     public User() {
     }
 
@@ -158,5 +163,29 @@ public class User {
 
     public void setVerificationToken(String verificationToken) {
         this.verificationToken = verificationToken;
+    }
+
+    public boolean isCompanyVerified() {
+        return isCompanyVerified;
+    }
+
+    public void setCompanyVerified(boolean companyVerified) {
+        isCompanyVerified = companyVerified;
+    }
+
+    public String getCompanyVerificationStatus() {
+        return companyVerificationStatus;
+    }
+
+    public void setCompanyVerificationStatus(String companyVerificationStatus) {
+        this.companyVerificationStatus = companyVerificationStatus;
+    }
+
+    public String getVerificationDocument() {
+        return verificationDocument;
+    }
+
+    public void setVerificationDocument(String verificationDocument) {
+        this.verificationDocument = verificationDocument;
     }
 }

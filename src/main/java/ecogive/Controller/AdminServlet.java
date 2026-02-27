@@ -83,6 +83,16 @@ public class AdminServlet extends HttpServlet {
                 case "delete-station-type":
                     deleteStationType(req, resp);
                     break;
+                // --- MỚI: Quản lý xác thực doanh nghiệp ---
+                case "verify-requests":
+                    listVerifyRequests(req, resp);
+                    break;
+                case "approve-company":
+                    approveCompany(req, resp);
+                    break;
+                case "reject-company":
+                    rejectCompany(req, resp);
+                    break;
                 default:
                     showDashboard(req, resp);
                     break;
@@ -443,5 +453,24 @@ public class AdminServlet extends HttpServlet {
         String code = req.getParameter("code");
         stationTypeDAO.delete(code);
         resp.sendRedirect(req.getContextPath() + "/admin?action=station-types");
+    }
+
+    // --- MỚI: Xử lý xác thực doanh nghiệp ---
+
+    private void listVerifyRequests(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, SQLException {
+        req.setAttribute("requests", userDAO.getPendingCompanyVerifications());
+        req.getRequestDispatcher("/WEB-INF/views/admin/verify-requests.jsp").forward(req, resp);
+    }
+
+    private void approveCompany(HttpServletRequest req, HttpServletResponse resp) throws SQLException, IOException {
+        long userId = Long.parseLong(req.getParameter("id"));
+        userDAO.approveCompany(userId);
+        resp.sendRedirect(req.getContextPath() + "/admin?action=verify-requests");
+    }
+
+    private void rejectCompany(HttpServletRequest req, HttpServletResponse resp) throws SQLException, IOException {
+        long userId = Long.parseLong(req.getParameter("id"));
+        userDAO.rejectCompany(userId);
+        resp.sendRedirect(req.getContextPath() + "/admin?action=verify-requests");
     }
 }

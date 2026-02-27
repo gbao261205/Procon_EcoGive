@@ -114,7 +114,12 @@
             </div>
             <div class="flex-1 text-center md:text-left space-y-4">
                 <div>
-                    <h1 class="text-3xl md:text-4xl font-bold text-slate-800 tracking-tight mb-1">${profileUser.username}</h1>
+                    <h1 class="text-3xl md:text-4xl font-bold text-slate-800 tracking-tight mb-1 flex items-center justify-center md:justify-start gap-2">
+                        ${profileUser.username}
+                        <c:if test="${profileUser.isCompanyVerified()}">
+                            <span class="material-symbols-outlined text-blue-500 text-2xl" title="Doanh nghiệp đã xác thực">verified</span>
+                        </c:if>
+                    </h1>
                     <c:if test="${isMyProfile}">
                         <p class="text-slate-500 font-medium">${profileUser.email}</p>
                     </c:if>
@@ -152,6 +157,11 @@
             <c:if test="${isMyProfile}">
                 <button onclick="switchTab('received')" id="tab-received" class="flex-1 min-w-[120px] py-5 text-sm font-bold text-slate-500 border-b-2 border-transparent hover:text-primary hover:bg-slate-50 transition-all duration-200">
                     📥 Vật phẩm đã nhận <span class="ml-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs">${fn:length(receivedItems)}</span>
+                </button>
+            </c:if>
+            <c:if test="${profileUser.role == 'COLLECTOR_COMPANY'}">
+                <button onclick="switchTab('points')" id="tab-points" class="flex-1 min-w-[120px] py-5 text-sm font-bold text-slate-500 border-b-2 border-transparent hover:text-primary hover:bg-slate-50 transition-all duration-200">
+                    ♻️ Điểm tập kết <span class="ml-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs">${fn:length(companyPoints)}</span>
                 </button>
             </c:if>
             <button onclick="switchTab('reviews')" id="tab-reviews" class="flex-1 min-w-[120px] py-5 text-sm font-bold text-slate-500 border-b-2 border-transparent hover:text-primary hover:bg-slate-50 transition-all duration-200">
@@ -261,6 +271,36 @@
                 </div>
             </c:if>
 
+            <!-- TAB: Điểm tập kết (chỉ hiển thị cho doanh nghiệp) -->
+            <c:if test="${profileUser.role == 'COLLECTOR_COMPANY'}">
+                <div id="content-points" class="hidden animate-fade-in">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <c:forEach var="point" items="${companyPoints}">
+                            <div class="bg-white border border-slate-100 rounded-2xl p-5 hover:shadow-md transition-all duration-300 flex gap-4 items-start">
+                                <div class="w-12 h-12 rounded-xl bg-yellow-50 flex items-center justify-center text-yellow-600 shrink-0 border border-yellow-100">
+                                    <span class="material-symbols-outlined text-2xl">recycling</span>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h3 class="font-bold text-slate-800 text-lg mb-1 truncate">${point.name}</h3>
+                                    <p class="text-sm text-slate-500 mb-2 flex items-center gap-1">
+                                        <span class="material-symbols-outlined text-sm">location_on</span> ${point.address}
+                                    </p>
+                                    <div class="flex items-center gap-2">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                                            ${point.typeName}
+                                        </span>
+                                        <a href="https://www.google.com/maps/search/?api=1&query=${point.location.latitude},${point.location.longitude}" target="_blank" class="text-xs font-bold text-blue-600 hover:underline">Chỉ đường</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </c:forEach>
+                        <c:if test="${empty companyPoints}">
+                            <div class="col-span-full text-center py-16 text-slate-400"><span class="text-4xl block mb-3">🏢</span><p>Doanh nghiệp này chưa có điểm tập kết nào.</p></div>
+                        </c:if>
+                    </div>
+                </div>
+            </c:if>
+
             <!-- TAB: Đánh giá -->
             <div id="content-reviews" class="hidden animate-fade-in">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -297,6 +337,9 @@
         const tabs = ['given', 'reviews'];
         if (${isMyProfile}) {
             tabs.push('received');
+        }
+        if ('${profileUser.role}' === 'COLLECTOR_COMPANY') {
+            tabs.push('points');
         }
 
         tabs.forEach(t => {

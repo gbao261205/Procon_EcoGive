@@ -229,6 +229,57 @@ public class UserDAO {
         }
     }
 
+    // --- MỚI: Các phương thức xác thực doanh nghiệp ---
+
+    public boolean updateCompanyVerificationRequest(long userId, String documentUrl) throws SQLException {
+        String sql = "UPDATE users SET company_verification_status = 'PENDING', verification_document = ? WHERE user_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, documentUrl);
+            stmt.setLong(2, userId);
+            return stmt.executeUpdate() > 0;
+        } catch (Exception e) {
+            throw new SQLException(e);
+        }
+    }
+
+    public boolean approveCompany(long userId) throws SQLException {
+        String sql = "UPDATE users SET is_company_verified = TRUE, company_verification_status = 'VERIFIED' WHERE user_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setLong(1, userId);
+            return stmt.executeUpdate() > 0;
+        } catch (Exception e) {
+            throw new SQLException(e);
+        }
+    }
+
+    public boolean rejectCompany(long userId) throws SQLException {
+        String sql = "UPDATE users SET is_company_verified = FALSE, company_verification_status = 'REJECTED' WHERE user_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setLong(1, userId);
+            return stmt.executeUpdate() > 0;
+        } catch (Exception e) {
+            throw new SQLException(e);
+        }
+    }
+
+    public List<User> getPendingCompanyVerifications() throws SQLException {
+        List<User> list = new ArrayList<>();
+        String sql = "SELECT * FROM users WHERE company_verification_status = 'PENDING'";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                list.add(mapRow(rs));
+            }
+        } catch (Exception e) {
+            throw new SQLException(e);
+        }
+        return list;
+    }
+
     private User mapRow(ResultSet rs) throws SQLException {
         User u = new User();
         u.setUserId(rs.getLong("user_id"));
@@ -242,6 +293,17 @@ public class UserDAO {
         u.setResetToken(rs.getString("reset_token"));
         u.setVerified(rs.getBoolean("is_verified"));
         u.setVerificationToken(rs.getString("verification_token"));
+        
+        // Map các cột mới (cần kiểm tra xem cột có tồn tại không để tránh lỗi nếu DB chưa update)
+        try {
+            u.setCompanyVerified(rs.getBoolean("is_company_verified"));
+            u.setCompanyVerificationStatus(rs.getString("company_verification_status"));
+            u.setVerificationDocument(rs.getString("verification_document"));
+        } catch (SQLException e) {
+            // Cột chưa tồn tại trong DB, bỏ qua hoặc set mặc định
+            u.setCompanyVerified(false);
+            u.setCompanyVerificationStatus("NONE");
+        }
         
         Timestamp expiry = rs.getTimestamp("reset_token_expiry");
         if (expiry != null) {

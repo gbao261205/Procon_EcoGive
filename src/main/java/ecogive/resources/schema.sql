@@ -18,16 +18,19 @@ CREATE TABLE users (
     username VARCHAR(50) NOT NULL UNIQUE,
     email VARCHAR(100) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
-    eco_points DECIMAL(10, 2) DEFAULT 0.00,
-    reputation_score DECIMAL(3, 2) DEFAULT 1.00,
-    join_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    role ENUM('USER', 'ADMIN', 'COLLECTOR_COMPANY') NOT NULL DEFAULT 'USER',
     phone_number VARCHAR(20) NULL,
     address TEXT NULL,
+    eco_points DECIMAL(10, 2) DEFAULT 0.00,
+    reputation_score DECIMAL(3, 2) DEFAULT 1.00,
+    role ENUM('USER', 'ADMIN', 'COLLECTOR_COMPANY') NOT NULL DEFAULT 'USER',
+    join_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     reset_token VARCHAR(255) NULL,
     reset_token_expiry TIMESTAMP NULL,
     is_verified BOOLEAN DEFAULT FALSE,
-    verification_token VARCHAR(255) NULL
+    verification_token VARCHAR(255) NULL,
+    is_company_verified BOOLEAN DEFAULT FALSE,
+    company_verification_status ENUM('NONE', 'PENDING', 'VERIFIED', 'REJECTED') DEFAULT 'NONE',
+    verification_document VARCHAR(255) NULL
 );
 
 -- Bảng 2: Danh mục (Categories) - ĐÃ KHÔI PHỤC

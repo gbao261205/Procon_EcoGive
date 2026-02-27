@@ -1,9 +1,12 @@
 package ecogive.Controller;
 
+import ecogive.Model.CollectionPoint;
 import ecogive.Model.Item;
 import ecogive.Model.ItemStatus;
+import ecogive.Model.Role;
 import ecogive.Model.User;
 import ecogive.Model.Review;
+import ecogive.dao.CollectionPointDAO;
 import ecogive.dao.ItemDAO;
 import ecogive.dao.ReviewDAO;
 import ecogive.dao.UserDAO;
@@ -25,6 +28,7 @@ public class ProfileServlet extends HttpServlet {
     private final ItemDAO itemDAO = new ItemDAO();
     private final ReviewDAO reviewDAO = new ReviewDAO();
     private final UserDAO userDAO = new UserDAO();
+    private final CollectionPointDAO collectionPointDAO = new CollectionPointDAO();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -81,13 +85,23 @@ public class ProfileServlet extends HttpServlet {
         List<Item> givenItems = itemDAO.findItemsByGiverId(profileUser.getUserId());
         List<Review> reviews = reviewDAO.findReviewsByTargetUser(profileUser.getUserId());
         List<Item> receivedItems = isMyProfile ? itemDAO.findItemsByReceiverId(profileUser.getUserId()) : Collections.emptyList();
-
+        
+        // Lấy danh sách điểm tập kết nếu là doanh nghiệp
+        List<CollectionPoint> companyPoints = Collections.emptyList();
+        if (profileUser.getRole() == Role.COLLECTOR_COMPANY) {
+            try {
+                companyPoints = collectionPointDAO.findByOwnerId(profileUser.getUserId());
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
 
         req.setAttribute("profileUser", profileUser);
         req.setAttribute("isMyProfile", isMyProfile);
         req.setAttribute("givenItems", givenItems);
         req.setAttribute("receivedItems", receivedItems);
         req.setAttribute("reviews", reviews);
+        req.setAttribute("companyPoints", companyPoints);
 
         req.getRequestDispatcher("/WEB-INF/views/profile.jsp").forward(req, resp);
     }
