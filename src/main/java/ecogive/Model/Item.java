@@ -14,6 +14,7 @@ public class Item {
     private LocalDateTime postDate;
     private GeoPoint location;
     private String giverName;
+    private String giverDisplayName; // MỚI: Tên hiển thị của người tặng
     private BigDecimal ecoPoints; // Số điểm thưởng cho vật phẩm
     private String categoryName; // Tên danh mục
     private String address; // Địa chỉ chi tiết
@@ -61,6 +62,14 @@ public class Item {
 
     public void setGiverName(String giverName) {
         this.giverName = giverName;
+    }
+
+    public String getGiverDisplayName() {
+        return giverDisplayName;
+    }
+
+    public void setGiverDisplayName(String giverDisplayName) {
+        this.giverDisplayName = giverDisplayName;
     }
 
     public long getItemId() {

@@ -954,6 +954,7 @@
                     }
 
                     let actionBtn = '';
+                    const displayName = item.giverDisplayName || item.giverName || 'Người tặng';
 
                     if (currentUserId) {
                         if (item.giverId === currentUserId) {
@@ -962,7 +963,7 @@
                             // Cập nhật nút bấm trong Popup
                             actionBtn = `
                                 <div class="flex flex-col gap-1 mt-2">
-                                    <button onclick="requestItem(\${item.itemId}, \${item.giverId}, '\${item.giverName || 'Người tặng'}', '\${item.title}')" class="w-full bg-primary text-white text-xs font-bold py-2 rounded-lg hover:bg-primary-hover shadow-md transition">Xin món này 🎁</button>
+                                    <button onclick="requestItem(\${item.itemId}, \${item.giverId}, '\${displayName}', '\${item.title}')" class="w-full bg-primary text-white text-xs font-bold py-2 rounded-lg hover:bg-primary-hover shadow-md transition">Xin món này 🎁</button>
                                     <button onclick="openTradeProposal(\${item.itemId}, '\${item.title}', '\${imgUrl}')" class="w-full bg-white text-primary text-xs font-bold py-2 rounded-lg border border-primary hover:bg-emerald-50 transition">Trao đổi 🔄</button>
                                 </div>
                             `;
@@ -988,7 +989,7 @@
                             </div>
                             <div class="custom-popup-body">
                                 <h3 class="font-bold text-sm text-slate-800 mb-1 line-clamp-1">\${item.title}</h3>
-                                <p class="text-xs text-slate-500 mb-2">Người tặng: <span class="font-medium text-slate-700">\${item.giverName}</span></p>
+                                <p class="text-xs text-slate-500 mb-2">Người tặng: <span class="font-medium text-slate-700">\${displayName}</span></p>
                                 \${addressHtml}
                                 \${detailBtn}
                                 \${actionBtn}
@@ -1020,15 +1021,16 @@
         document.getElementById('detailDesc').innerText = item.description || "Không có mô tả";
         document.getElementById('detailAddress').innerText = item.address || "Chưa cập nhật địa chỉ";
 
+        const displayName = item.giverDisplayName || item.giverName || "Ẩn danh";
         const giverEl = document.getElementById('detailGiver');
-        giverEl.innerText = item.giverName || "Ẩn danh";
+        giverEl.innerText = displayName;
         if (item.giverId) {
             giverEl.href = '${pageContext.request.contextPath}/profile?userId=' + item.giverId;
         } else {
             giverEl.href = '#';
         }
 
-        document.getElementById('detailAvatar').innerText = (item.giverName || "?").charAt(0).toUpperCase();
+        document.getElementById('detailAvatar').innerText = displayName.charAt(0).toUpperCase();
         document.getElementById('detailGiverPoints').innerText = item.giverEcoPoints || "0";
 
         let dateStr = "Vừa xong";
@@ -1049,7 +1051,7 @@
                 // Thêm nút Trao đổi
                 actionContainer.innerHTML = `
                     <div class="flex flex-col gap-2 w-full">
-                        <button onclick="requestItem(\${item.itemId}, \${item.giverId}, '\${item.giverName}', '\${item.title}'); document.getElementById('itemDetailModal').classList.add('hidden');" class="w-full bg-primary text-white font-bold py-3 px-6 rounded-xl hover:bg-primary-hover shadow-lg shadow-emerald-200 transition">Xin món này 🎁</button>
+                        <button onclick="requestItem(\${item.itemId}, \${item.giverId}, '\${displayName}', '\${item.title}'); document.getElementById('itemDetailModal').classList.add('hidden');" class="w-full bg-primary text-white font-bold py-3 px-6 rounded-xl hover:bg-primary-hover shadow-lg shadow-emerald-200 transition">Xin món này 🎁</button>
                         <button onclick="openTradeProposal(\${item.itemId}, '\${item.title}', '\${imgUrl}'); document.getElementById('itemDetailModal').classList.add('hidden');" class="w-full bg-white text-primary font-bold py-3 px-6 rounded-xl border-2 border-primary hover:bg-emerald-50 transition">Đề nghị trao đổi 🔄</button>
                     </div>
                 `;
@@ -1119,10 +1121,12 @@
 
                 if (shouldShow) {
                     let extraActions = '';
+                    const ownerDisplayName = p.ownerDisplayName || p.ownerName;
+
                     if (isCompany && p.ownerId) {
                         extraActions = `
                             <div class="flex gap-2 mt-2">
-                                <button onclick="openChatWithCompany(\${p.ownerId}, '\${p.ownerName}')" class="flex-1 bg-white text-primary text-xs font-bold py-2 rounded-lg border border-primary hover:bg-emerald-50 transition">Nhắn tin</button>
+                                <button onclick="openChatWithCompany(\${p.ownerId}, '\${ownerDisplayName}')" class="flex-1 bg-white text-primary text-xs font-bold py-2 rounded-lg border border-primary hover:bg-emerald-50 transition">Nhắn tin</button>
                                 <a href="${pageContext.request.contextPath}/profile?userId=\${p.ownerId}" class="flex-1 bg-slate-100 text-slate-700 text-xs font-bold py-2 rounded-lg hover:bg-slate-200 text-center transition">Hồ sơ</a>
                             </div>
                         `;
@@ -1132,7 +1136,7 @@
                         <div class="text-center p-4">
                             \${popupHeader}
                             <h3 class="font-bold text-slate-800 text-sm mb-1">\${p.name}</h3>
-                            \${isCompany && p.ownerName ? `<p class="text-xs text-slate-500 mb-1">Doanh nghiệp: <span class="font-bold text-slate-700">\${p.ownerName}</span></p>` : ''}
+                            \${isCompany && ownerDisplayName ? `<p class="text-xs text-slate-500 mb-1">Doanh nghiệp: <span class="font-bold text-slate-700">\${ownerDisplayName}</span></p>` : ''}
                             <p class="text-xs text-slate-500 mb-3">📍 \${p.address}</p>
                             <a href="https://www.google.com/maps/search/?api=1&query=\${p.latitude},\${p.longitude}" target="_blank" class="block w-full bg-slate-50 text-slate-600 text-xs font-bold py-2 rounded-lg hover:bg-slate-100 border border-slate-200 transition">🗺️ Chỉ đường</a>
                             \${extraActions}
@@ -1634,8 +1638,9 @@
                 const distStr = formatDistance(dist);
                 const postedAgo = timeAgo(item.postDate);
                 const giverName = item.giverName || 'Anonymous';
+                const displayName = item.giverDisplayName || giverName;
                 const itemTitle = item.title.replace(/'/g, "\\'");
-                const giverNameEscaped = giverName.replace(/'/g, "\\'");
+                const displayNameEscaped = displayName.replace(/'/g, "\\'");
                 const catName = item.categoryName || categoryMap[item.categoryId] || 'GENERAL';
 
                 let requestBtn = '';
@@ -1645,7 +1650,7 @@
                 } else {
                     requestBtn = `
                         <div class="flex gap-2">
-                            <button onclick="event.stopPropagation(); requestItem(\${item.itemId}, \${item.giverId}, '\${giverNameEscaped}', '\${itemTitle}');" class="bg-primary text-white text-xs font-bold px-4 py-2 rounded-full hover:bg-primary-hover transition shadow-sm">Xin</button>
+                            <button onclick="event.stopPropagation(); requestItem(\${item.itemId}, \${item.giverId}, '\${displayNameEscaped}', '\${itemTitle}');" class="bg-primary text-white text-xs font-bold px-4 py-2 rounded-full hover:bg-primary-hover transition shadow-sm">Xin</button>
                             <button onclick="event.stopPropagation(); openTradeProposal(\${item.itemId}, '\${itemTitle}', '\${imgUrl}');" class="bg-white text-primary text-xs font-bold px-4 py-2 rounded-full border border-primary hover:bg-emerald-50 transition shadow-sm">Đổi 🔄</button>
                         </div>
                     `;
@@ -1664,7 +1669,7 @@
                             </div>
                             <p class="text-slate-500 text-sm flex items-center gap-1.5">
                                 <span class="material-symbols-outlined text-base">person</span>
-                                \${giverName}
+                                \${displayName}
                             </p>
                             <div class="flex flex-wrap gap-2 pt-1">
                                  <span class="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase text-slate-600">\${catName}</span>
@@ -1761,13 +1766,14 @@
                 const isCompany = p.ownerRole === 'COLLECTOR_COMPANY';
                 const dist = calculateDistance(currentLatLng.lat, currentLatLng.lng, p.latitude, p.longitude);
                 const distStr = formatDistance(dist);
+                const ownerDisplayName = p.ownerDisplayName || p.ownerName;
 
                 // Action Button
                 let actionHtml;
                 if (isCompany) {
                     actionHtml = `
                         <div class="flex gap-2 w-full justify-end">
-                            <button onclick="openChatWithCompany(\${p.ownerId}, '\${p.ownerName}')" class="bg-white text-primary text-xs font-bold px-4 py-2 rounded-full border border-primary hover:bg-emerald-50 transition shadow-sm">Nhắn tin</button>
+                            <button onclick="openChatWithCompany(\${p.ownerId}, '\${ownerDisplayName}')" class="bg-white text-primary text-xs font-bold px-4 py-2 rounded-full border border-primary hover:bg-emerald-50 transition shadow-sm">Nhắn tin</button>
                             <a href="${pageContext.request.contextPath}/profile?userId=\${p.ownerId}" class="bg-slate-100 text-slate-700 text-xs font-bold px-4 py-2 rounded-full hover:bg-slate-200 transition shadow-sm">Hồ sơ</a>
                             <button onclick="flyToLocation(\${p.latitude}, \${p.longitude}, '\${p.name}'); document.getElementById('allPointsModal').classList.add('hidden');" class="bg-primary text-white text-xs font-bold px-4 py-2 rounded-full hover:bg-primary-hover transition shadow-sm">Xem vị trí</button>
                         </div>
@@ -1800,7 +1806,7 @@
                         </div>
 
                         <!-- Row 2 -->
-                        \${isCompany && p.ownerName ? `<p class="text-xs text-slate-500 mt-1">Doanh nghiệp: <span class="font-bold text-slate-700">\${p.ownerName}</span></p>` : ''}
+                        \${isCompany && ownerDisplayName ? `<p class="text-xs text-slate-500 mt-1">Doanh nghiệp: <span class="font-bold text-slate-700">\${ownerDisplayName}</span></p>` : ''}
                         <p class="text-slate-500 text-sm mt-2">\${p.address}</p>
 
                         <!-- Row 3: Tags -->

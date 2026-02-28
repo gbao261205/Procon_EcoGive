@@ -10,6 +10,7 @@ public class CollectionPoint {
     private GeoPoint location;
     private long ownerId;
     private String ownerName;
+    private String ownerDisplayName; // MỚI: Tên hiển thị của doanh nghiệp
     private String ownerRole;
 
     public CollectionPoint() {
@@ -52,6 +53,9 @@ public class CollectionPoint {
     
     public String getOwnerName() { return ownerName; }
     public void setOwnerName(String ownerName) { this.ownerName = ownerName; }
+
+    public String getOwnerDisplayName() { return ownerDisplayName; }
+    public void setOwnerDisplayName(String ownerDisplayName) { this.ownerDisplayName = ownerDisplayName; }
 
     public String getOwnerRole() { return ownerRole; }
     public void setOwnerRole(String ownerRole) { this.ownerRole = ownerRole; }

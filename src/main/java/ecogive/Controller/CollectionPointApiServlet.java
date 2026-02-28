@@ -77,6 +77,7 @@ public class CollectionPointApiServlet extends HttpServlet {
         String ownerRole; 
         long ownerId;     // Thêm ownerId
         String ownerName; // Thêm ownerName
+        String ownerDisplayName; // MỚI: Thêm ownerDisplayName
 
         public StationDTO(CollectionPoint p) {
             this.pointId = p.getPointId();
@@ -86,6 +87,7 @@ public class CollectionPointApiServlet extends HttpServlet {
             this.ownerRole = p.getOwnerRole(); 
             this.ownerId = p.getOwnerId();     // Map ownerId
             this.ownerName = p.getOwnerName(); // Map ownerName
+            this.ownerDisplayName = p.getOwnerDisplayName(); // Map ownerDisplayName
 
             if (p.getLocation() != null) {
                 this.latitude = p.getLocation().getLatitude();

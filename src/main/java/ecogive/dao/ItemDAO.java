@@ -24,8 +24,10 @@ public class ItemDAO {
     }
 
     public Item findById(long id) throws SQLException {
-        String sql = "SELECT *, ST_X(location) AS longitude, ST_Y(location) AS latitude " +
-                     "FROM items WHERE item_id = ?";
+        String sql = "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude, u.username, u.display_name " +
+                     "FROM items i " +
+                     "LEFT JOIN users u ON i.giver_id = u.user_id " +
+                     "WHERE i.item_id = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -33,7 +35,14 @@ public class ItemDAO {
             stmt.setLong(1, id);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    return mapRow(rs);
+                    Item item = mapRow(rs);
+                    item.setGiverName(rs.getString("username"));
+                    try {
+                        item.setGiverDisplayName(rs.getString("display_name"));
+                    } catch (SQLException e) {
+                        item.setGiverDisplayName(item.getGiverName());
+                    }
+                    return item;
                 }
             }
         }catch (Exception e) {
@@ -43,7 +52,7 @@ public class ItemDAO {
     }
 
     public List<Item> findAllAvailable() throws SQLException {
-        String sql = "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude, u.username, u.is_company_verified " +
+        String sql = "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude, u.username, u.display_name, u.is_company_verified " +
                 "FROM items i " +
                 "JOIN users u ON i.giver_id = u.user_id " +
                 "WHERE i.status = 'AVAILABLE'";
@@ -56,6 +65,11 @@ public class ItemDAO {
             while (rs.next()) {
                 Item item = mapRow(rs);
                 item.setGiverName(rs.getString("username"));
+                try {
+                    item.setGiverDisplayName(rs.getString("display_name"));
+                } catch (SQLException e) {
+                    item.setGiverDisplayName(item.getGiverName());
+                }
                 try {
                     item.setCompanyVerified(rs.getBoolean("is_company_verified"));
                 } catch (SQLException e) { item.setCompanyVerified(false); }
@@ -76,7 +90,7 @@ public class ItemDAO {
                 minLng, minLat);
 
         StringBuilder sql = new StringBuilder(
-                "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude, u.username, u.is_company_verified " +
+                "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude, u.username, u.display_name, u.is_company_verified " +
                 "FROM items i " +
                 "JOIN users u ON i.giver_id = u.user_id " +
                 "WHERE i.status = 'AVAILABLE' " +
@@ -101,6 +115,11 @@ public class ItemDAO {
                     Item item = mapRow(rs);
                     item.setGiverName(rs.getString("username"));
                     try {
+                        item.setGiverDisplayName(rs.getString("display_name"));
+                    } catch (SQLException e) {
+                        item.setGiverDisplayName(item.getGiverName());
+                    }
+                    try {
                         item.setCompanyVerified(rs.getBoolean("is_company_verified"));
                     } catch (SQLException e) { item.setCompanyVerified(false); }
                     list.add(item);
@@ -118,7 +137,7 @@ public class ItemDAO {
     
     public List<Item> findAvailableSortedByDistance(double lat, double lng, int limit, int offset, Integer categoryId) throws SQLException {
         StringBuilder sql = new StringBuilder(
-            "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude, u.username, u.is_company_verified, " +
+            "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude, u.username, u.display_name, u.is_company_verified, " +
             "ST_Distance_Sphere(i.location, ST_GeomFromText(?)) AS distance " +
             "FROM items i " +
             "JOIN users u ON i.giver_id = u.user_id " +
@@ -152,6 +171,11 @@ public class ItemDAO {
                     Item item = mapRow(rs);
                     item.setGiverName(rs.getString("username"));
                     try {
+                        item.setGiverDisplayName(rs.getString("display_name"));
+                    } catch (SQLException e) {
+                        item.setGiverDisplayName(item.getGiverName());
+                    }
+                    try {
                         item.setCompanyVerified(rs.getBoolean("is_company_verified"));
                     } catch (SQLException e) { item.setCompanyVerified(false); }
                     list.add(item);
@@ -173,18 +197,20 @@ public class ItemDAO {
 
     public List<Item> findAll(int limit, int offset, String statusFilter) throws SQLException {
         StringBuilder sql = new StringBuilder(
-            "SELECT *, ST_X(location) AS longitude, ST_Y(location) AS latitude FROM items "
+            "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude, u.username, u.display_name " +
+            "FROM items i " +
+            "LEFT JOIN users u ON i.giver_id = u.user_id "
         );
         
         if (statusFilter != null && !statusFilter.isEmpty()) {
             if ("TRADE_ITEMS".equals(statusFilter)) {
-                sql.append(" WHERE status IN ('TRADE_PENDING', 'TRADE_COMPLETED') ");
+                sql.append(" WHERE i.status IN ('TRADE_PENDING', 'TRADE_COMPLETED') ");
             } else {
-                sql.append(" WHERE status = ? ");
+                sql.append(" WHERE i.status = ? ");
             }
         }
         
-        sql.append(" ORDER BY post_date DESC LIMIT ? OFFSET ?");
+        sql.append(" ORDER BY i.post_date DESC LIMIT ? OFFSET ?");
 
         List<Item> list = new ArrayList<>();
         try (Connection conn = DatabaseConnection.getConnection();
@@ -199,7 +225,14 @@ public class ItemDAO {
 
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    list.add(mapRow(rs));
+                    Item item = mapRow(rs);
+                    item.setGiverName(rs.getString("username"));
+                    try {
+                        item.setGiverDisplayName(rs.getString("display_name"));
+                    } catch (SQLException e) {
+                        item.setGiverDisplayName(item.getGiverName());
+                    }
+                    list.add(item);
                 }
             }
         } catch (Exception e) {
@@ -238,9 +271,10 @@ public class ItemDAO {
 
     public List<Item> findItemsByGiverId(long giverId) {
         List<Item> list = new ArrayList<>();
-        String sql = "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude, c.name AS category_name " +
+        String sql = "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude, c.name AS category_name, u.username, u.display_name " +
                      "FROM items i " +
                      "LEFT JOIN categories c ON i.category_id = c.category_id " +
+                     "LEFT JOIN users u ON i.giver_id = u.user_id " +
                      "WHERE i.giver_id = ? ORDER BY i.post_date DESC";
 
         try (Connection conn = DatabaseConnection.getConnection();
@@ -250,6 +284,12 @@ public class ItemDAO {
             while (rs.next()) {
                 Item item = mapRow(rs);
                 item.setCategoryName(rs.getString("category_name"));
+                item.setGiverName(rs.getString("username"));
+                try {
+                    item.setGiverDisplayName(rs.getString("display_name"));
+                } catch (SQLException e) {
+                    item.setGiverDisplayName(item.getGiverName());
+                }
                 list.add(item);
             }
         } catch (Exception e) { e.printStackTrace(); }
@@ -258,7 +298,7 @@ public class ItemDAO {
 
     public List<Item> findTradableItemsByGiverId(long giverId) throws SQLException {
         List<Item> list = new ArrayList<>();
-        String sql = "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude, u.username " +
+        String sql = "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude, u.username, u.display_name " +
                      "FROM items i " +
                      "JOIN users u ON i.giver_id = u.user_id " +
                      "WHERE i.giver_id = ? AND (i.status = 'AVAILABLE' OR i.status = 'PENDING') ORDER BY i.post_date DESC";
@@ -270,6 +310,11 @@ public class ItemDAO {
             while (rs.next()) {
                 Item item = mapRow(rs);
                 item.setGiverName(rs.getString("username"));
+                try {
+                    item.setGiverDisplayName(rs.getString("display_name"));
+                } catch (SQLException e) {
+                    item.setGiverDisplayName(item.getGiverName());
+                }
                 list.add(item);
             }
         } catch (Exception e) { throw new SQLException(e); }
@@ -278,9 +323,10 @@ public class ItemDAO {
 
     public List<Item> findItemsByGiverAndStatus(long giverId, String status) throws SQLException {
         List<Item> list = new ArrayList<>();
-        String sql = "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude, c.name AS category_name " +
+        String sql = "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude, c.name AS category_name, u.username, u.display_name " +
                 "FROM items i " +
                 "LEFT JOIN categories c ON i.category_id = c.category_id " +
+                "LEFT JOIN users u ON i.giver_id = u.user_id " +
                 "WHERE i.giver_id = ? AND i.status = ? ORDER BY i.post_date DESC";
 
         try (Connection conn = DatabaseConnection.getConnection();
@@ -291,6 +337,12 @@ public class ItemDAO {
             while (rs.next()) {
                 Item item = mapRow(rs);
                 item.setCategoryName(rs.getString("category_name"));
+                item.setGiverName(rs.getString("username"));
+                try {
+                    item.setGiverDisplayName(rs.getString("display_name"));
+                } catch (SQLException e) {
+                    item.setGiverDisplayName(item.getGiverName());
+                }
                 list.add(item);
             }
         } catch (Exception e) { throw new SQLException(e); }
@@ -299,9 +351,10 @@ public class ItemDAO {
 
     public List<Item> findItemsByReceiverId(long receiverId) {
         List<Item> list = new ArrayList<>();
-        String sql = "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude " +
+        String sql = "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude, u.username, u.display_name " +
                 "FROM items i " +
                 "JOIN transactions t ON i.item_id = t.item_id " +
+                "LEFT JOIN users u ON i.giver_id = u.user_id " +
                 "WHERE t.receiver_id = ? ORDER BY t.exchange_date DESC";
 
         try (Connection conn = DatabaseConnection.getConnection();
@@ -309,7 +362,14 @@ public class ItemDAO {
             ps.setLong(1, receiverId);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                list.add(mapRow(rs));
+                Item item = mapRow(rs);
+                item.setGiverName(rs.getString("username"));
+                try {
+                    item.setGiverDisplayName(rs.getString("display_name"));
+                } catch (SQLException e) {
+                    item.setGiverDisplayName(item.getGiverName());
+                }
+                list.add(item);
             }
         } catch (Exception e) { e.printStackTrace(); }
         return list;
@@ -379,15 +439,17 @@ public class ItemDAO {
         String[] words = keyword.trim().split("\\s+");
         
         StringBuilder sql = new StringBuilder(
-            "SELECT *, ST_X(location) AS longitude, ST_Y(location) AS latitude " +
-            "FROM items WHERE status = 'AVAILABLE'"
+            "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude, u.username, u.display_name " +
+            "FROM items i " +
+            "LEFT JOIN users u ON i.giver_id = u.user_id " +
+            "WHERE i.status = 'AVAILABLE'"
         );
         
         for (int i = 0; i < words.length; i++) {
-            sql.append(" AND title LIKE ?");
+            sql.append(" AND i.title LIKE ?");
         }
         
-        sql.append(" ORDER BY post_date DESC LIMIT 5");
+        sql.append(" ORDER BY i.post_date DESC LIMIT 5");
 
         List<Item> list = new ArrayList<>();
         try (Connection conn = DatabaseConnection.getConnection();
@@ -399,7 +461,14 @@ public class ItemDAO {
             
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    list.add(mapRow(rs));
+                    Item item = mapRow(rs);
+                    item.setGiverName(rs.getString("username"));
+                    try {
+                        item.setGiverDisplayName(rs.getString("display_name"));
+                    } catch (SQLException e) {
+                        item.setGiverDisplayName(item.getGiverName());
+                    }
+                    list.add(item);
                 }
             }
         } catch (Exception e) {
@@ -412,9 +481,10 @@ public class ItemDAO {
         String[] words = categoryName.trim().split("\\s+");
         
         StringBuilder sql = new StringBuilder(
-            "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude " +
+            "SELECT i.*, ST_X(i.location) AS longitude, ST_Y(i.location) AS latitude, u.username, u.display_name " +
             "FROM items i " +
             "JOIN categories c ON i.category_id = c.category_id " +
+            "LEFT JOIN users u ON i.giver_id = u.user_id " +
             "WHERE i.status = 'AVAILABLE'"
         );
         
@@ -434,7 +504,14 @@ public class ItemDAO {
 
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    list.add(mapRow(rs));
+                    Item item = mapRow(rs);
+                    item.setGiverName(rs.getString("username"));
+                    try {
+                        item.setGiverDisplayName(rs.getString("display_name"));
+                    } catch (SQLException e) {
+                        item.setGiverDisplayName(item.getGiverName());
+                    }
+                    list.add(item);
                 }
             }
         } catch (Exception e) {

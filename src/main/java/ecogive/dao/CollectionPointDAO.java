@@ -26,7 +26,7 @@ public class CollectionPointDAO {
     public List<CollectionPoint> findAll() throws SQLException {
         // JOIN với bảng collection_point_types để lấy tên hiển thị và icon
         String sql = "SELECT cp.*, ST_X(cp.location) AS longitude, ST_Y(cp.location) AS latitude, " +
-                     "u.username AS owner_name, u.role AS owner_role, " +
+                     "u.username AS owner_name, u.display_name AS owner_display_name, u.role AS owner_role, " +
                      "cpt.display_name AS type_name, cpt.icon AS type_icon " +
                      "FROM collection_points cp " +
                      "LEFT JOIN users u ON cp.owner_id = u.user_id " +
@@ -49,7 +49,7 @@ public class CollectionPointDAO {
     public List<CollectionPoint> findAllSortedByDistance(double lat, double lng, int limit, int offset, String typeCode, String ownerRole) throws SQLException {
         StringBuilder sql = new StringBuilder(
             "SELECT cp.*, ST_X(cp.location) AS longitude, ST_Y(cp.location) AS latitude, " +
-            "u.username AS owner_name, u.role AS owner_role, " +
+            "u.username AS owner_name, u.display_name AS owner_display_name, u.role AS owner_role, " +
             "cpt.display_name AS type_name, cpt.icon AS type_icon, " +
             "ST_Distance_Sphere(cp.location, ST_GeomFromText(?)) AS distance " +
             "FROM collection_points cp " +
@@ -196,7 +196,7 @@ public class CollectionPointDAO {
     
     public List<CollectionPoint> findByType(String typeCode) throws SQLException {
         String sql = "SELECT cp.*, ST_X(cp.location) AS longitude, ST_Y(cp.location) AS latitude, " +
-                     "u.username AS owner_name, u.role AS owner_role, " +
+                     "u.username AS owner_name, u.display_name AS owner_display_name, u.role AS owner_role, " +
                      "cpt.display_name AS type_name, cpt.icon AS type_icon " +
                      "FROM collection_points cp " +
                      "LEFT JOIN users u ON cp.owner_id = u.user_id " +
@@ -222,29 +222,32 @@ public class CollectionPointDAO {
         cp.setPointId(rs.getLong("point_id"));
         cp.setName(rs.getString("name"));
         cp.setOwnerId(rs.getLong("owner_id"));
-        
-        ResultSetMetaData metaData = rs.getMetaData();
-        int columnCount = metaData.getColumnCount();
-        
-        for (int i = 1; i <= columnCount; i++) {
-            String columnLabel = metaData.getColumnLabel(i);
-            if ("owner_name".equalsIgnoreCase(columnLabel)) {
-                cp.setOwnerName(rs.getString("owner_name"));
-            }
-            if ("owner_role".equalsIgnoreCase(columnLabel)) {
-                cp.setOwnerRole(rs.getString("owner_role"));
-            }
-            if ("type_name".equalsIgnoreCase(columnLabel)) {
-                cp.setTypeName(rs.getString("type_name"));
-            }
-            if ("type_icon".equalsIgnoreCase(columnLabel)) {
-                cp.setTypeIcon(rs.getString("type_icon"));
-            }
-        }
-
         cp.setTypeCode(rs.getString("type"));
         cp.setAddress(rs.getString("address"));
         cp.setLocation(fromResultSet(rs));
+
+        // Dùng try-catch để lấy an toàn các cột optional (bỏ qua lỗi MySQL MetaData Alias)
+        try {
+            cp.setOwnerName(rs.getString("owner_name"));
+        } catch (SQLException ignore) {}
+
+        try {
+            String displayName = rs.getString("owner_display_name");
+            cp.setOwnerDisplayName((displayName != null && !displayName.trim().isEmpty()) ? displayName : cp.getOwnerName());
+        } catch (SQLException ignore) {}
+
+        try {
+            cp.setOwnerRole(rs.getString("owner_role"));
+        } catch (SQLException ignore) {}
+
+        try {
+            cp.setTypeName(rs.getString("type_name"));
+        } catch (SQLException ignore) {}
+
+        try {
+            cp.setTypeIcon(rs.getString("type_icon"));
+        } catch (SQLException ignore) {}
+
         return cp;
     }
 }
