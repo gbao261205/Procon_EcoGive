@@ -1132,6 +1132,7 @@
                         <div class="text-center p-4">
                             \${popupHeader}
                             <h3 class="font-bold text-slate-800 text-sm mb-1">\${p.name}</h3>
+                            \${isCompany && p.ownerName ? `<p class="text-xs text-slate-500 mb-1">Doanh nghiệp: <span class="font-bold text-slate-700">\${p.ownerName}</span></p>` : ''}
                             <p class="text-xs text-slate-500 mb-3">📍 \${p.address}</p>
                             <a href="https://www.google.com/maps/search/?api=1&query=\${p.latitude},\${p.longitude}" target="_blank" class="block w-full bg-slate-50 text-slate-600 text-xs font-bold py-2 rounded-lg hover:bg-slate-100 border border-slate-200 transition">🗺️ Chỉ đường</a>
                             \${extraActions}
@@ -1766,8 +1767,8 @@
                 if (isCompany) {
                     actionHtml = `
                         <div class="flex gap-2 w-full justify-end">
-                            <button onclick="openChatWithCompany(\${p.ownerId}, '\${p.ownerName}')" class="text-primary text-xs font-bold hover:underline">Nhắn tin</button>
-                            <a href="${pageContext.request.contextPath}/profile?userId=\${p.ownerId}" class="text-slate-600 text-xs font-bold hover:underline">Hồ sơ</a>
+                            <button onclick="openChatWithCompany(\${p.ownerId}, '\${p.ownerName}')" class="bg-white text-primary text-xs font-bold px-4 py-2 rounded-full border border-primary hover:bg-emerald-50 transition shadow-sm">Nhắn tin</button>
+                            <a href="${pageContext.request.contextPath}/profile?userId=\${p.ownerId}" class="bg-slate-100 text-slate-700 text-xs font-bold px-4 py-2 rounded-full hover:bg-slate-200 transition shadow-sm">Hồ sơ</a>
                             <button onclick="flyToLocation(\${p.latitude}, \${p.longitude}, '\${p.name}'); document.getElementById('allPointsModal').classList.add('hidden');" class="bg-primary text-white text-xs font-bold px-4 py-2 rounded-full hover:bg-primary-hover transition shadow-sm">Xem vị trí</button>
                         </div>
                     `;
@@ -1799,6 +1800,7 @@
                         </div>
 
                         <!-- Row 2 -->
+                        \${isCompany && p.ownerName ? `<p class="text-xs text-slate-500 mt-1">Doanh nghiệp: <span class="font-bold text-slate-700">\${p.ownerName}</span></p>` : ''}
                         <p class="text-slate-500 text-sm mt-2">\${p.address}</p>
 
                         <!-- Row 3: Tags -->
@@ -2032,62 +2034,6 @@
             return;
         }
         window.location.href = '${pageContext.request.contextPath}/chat?partnerId=' + ownerId;
-    }
-
-    async function loadCollectionPoints() {
-        try {
-            const showPublic = document.getElementById('filterPublicPoint').checked;
-            const showCompany = document.getElementById('filterCompanyPoint').checked;
-
-            if (!showPublic && !showCompany) return;
-
-            const response = await fetch('${pageContext.request.contextPath}/api/collection-points');
-            const points = await response.json();
-
-            points.forEach(p => {
-                let icon;
-                let popupHeader;
-                let shouldShow = false;
-                const isCompany = p.ownerRole === 'COLLECTOR_COMPANY';
-
-                if (isCompany) {
-                    if (showCompany) {
-                        icon = yellowIcon;
-                        popupHeader = `<div class="bg-yellow-100 text-yellow-800 text-[10px] font-bold px-2 py-1 rounded mb-2 inline-block border border-yellow-200">🏢 Điểm thu gom Doanh nghiệp</div>`;
-                        shouldShow = true;
-                    }
-                } else {
-                    if (showPublic) {
-                        icon = greenIcon;
-                        popupHeader = `<div class="bg-green-100 text-green-800 text-[10px] font-bold px-2 py-1 rounded mb-2 inline-block border border-green-200">♻️ Điểm tập kết công cộng</div>`;
-                        shouldShow = true;
-                    }
-                }
-
-                if (shouldShow) {
-                    let extraActions = '';
-                    if (isCompany && p.ownerId) {
-                        extraActions = `
-                            <div class="flex gap-2 mt-2">
-                                <button onclick="openChatWithCompany(\${p.ownerId}, '\${p.ownerName}')" class="flex-1 bg-white text-primary text-xs font-bold py-2 rounded-lg border border-primary hover:bg-emerald-50 transition">Nhắn tin</button>
-                                <a href="${pageContext.request.contextPath}/profile?userId=\${p.ownerId}" class="flex-1 bg-slate-100 text-slate-700 text-xs font-bold py-2 rounded-lg hover:bg-slate-200 text-center transition">Hồ sơ</a>
-                            </div>
-                        `;
-                    }
-
-                    const content = `
-                        <div class="text-center p-4">
-                            \${popupHeader}
-                            <h3 class="font-bold text-slate-800 text-sm mb-1">\${p.name}</h3>
-                            <p class="text-xs text-slate-500 mb-3">📍 \${p.address}</p>
-                            <a href="https://www.google.com/maps/search/?api=1&query=\${p.latitude},\${p.longitude}" target="_blank" class="block w-full bg-slate-50 text-slate-600 text-xs font-bold py-2 rounded-lg hover:bg-slate-100 border border-slate-200 transition">🗺️ Chỉ đường</a>
-                            \${extraActions}
-                        </div>`;
-                    const marker = L.marker([p.latitude, p.longitude], {icon: icon}).addTo(map).bindPopup(content);
-                    pointLayers.push(marker);
-                }
-            });
-        } catch (e) { console.error(e); }
     }
 </script>
 </body>
