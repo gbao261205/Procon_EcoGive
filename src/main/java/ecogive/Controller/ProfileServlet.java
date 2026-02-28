@@ -48,6 +48,13 @@ public class ProfileServlet extends HttpServlet {
 
         try {
             if (userIdParam != null && !userIdParam.isEmpty()) {
+                // --- SECURITY CHECK: Validate input is numeric ---
+                if (!userIdParam.matches("\\d+")) {
+                    // Nếu chứa ký tự không phải số (như ' hoặc SQL), redirect ngay
+                    resp.sendRedirect(req.getContextPath() + "/home");
+                    return;
+                }
+                
                 profileUserId = Long.parseLong(userIdParam);
                 if (profileUserId != currentUser.getUserId()) {
                     isMyProfile = false;
@@ -121,6 +128,12 @@ public class ProfileServlet extends HttpServlet {
 
         if (itemIdStr != null && !itemIdStr.isEmpty()) {
             try {
+                // --- SECURITY CHECK: Validate input is numeric ---
+                if (!itemIdStr.matches("\\d+")) {
+                    resp.sendRedirect(req.getContextPath() + "/profile");
+                    return;
+                }
+
                 long itemId = Long.parseLong(itemIdStr);
                 Item item = itemDAO.findById(itemId);
 
