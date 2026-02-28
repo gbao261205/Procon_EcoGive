@@ -98,6 +98,23 @@ public class RateTransactionServlet extends HttpServlet {
                     psScore.executeUpdate();
 
                     conn.commit();
+                    
+                    // --- CẬP NHẬT: Gửi thông báo ---
+                    // Lấy tên hiển thị của người đánh giá
+                    String reviewerName = currentUser.getDisplayName() != null && !currentUser.getDisplayName().isEmpty() 
+                                          ? currentUser.getDisplayName() 
+                                          : currentUser.getUsername();
+                    
+                    String notiContent = reviewerName + " đã đánh giá " + rating + " sao cho giao dịch của bạn.";
+                    ecogive.util.NotificationService.sendNotification(
+                        ratedUserId, 
+                        notiContent, 
+                        "RATING", 
+                        transactionId, 
+                        "Đánh giá mới từ " + reviewerName
+                    );
+                    // ------------------------------
+
                     response.addProperty("status", "success");
                     response.addProperty("message", "Đánh giá thành công! Cảm ơn bạn.");
                 } catch (Exception e) {

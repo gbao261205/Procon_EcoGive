@@ -91,7 +91,12 @@ public class RequestItemServlet extends HttpServlet {
                 if (transSuccess) {
                     // --- CẬP NHẬT: Gửi thông báo và email ---
                     if (!exists && trans != null) {
-                        String content = "Người dùng " + currentUser.getUsername() + " muốn xin vật phẩm '" + item.getTitle() + "' của bạn.";
+                        // Ưu tiên dùng displayName
+                        String senderName = currentUser.getDisplayName() != null && !currentUser.getDisplayName().isEmpty() 
+                                            ? currentUser.getDisplayName() 
+                                            : currentUser.getUsername();
+                        
+                        String content = "Người dùng " + senderName + " muốn xin vật phẩm '" + item.getTitle() + "' của bạn.";
                         String sysMsg = "SYSTEM_GIFT:" + content;
                         
                         // 1. Lưu tin nhắn chat (để hiện trong khung chat)

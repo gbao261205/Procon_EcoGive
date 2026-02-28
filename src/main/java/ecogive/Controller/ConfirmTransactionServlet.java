@@ -46,6 +46,11 @@ public class ConfirmTransactionServlet extends HttpServlet {
                 resp.getWriter().write(gson.toJson(response));
                 return;
             }
+            
+            // Lấy tên hiển thị của người dùng hiện tại
+            String currentDisplayName = currentUser.getDisplayName() != null && !currentUser.getDisplayName().isEmpty() 
+                                        ? currentUser.getDisplayName() 
+                                        : currentUser.getUsername();
 
             long itemId = Long.parseLong(req.getParameter("itemId"));
             long receiverId = Long.parseLong(req.getParameter("receiverId"));
@@ -176,6 +181,10 @@ public class ConfirmTransactionServlet extends HttpServlet {
                             }
                             // ---------------------------------------------
 
+                            // Sử dụng display_name trong thông báo
+                            String sysMsg = "SYSTEM_GIFT:" + currentDisplayName + " đã xác nhận giao đồ. Bạn hãy xác nhận khi nhận được nhé!";
+                            ChatEndpoint.sendSystemMessage(String.valueOf(receiverId), sysMsg);
+
                             response.addProperty("status", "success");
                             response.addProperty("message", "Đã xác nhận cho! Chờ người nhận xác nhận.");
                             response.addProperty("newStatus", "CONFIRMED");
@@ -193,6 +202,11 @@ public class ConfirmTransactionServlet extends HttpServlet {
                             if (item.getEcoPoints() != null && item.getEcoPoints().compareTo(BigDecimal.ZERO) > 0) {
                                 userDAO.addEcoPoints(item.getGiverId(), item.getEcoPoints());
                             }
+                            
+                            // Thông báo cho người tặng
+                            String sysMsg = "SYSTEM_GIFT:Người nhận đã xác nhận nhận đồ. Giao dịch hoàn tất!";
+                            ChatEndpoint.sendSystemMessage(String.valueOf(item.getGiverId()), sysMsg);
+
                             response.addProperty("status", "success");
                             response.addProperty("message", "Giao dịch hoàn tất! Cảm ơn bạn.");
                             response.addProperty("newStatus", "COMPLETED");
