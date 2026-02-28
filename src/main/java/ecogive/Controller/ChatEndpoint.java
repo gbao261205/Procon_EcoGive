@@ -49,18 +49,23 @@ public class ChatEndpoint {
 
             if (receiverIdStr == null) return;
 
+            // --- SECURITY: XSS Prevention ---
+            // Mã hóa nội dung tin nhắn trước khi xử lý (Chỉ mã hóa ký tự nguy hiểm)
+            String safeContent = escapeHtml(content);
+            // --------------------------------
+
             // Lấy senderId từ URL kết nối websocket
             String senderIdStr = senderSession.getPathParameters().get("userId");
 
-            // 2. LƯU VÀO DATABASE
-            saveMessageToDB(Long.parseLong(senderIdStr), Long.parseLong(receiverIdStr), content, imageUrl);
+            // 2. LƯU VÀO DATABASE (Đã dùng PreparedStatement để chống SQL Injection)
+            saveMessageToDB(Long.parseLong(senderIdStr), Long.parseLong(receiverIdStr), safeContent, imageUrl);
 
             // 3. Gửi Real-time nếu người nhận đang Online
             Session receiverSession = userSessions.get(receiverIdStr);
             if (receiverSession != null && receiverSession.isOpen()) {
                 JsonObject response = new JsonObject();
                 response.addProperty("senderId", senderIdStr);
-                response.addProperty("content", content);
+                response.addProperty("content", safeContent); // Gửi nội dung đã mã hóa
                 if (imageUrl != null) response.addProperty("imageUrl", imageUrl);
                 
                 receiverSession.getBasicRemote().sendText(gson.toJson(response));
@@ -91,7 +96,8 @@ public class ChatEndpoint {
             try {
                 JsonObject response = new JsonObject();
                 response.addProperty("senderId", "SYSTEM"); // Đánh dấu là hệ thống
-                response.addProperty("content", message);
+                // Tin nhắn hệ thống do server tạo ra nên thường an toàn, nhưng escape cũng tốt
+                response.addProperty("content", message); 
                 session.getBasicRemote().sendText(gson.toJson(response));
             } catch (IOException e) {
                 e.printStackTrace();
@@ -130,5 +136,29 @@ public class ChatEndpoint {
             e.printStackTrace();
             System.err.println("Lỗi lưu tin nhắn vào DB: " + e.getMessage());
         }
+    }
+
+    // --- SECURITY HELPER: Simple HTML Escape (Updated for Unicode) ---
+    private String escapeHtml(String s) {
+        if (s == null) return null;
+        StringBuilder out = new StringBuilder(Math.max(16, s.length()));
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            // Chỉ escape các ký tự đặc biệt của HTML, giữ nguyên Unicode (Tiếng Việt)
+            if (c == '"') {
+                out.append("&quot;");
+            } else if (c == '\'') {
+                out.append("&#39;");
+            } else if (c == '<') {
+                out.append("&lt;");
+            } else if (c == '>') {
+                out.append("&gt;");
+            } else if (c == '&') {
+                out.append("&amp;");
+            } else {
+                out.append(c);
+            }
+        }
+        return out.toString();
     }
 }

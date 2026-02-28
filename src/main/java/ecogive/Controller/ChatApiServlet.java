@@ -97,7 +97,10 @@ public class ChatApiServlet extends HttpServlet {
                     
                     String lastMsg = rs.getString("last_msg");
                     if (lastMsg == null) lastMsg = "Bắt đầu cuộc trò chuyện...";
-                    obj.addProperty("lastMsg", lastMsg);
+                    
+                    // --- SECURITY: Escape HTML for last message ---
+                    obj.addProperty("lastMsg", escapeHtml(lastMsg));
+                    // ----------------------------------------------
                     
                     // Có thể trả về lastMsgTime nếu cần hiển thị thời gian
                     Timestamp ts = rs.getTimestamp("last_msg_time");
@@ -148,7 +151,10 @@ public class ChatApiServlet extends HttpServlet {
                     JsonObject msg = new JsonObject();
                     msg.addProperty("senderId", rs.getLong("sender_id"));
                     String content = rs.getString("content");
-                    msg.addProperty("content", content);
+                    
+                    // --- SECURITY: Escape HTML for message content ---
+                    msg.addProperty("content", escapeHtml(content));
+                    // -------------------------------------------------
                     
                     if (hasImageColumn) {
                         msg.addProperty("imageUrl", rs.getString("image_url"));
@@ -261,7 +267,7 @@ public class ChatApiServlet extends HttpServlet {
                         displayName = rs.getString("username");
                     }
                     user.addProperty("displayName", displayName);
-
+                    
                     user.addProperty("email", rs.getString("email"));
                     user.addProperty("ecoPoints", rs.getBigDecimal("eco_points"));
                     user.addProperty("reputationScore", rs.getBigDecimal("reputation_score"));
@@ -306,5 +312,29 @@ public class ChatApiServlet extends HttpServlet {
             e.printStackTrace();
             resp.setStatus(500);
         }
+    }
+
+    // --- SECURITY HELPER: Simple HTML Escape (Updated for Unicode) ---
+    private String escapeHtml(String s) {
+        if (s == null) return null;
+        StringBuilder out = new StringBuilder(Math.max(16, s.length()));
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            // Chỉ escape các ký tự đặc biệt của HTML, giữ nguyên Unicode (Tiếng Việt)
+            if (c == '"') {
+                out.append("&quot;");
+            } else if (c == '\'') {
+                out.append("&#39;");
+            } else if (c == '<') {
+                out.append("&lt;");
+            } else if (c == '>') {
+                out.append("&gt;");
+            } else if (c == '&') {
+                out.append("&amp;");
+            } else {
+                out.append(c);
+            }
+        }
+        return out.toString();
     }
 }

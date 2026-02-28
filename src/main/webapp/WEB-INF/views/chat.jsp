@@ -479,7 +479,8 @@
                         await loadActiveDeals(currentReceiverId);
                         loadHistory(currentReceiverId);
                     }
-                    loadInboxList();
+                    // Cập nhật UI inbox ngay lập tức
+                    updateInboxUI(data.senderId || currentReceiverId, msgText, new Date().toISOString());
                     return;
                 }
 
@@ -487,13 +488,16 @@
                 if (data.content && data.content.startsWith("SYSTEM_TRADE_PROPOSAL:")) {
                     const transId = data.content.split(":")[1];
                     appendTradeProposal(transId, data.senderId, "PENDING_TRADE"); // Ban đầu luôn là PENDING
+                    updateInboxUI(data.senderId, "🔄 Đề nghị trao đổi", new Date().toISOString());
                     return;
                 }
 
                 if (data.senderId == currentReceiverId) {
                     appendMessage(data.content, data.imageUrl, 'incoming', new Date().toISOString());
                 }
-                loadInboxList();
+
+                // Cập nhật UI inbox ngay lập tức khi nhận tin nhắn
+                updateInboxUI(data.senderId, data.content, new Date().toISOString());
             };
 
             chatSocket.onclose = () => setTimeout(connectWebSocket, 3000);
@@ -625,7 +629,7 @@
                     : '';
 
                 listEl.innerHTML +=
-                    '<div onclick="selectUserChat(\'' + u.userId + '\', \'' + displayName + '\', \'' + itemId + '\', \'' + itemName + '\', \'' + giverId + '\')"'
+                    '<div id="inbox-item-' + u.userId + '" onclick="selectUserChat(\'' + u.userId + '\', \'' + displayName + '\', \'' + itemId + '\', \'' + itemName + '\', \'' + giverId + '\')"'
                     + ' class="cursor-pointer p-3 rounded-xl transition-all duration-300 mb-2 ' + activeClass + ' group">'
                     + '<div class="flex items-center gap-3">'
                     + '<div class="relative shrink-0">'
@@ -637,14 +641,52 @@
                     + '<div class="flex-1 min-w-0">'
                     + '<div class="flex justify-between items-center mb-0.5">'
                     + '<div class="font-bold text-sm text-slate-800 truncate group-hover:text-primary transition-colors">' + displayName + '</div>'
-                    + '<div class="text-[10px] text-slate-400 font-medium">' + timeDisplay + '</div>'
+                    + '<div class="text-[10px] text-slate-400 font-medium inbox-time">' + timeDisplay + '</div>'
                     + '</div>'
-                    + '<div class="text-xs text-slate-500 truncate font-medium opacity-80">' + lastMsg + '</div>'
+                    + '<div class="text-xs text-slate-500 truncate font-medium opacity-80 inbox-last-msg">' + lastMsg + '</div>'
                     + itemBadge
                     + '</div>'
                     + '</div>'
                     + '</div>';
             });
+        }
+
+        // --- MỚI: Hàm cập nhật UI Inbox ngay lập tức ---
+        function updateInboxUI(userId, content, timestamp) {
+            const item = document.getElementById('inbox-item-' + userId);
+
+            // Xử lý nội dung hiển thị nếu là ảnh hoặc rỗng
+            let displayContent = content;
+            if (!displayContent || displayContent.trim() === "") {
+                displayContent = "[Hình ảnh]";
+            }
+
+            if (item) {
+                // Cập nhật nội dung tin nhắn
+                const msgEl = item.querySelector('.inbox-last-msg');
+                if (msgEl) msgEl.innerText = displayContent;
+
+                // Cập nhật thời gian
+                const timeEl = item.querySelector('.inbox-time');
+                if (timeEl) timeEl.innerText = formatTime(timestamp);
+
+                // Đẩy lên đầu danh sách
+                const parent = document.getElementById('inboxList');
+                parent.prepend(item);
+
+                // --- QUAN TRỌNG: Cập nhật dữ liệu trong mảng allInboxUsers ---
+                const userIndex = allInboxUsers.findIndex(u => u.userId == userId);
+                if (userIndex !== -1) {
+                    allInboxUsers[userIndex].lastMsg = displayContent;
+                    allInboxUsers[userIndex].lastMsgTime = new Date(timestamp).getTime();
+                    // Di chuyển user lên đầu mảng
+                    const user = allInboxUsers.splice(userIndex, 1)[0];
+                    allInboxUsers.unshift(user);
+                }
+            } else {
+                // Nếu chưa có trong danh sách (người mới), tải lại danh sách
+                loadInboxList();
+            }
         }
 
         async function selectUserChat(userId, username, itemId, itemName, giverId) {
@@ -1036,6 +1078,10 @@
             };
             chatSocket.send(JSON.stringify(msg));
             appendMessage(content, null, 'outgoing', new Date().toISOString());
+
+            // Cập nhật UI inbox ngay lập tức khi gửi
+            updateInboxUI(currentReceiverId, content, new Date().toISOString());
+
             input.value = '';
         }
 
@@ -1048,6 +1094,9 @@
             };
             chatSocket.send(JSON.stringify(msg));
             appendMessage(content, imgUrl, 'outgoing', new Date().toISOString());
+
+            // Cập nhật UI inbox ngay lập tức khi gửi tự động
+            updateInboxUI(currentReceiverId, content, new Date().toISOString());
         }
 
         function sendQuickReply(text) {
