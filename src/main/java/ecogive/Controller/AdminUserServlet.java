@@ -60,8 +60,17 @@ public class AdminUserServlet extends HttpServlet {
 
     private void listUsers(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, ServletException, IOException {
-        List<User> users = userDAO.findAll();
+        String roleFilter = request.getParameter("role");
+        List<User> users;
+
+        if (roleFilter != null && !roleFilter.isEmpty()) {
+            users = userDAO.findByRole(roleFilter);
+        } else {
+            users = userDAO.findAll();
+        }
+
         request.setAttribute("users", users);
+        request.setAttribute("currentRoleFilter", roleFilter); // Để giữ trạng thái nút active
         request.getRequestDispatcher("/WEB-INF/views/admin/users.jsp").forward(request, response);
     }
 

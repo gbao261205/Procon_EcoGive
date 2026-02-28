@@ -35,6 +35,26 @@
 
     <div class="p-8 max-w-7xl mx-auto w-full space-y-8">
 
+        <!-- Filter Buttons -->
+        <div class="flex gap-2">
+            <a href="${pageContext.request.contextPath}/admin/users"
+               class="px-4 py-2 rounded-lg text-sm font-bold transition-colors ${empty currentRoleFilter ? 'bg-slate-800 text-white' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}">
+                Tất cả
+            </a>
+            <a href="${pageContext.request.contextPath}/admin/users?role=USER"
+               class="px-4 py-2 rounded-lg text-sm font-bold transition-colors ${currentRoleFilter == 'USER' ? 'bg-emerald-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}">
+                Người dùng
+            </a>
+            <a href="${pageContext.request.contextPath}/admin/users?role=COLLECTOR_COMPANY"
+               class="px-4 py-2 rounded-lg text-sm font-bold transition-colors ${currentRoleFilter == 'COLLECTOR_COMPANY' ? 'bg-yellow-500 text-white' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}">
+                Doanh nghiệp
+            </a>
+            <a href="${pageContext.request.contextPath}/admin/users?role=ADMIN"
+               class="px-4 py-2 rounded-lg text-sm font-bold transition-colors ${currentRoleFilter == 'ADMIN' ? 'bg-purple-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}">
+                Quản trị viên
+            </a>
+        </div>
+
         <!-- Form Section (Hidden by default) -->
         <div id="user-form-container" class="hidden bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden transition-all duration-300 scroll-mt-24">
             <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">

@@ -111,6 +111,24 @@ public class UserDAO {
         return list;
     }
 
+    // --- MỚI: Tìm theo Role ---
+    public List<User> findByRole(String role) throws SQLException {
+        List<User> list = new ArrayList<>();
+        String sql = "SELECT * FROM users WHERE role = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, role);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
+            }
+        } catch (Exception e) {
+            throw new SQLException(e);
+        }
+        return list;
+    }
+
     public List<User> getTopUsers(int limit) throws SQLException {
         List<User> list = new ArrayList<>();
         String sql = "SELECT * FROM users WHERE role = 'USER' ORDER BY eco_points DESC LIMIT ?";
