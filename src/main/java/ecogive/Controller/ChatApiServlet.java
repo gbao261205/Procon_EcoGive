@@ -48,7 +48,7 @@ public class ChatApiServlet extends HttpServlet {
 
             // 1. INBOX LIST
             if ("inbox".equals(action)) {
-                String sql = "SELECT u.user_id, u.username, " +
+                String sql = "SELECT u.user_id, u.username, u.display_name, " + // Thêm display_name
                         "(SELECT content FROM messages m WHERE (m.sender_id = u.user_id AND m.receiver_id = ?) " +
                         "OR (m.sender_id = ? AND m.receiver_id = u.user_id) ORDER BY m.created_at DESC LIMIT 1) as last_msg, " +
                         
@@ -87,6 +87,13 @@ public class ChatApiServlet extends HttpServlet {
                     JsonObject obj = new JsonObject();
                     obj.addProperty("userId", rs.getLong("user_id"));
                     obj.addProperty("username", rs.getString("username"));
+                    
+                    // Lấy display_name, nếu null thì fallback về username
+                    String displayName = rs.getString("display_name");
+                    if (displayName == null || displayName.isEmpty()) {
+                        displayName = rs.getString("username");
+                    }
+                    obj.addProperty("displayName", displayName);
                     
                     String lastMsg = rs.getString("last_msg");
                     if (lastMsg == null) lastMsg = "Bắt đầu cuộc trò chuyện...";
@@ -207,7 +214,7 @@ public class ChatApiServlet extends HttpServlet {
             // 4. ITEM DETAIL
             else if ("item_detail".equals(action)) {
                 long itemId = Long.parseLong(req.getParameter("itemId"));
-                String sql = "SELECT i.*, u.username as giver_name, c.name as category_name " +
+                String sql = "SELECT i.*, u.username as giver_name, u.display_name as giver_display_name, c.name as category_name " +
                              "FROM items i " +
                              "JOIN users u ON i.giver_id = u.user_id " +
                              "LEFT JOIN categories c ON i.category_id = c.category_id " +
@@ -223,7 +230,11 @@ public class ChatApiServlet extends HttpServlet {
                     item.addProperty("imageUrl", rs.getString("image_url"));
                     item.addProperty("address", rs.getString("address"));
                     item.addProperty("ecoPoints", rs.getBigDecimal("eco_points"));
-                    item.addProperty("giverName", rs.getString("giver_name"));
+                    
+                    String giverName = rs.getString("giver_name");
+                    String giverDisplayName = rs.getString("giver_display_name");
+                    item.addProperty("giverName", giverDisplayName != null ? giverDisplayName : giverName);
+                    
                     item.addProperty("categoryName", rs.getString("category_name"));
                     item.addProperty("status", rs.getString("status"));
                     resp.getWriter().write(new Gson().toJson(item));
@@ -235,7 +246,7 @@ public class ChatApiServlet extends HttpServlet {
             // 5. USER INFO
             else if ("user_info".equals(action)) {
                 long userId = Long.parseLong(req.getParameter("userId"));
-                String sql = "SELECT user_id, username, email, eco_points, reputation_score, join_date, role, address " +
+                String sql = "SELECT user_id, username, display_name, email, eco_points, reputation_score, join_date, role, address " +
                              "FROM users WHERE user_id = ?";
                 PreparedStatement ps = conn.prepareStatement(sql);
                 ps.setLong(1, userId);
@@ -244,6 +255,13 @@ public class ChatApiServlet extends HttpServlet {
                     JsonObject user = new JsonObject();
                     user.addProperty("userId", rs.getLong("user_id"));
                     user.addProperty("username", rs.getString("username"));
+                    
+                    String displayName = rs.getString("display_name");
+                    if (displayName == null || displayName.isEmpty()) {
+                        displayName = rs.getString("username");
+                    }
+                    user.addProperty("displayName", displayName);
+
                     user.addProperty("email", rs.getString("email"));
                     user.addProperty("ecoPoints", rs.getBigDecimal("eco_points"));
                     user.addProperty("reputationScore", rs.getBigDecimal("reputation_score"));

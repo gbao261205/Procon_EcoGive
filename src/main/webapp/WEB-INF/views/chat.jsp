@@ -129,7 +129,7 @@
                 </a>
                 <div class="flex items-center gap-3 md:pl-4 md:border-l border-slate-300/50">
                     <div class="text-right hidden md:block">
-                        <div class="text-sm font-bold text-slate-800">${sessionScope.currentUser.username}</div>
+                        <div class="text-sm font-bold text-slate-800">${sessionScope.currentUser.displayName != null ? sessionScope.currentUser.displayName : sessionScope.currentUser.username}</div>
                         <div class="text-[10px] font-semibold text-primary">Online</div>
                     </div>
                     <div class="relative">
@@ -445,6 +445,9 @@
         const paramPartnerId = urlParams.get('partnerId');
         const paramItemId = urlParams.get('itemId');
 
+        // Lấy tên hiển thị của partner từ attribute (nếu có)
+        const paramPartnerDisplayName = "${partnerDisplayName}";
+
         document.addEventListener("DOMContentLoaded", function() {
             connectWebSocket();
             loadInboxList();
@@ -540,28 +543,22 @@
 
                     // NẾU LÀ NGƯỜI MỚI CHƯA TỪNG CHAT
                     if (!target) {
-                        try {
-                            // Gọi API lấy thông tin user để lấy tên hiển thị
-                            const userRes = await fetch('${pageContext.request.contextPath}/api/chat?action=user_info&userId=' + paramPartnerId);
-                            const userInfo = await userRes.json();
+                        // Sử dụng tên hiển thị từ attribute nếu có, nếu không thì dùng "Người dùng mới"
+                        const displayName = paramPartnerDisplayName || "Người dùng mới";
 
-                            if (!userInfo.error) {
-                                // Tạo một object giả lập cấu trúc inbox item
-                                target = {
-                                    userId: paramPartnerId,
-                                    username: userInfo.username || "Người dùng mới",
-                                    itemId: paramItemId || null,
-                                    itemName: null,
-                                    giverId: null,
-                                    lastMsgTime: new Date().getTime(), // Lấy thời gian hiện tại
-                                    lastMsg: 'Bắt đầu cuộc trò chuyện...'
-                                };
-                                // Thêm người dùng mới này lên đầu danh sách inbox
-                                users.unshift(target);
-                            }
-                        } catch (err) {
-                            console.error("Lỗi khi tải thông tin đối tác chat mới:", err);
-                        }
+                        // Tạo một object giả lập cấu trúc inbox item
+                        target = {
+                            userId: paramPartnerId,
+                            username: displayName, // Sử dụng displayName thay vì username
+                            displayName: displayName,
+                            itemId: paramItemId || null,
+                            itemName: null,
+                            giverId: null,
+                            lastMsgTime: new Date().getTime(), // Lấy thời gian hiện tại
+                            lastMsg: 'Bắt đầu cuộc trò chuyện...'
+                        };
+                        // Thêm người dùng mới này lên đầu danh sách inbox
+                        users.unshift(target);
                     }
 
                     allInboxUsers = users;
@@ -569,7 +566,9 @@
 
                     // Mở khung chat với người này
                     if (target) {
-                        selectUserChat(target.userId, target.username, target.itemId, target.itemName, target.giverId);
+                        // Ưu tiên dùng displayName
+                        const nameToShow = target.displayName || target.username;
+                        selectUserChat(target.userId, nameToShow, target.itemId, target.itemName, target.giverId);
                     }
                 } else {
                     // Chạy bình thường nếu không có param trên URL
@@ -584,7 +583,10 @@
 
         function searchFriends() {
             const query = document.getElementById('searchInput').value.toLowerCase();
-            const filteredUsers = allInboxUsers.filter(u => u.username.toLowerCase().includes(query));
+            const filteredUsers = allInboxUsers.filter(u => {
+                const name = u.displayName || u.username;
+                return name.toLowerCase().includes(query);
+            });
             renderInboxList(filteredUsers);
         }
 
@@ -609,6 +611,9 @@
                 const giverId = u.giverId || '';
                 const timeDisplay = formatTime(u.lastMsgTime);
 
+                // Ưu tiên hiển thị displayName
+                const displayName = u.displayName || u.username;
+
                 let lastMsg = u.lastMsg || '...';
                 if (lastMsg.startsWith("SYSTEM_GIFT:")) lastMsg = "🎁 Thông báo hệ thống";
                 if (lastMsg.startsWith("SYSTEM_TRADE:")) lastMsg = "🔄 Thông báo trao đổi";
@@ -620,7 +625,7 @@
                     : '';
 
                 listEl.innerHTML +=
-                    '<div onclick="selectUserChat(\'' + u.userId + '\', \'' + u.username + '\', \'' + itemId + '\', \'' + itemName + '\', \'' + giverId + '\')"'
+                    '<div onclick="selectUserChat(\'' + u.userId + '\', \'' + displayName + '\', \'' + itemId + '\', \'' + itemName + '\', \'' + giverId + '\')"'
                     + ' class="cursor-pointer p-3 rounded-xl transition-all duration-300 mb-2 ' + activeClass + ' group">'
                     + '<div class="flex items-center gap-3">'
                     + '<div class="relative shrink-0">'
@@ -631,7 +636,7 @@
                     + '</div>'
                     + '<div class="flex-1 min-w-0">'
                     + '<div class="flex justify-between items-center mb-0.5">'
-                    + '<div class="font-bold text-sm text-slate-800 truncate group-hover:text-primary transition-colors">' + u.username + '</div>'
+                    + '<div class="font-bold text-sm text-slate-800 truncate group-hover:text-primary transition-colors">' + displayName + '</div>'
                     + '<div class="text-[10px] text-slate-400 font-medium">' + timeDisplay + '</div>'
                     + '</div>'
                     + '<div class="text-xs text-slate-500 truncate font-medium opacity-80">' + lastMsg + '</div>'
@@ -645,6 +650,9 @@
         async function selectUserChat(userId, username, itemId, itemName, giverId) {
             currentReceiverId = userId;
             document.getElementById('chatTitle').innerText = username;
+            // Lưu ý: Avatar vẫn dùng username gốc để generate seed cho nhất quán
+            // Tuy nhiên ở đây username truyền vào hàm selectUserChat đã là displayName
+            // Để fix, ta có thể truyền thêm originalUsername, hoặc chấp nhận dùng displayName làm seed (cũng ok)
             document.getElementById('chatHeaderAvatar').innerHTML = `<img src="https://api.dicebear.com/9.x/notionists-neutral/svg?seed=\${username}" class="w-full h-full object-cover">`;
 
             // Hiển thị trạng thái (Tạm thời là Truy cập gần đây)
@@ -1233,7 +1241,8 @@
                     return;
                 }
 
-                document.getElementById('profileName').innerText = user.username;
+                // Ưu tiên hiển thị displayName
+                document.getElementById('profileName').innerText = user.displayName || user.username;
                 document.getElementById('profileEmail').innerText = user.email;
                 document.getElementById('profilePoints').innerText = user.ecoPoints || 0;
                 document.getElementById('profileReputation').innerText = user.reputationScore || 0;
