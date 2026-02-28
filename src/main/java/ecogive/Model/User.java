@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 public class User {
     private long userId;
     private String username;
+    private String displayName; // MỚI: Tên hiển thị
     private String email;
     private String passwordHash;
     private BigDecimal ecoPoints;
@@ -27,10 +28,11 @@ public class User {
     public User() {
     }
 
-    public User(long userId, String username, String email, String passwordHash,
+    public User(long userId, String username, String displayName, String email, String passwordHash,
                 BigDecimal ecoPoints, BigDecimal reputationScore, LocalDateTime joinDate, Role role) {
         this.userId = userId;
         this.username = username;
+        this.displayName = displayName;
         this.email = email;
         this.passwordHash = passwordHash;
         this.ecoPoints = ecoPoints;
@@ -39,9 +41,10 @@ public class User {
         this.role = role;
     }
     
-    public User(long userId, String username, String email, String passwordHash, BigDecimal ecoPoints, BigDecimal reputationScore, LocalDateTime joinDate, Role role, String phoneNumber, String address) {
+    public User(long userId, String username, String displayName, String email, String passwordHash, BigDecimal ecoPoints, BigDecimal reputationScore, LocalDateTime joinDate, Role role, String phoneNumber, String address) {
         this.userId = userId;
         this.username = username;
+        this.displayName = displayName;
         this.email = email;
         this.passwordHash = passwordHash;
         this.ecoPoints = ecoPoints;
@@ -67,6 +70,14 @@ public class User {
 
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
     }
 
     public String getEmail() {

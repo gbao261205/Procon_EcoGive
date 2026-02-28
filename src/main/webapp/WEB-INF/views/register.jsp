@@ -293,10 +293,17 @@
 
                         <form id="registerForm" method="post" action="${pageContext.request.contextPath}/register" class="space-y-4">
                             <div>
-                                <label for="username" class="block text-sm font-medium text-slate-700 mb-1.5">Tên đăng nhập</label>
+                                <label for="username" class="block text-sm font-medium text-slate-700 mb-1.5">Tên đăng nhập (ID)</label>
                                 <input type="text" id="username" name="username" value="${username}"
                                        class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base md:text-sm"
-                                       placeholder="Ví dụ: nguyenvanan" required>
+                                       placeholder="Ví dụ: user123" required>
+                            </div>
+
+                            <div>
+                                <label for="displayName" class="block text-sm font-medium text-slate-700 mb-1.5">Tên hiển thị</label>
+                                <input type="text" id="displayName" name="displayName" value="${displayName}"
+                                       class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base md:text-sm"
+                                       placeholder="Ví dụ: Nguyễn Văn A">
                             </div>
 
                             <div>

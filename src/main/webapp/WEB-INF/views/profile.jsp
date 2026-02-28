@@ -6,7 +6,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Hồ sơ của ${profileUser.username} - EcoGive</title>
+    <title>Hồ sơ của ${profileUser.displayName != null ? profileUser.displayName : profileUser.username} - EcoGive</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -85,7 +85,7 @@
             </c:if>
 
             <div class="text-right hidden sm:block">
-                <div class="text-sm font-bold text-slate-800">${sessionScope.currentUser.username}</div>
+                <div class="text-sm font-bold text-slate-800">${sessionScope.currentUser.displayName != null ? sessionScope.currentUser.displayName : sessionScope.currentUser.username}</div>
                 <div class="text-xs text-slate-500">Thành viên</div>
             </div>
             <a href="${pageContext.request.contextPath}/logout" class="flex items-center justify-center w-9 h-9 rounded-full text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all" title="Đăng xuất">
@@ -115,13 +115,14 @@
             <div class="flex-1 text-center md:text-left space-y-4">
                 <div>
                     <h1 class="text-3xl md:text-4xl font-bold text-slate-800 tracking-tight mb-1 flex items-center justify-center md:justify-start gap-2">
-                        ${profileUser.username}
+                        ${profileUser.displayName != null ? profileUser.displayName : profileUser.username}
                         <c:if test="${profileUser.isCompanyVerified()}">
                             <span class="material-symbols-outlined text-blue-500 text-2xl" title="Doanh nghiệp đã xác thực">verified</span>
                         </c:if>
                     </h1>
+                    <p class="text-slate-500 font-medium">@${profileUser.username}</p>
                     <c:if test="${isMyProfile}">
-                        <p class="text-slate-500 font-medium">${profileUser.email}</p>
+                        <p class="text-slate-400 text-sm">${profileUser.email}</p>
                     </c:if>
                 </div>
                 <div class="grid grid-cols-3 gap-4 max-w-lg mx-auto md:mx-0">

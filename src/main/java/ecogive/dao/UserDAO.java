@@ -129,26 +129,27 @@ public class UserDAO {
     }
 
     public boolean insert(User user) throws SQLException {
-        String sql = "INSERT INTO users (username, email, password_hash, role, eco_points, reputation_score, join_date, phone_number, address, is_verified, verification_token) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO users (username, display_name, email, password_hash, role, eco_points, reputation_score, join_date, phone_number, address, is_verified, verification_token) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             stmt.setString(1, user.getUsername());
-            stmt.setString(2, user.getEmail());
-            stmt.setString(3, user.getPasswordHash());
-            stmt.setString(4, user.getRole().name());
-            stmt.setBigDecimal(5, user.getEcoPoints() != null ? user.getEcoPoints() : BigDecimal.ZERO);
-            stmt.setBigDecimal(6, user.getReputationScore() != null ? user.getReputationScore() : BigDecimal.valueOf(1.00));
+            stmt.setString(2, user.getDisplayName()); // MỚI
+            stmt.setString(3, user.getEmail());
+            stmt.setString(4, user.getPasswordHash());
+            stmt.setString(5, user.getRole().name());
+            stmt.setBigDecimal(6, user.getEcoPoints() != null ? user.getEcoPoints() : BigDecimal.ZERO);
+            stmt.setBigDecimal(7, user.getReputationScore() != null ? user.getReputationScore() : BigDecimal.valueOf(1.00));
             if (user.getJoinDate() != null) {
-                stmt.setTimestamp(7, Timestamp.valueOf(user.getJoinDate()));
+                stmt.setTimestamp(8, Timestamp.valueOf(user.getJoinDate()));
             } else {
-                stmt.setTimestamp(7, new Timestamp(System.currentTimeMillis()));
+                stmt.setTimestamp(8, new Timestamp(System.currentTimeMillis()));
             }
-            stmt.setString(8, user.getPhoneNumber());
-            stmt.setString(9, user.getAddress());
-            stmt.setBoolean(10, user.isVerified());
-            stmt.setString(11, user.getVerificationToken());
+            stmt.setString(9, user.getPhoneNumber());
+            stmt.setString(10, user.getAddress());
+            stmt.setBoolean(11, user.isVerified());
+            stmt.setString(12, user.getVerificationToken());
 
             int affected = stmt.executeUpdate();
             if (affected > 0) {
@@ -166,26 +167,27 @@ public class UserDAO {
     }
 
     public boolean update(User user) throws SQLException {
-        String sql = "UPDATE users SET username = ?, email = ?, password_hash = ?, role = ?, phone_number = ?, address = ?, reset_token = ?, reset_token_expiry = ?, is_verified = ?, verification_token = ? WHERE user_id = ?";
+        String sql = "UPDATE users SET username = ?, display_name = ?, email = ?, password_hash = ?, role = ?, phone_number = ?, address = ?, reset_token = ?, reset_token_expiry = ?, is_verified = ?, verification_token = ? WHERE user_id = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, user.getUsername());
-            stmt.setString(2, user.getEmail());
-            stmt.setString(3, user.getPasswordHash());
-            stmt.setString(4, user.getRole().name());
-            stmt.setString(5, user.getPhoneNumber());
-            stmt.setString(6, user.getAddress());
-            stmt.setString(7, user.getResetToken());
+            stmt.setString(2, user.getDisplayName()); // MỚI
+            stmt.setString(3, user.getEmail());
+            stmt.setString(4, user.getPasswordHash());
+            stmt.setString(5, user.getRole().name());
+            stmt.setString(6, user.getPhoneNumber());
+            stmt.setString(7, user.getAddress());
+            stmt.setString(8, user.getResetToken());
             if (user.getResetTokenExpiry() != null) {
-                stmt.setTimestamp(8, Timestamp.valueOf(user.getResetTokenExpiry()));
+                stmt.setTimestamp(9, Timestamp.valueOf(user.getResetTokenExpiry()));
             } else {
-                stmt.setTimestamp(8, null);
+                stmt.setTimestamp(9, null);
             }
-            stmt.setBoolean(9, user.isVerified());
-            stmt.setString(10, user.getVerificationToken());
-            stmt.setLong(11, user.getUserId());
+            stmt.setBoolean(10, user.isVerified());
+            stmt.setString(11, user.getVerificationToken());
+            stmt.setLong(12, user.getUserId());
 
             int affected = stmt.executeUpdate();
             return affected > 0;
@@ -284,6 +286,15 @@ public class UserDAO {
         User u = new User();
         u.setUserId(rs.getLong("user_id"));
         u.setUsername(rs.getString("username"));
+        
+        // MỚI: Map display_name
+        try {
+            u.setDisplayName(rs.getString("display_name"));
+        } catch (SQLException e) {
+            // Nếu cột chưa tồn tại, fallback về username hoặc để null
+            u.setDisplayName(u.getUsername());
+        }
+
         u.setEmail(rs.getString("email"));
         u.setPasswordHash(rs.getString("password_hash"));
         u.setEcoPoints(rs.getBigDecimal("eco_points"));

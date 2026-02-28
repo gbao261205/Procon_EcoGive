@@ -37,11 +37,13 @@ public class RegisterServlet extends HttpServlet {
             throws ServletException, IOException {
         
         String username = request.getParameter("username");
+        String displayName = request.getParameter("displayName"); // MỚI
         String email = request.getParameter("email");
         String password = request.getParameter("password");
         String confirmPassword = request.getParameter("confirmPassword");
 
         request.setAttribute("username", username);
+        request.setAttribute("displayName", displayName); // MỚI
         request.setAttribute("email", email);
 
         if (!password.equals(confirmPassword)) {
@@ -85,6 +87,7 @@ public class RegisterServlet extends HttpServlet {
 
             User newUser = new User();
             newUser.setUsername(username);
+            newUser.setDisplayName(displayName); // MỚI
             newUser.setEmail(email);
             newUser.setPasswordHash(hashedPassword);
             newUser.setRole(Role.USER);
@@ -101,7 +104,7 @@ public class RegisterServlet extends HttpServlet {
                     + request.getContextPath() + "/verify?token=" + verificationToken;
             
             String subject = "Xác thực tài khoản EcoGive";
-            String content = "<p>Xin chào " + username + ",</p>"
+            String content = "<p>Xin chào " + (displayName != null && !displayName.isEmpty() ? displayName : username) + ",</p>"
                     + "<p>Cảm ơn bạn đã đăng ký tài khoản EcoGive. Vui lòng nhấp vào liên kết bên dưới để kích hoạt tài khoản của bạn:</p>"
                     + "<p><a href=\"" + verifyLink + "\">Xác thực tài khoản</a></p>";
 

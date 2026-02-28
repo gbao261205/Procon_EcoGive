@@ -54,10 +54,16 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Tên đăng nhập <span class="text-red-500">*</span></label>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Tên đăng nhập (ID) <span class="text-red-500">*</span></label>
                             <input type="text" id="username" name="username" required
                                    class="w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-2.5 text-sm focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all placeholder:text-slate-400"
-                                   placeholder="VD: nguyenvan_a">
+                                   placeholder="VD: user123">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Tên hiển thị</label>
+                            <input type="text" id="displayName" name="displayName"
+                                   class="w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-2.5 text-sm focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all placeholder:text-slate-400"
+                                   placeholder="VD: Nguyễn Văn A">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Email <span class="text-red-500">*</span></label>
@@ -125,6 +131,7 @@
                     <thead>
                     <tr class="bg-slate-50 border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500 font-bold">
                         <th class="px-6 py-4">User</th>
+                        <th class="px-6 py-4">Tên hiển thị</th>
                         <th class="px-6 py-4">Vai trò</th>
                         <th class="px-6 py-4">Điểm Eco</th>
                         <th class="px-6 py-4">Uy tín</th>
@@ -145,6 +152,9 @@
                                         <div class="text-xs text-slate-500">${u.email}</div>
                                     </div>
                                 </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-slate-700 font-medium">${u.displayName != null ? u.displayName : u.username}</div>
                             </td>
                             <td class="px-6 py-4">
                                 <c:choose>
@@ -173,7 +183,7 @@
                             </td>
                             <td class="px-6 py-4 text-right">
                                 <div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onclick="editUser(${u.userId}, '${u.username}', '${u.email}', '${u.role}', ${u.ecoPoints}, ${u.reputationScore})"
+                                    <button onclick="editUser(${u.userId}, '${u.username}', '${u.displayName != null ? u.displayName : ''}', '${u.email}', '${u.role}', ${u.ecoPoints}, ${u.reputationScore})"
                                             class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Chỉnh sửa">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                                     </button>
@@ -218,7 +228,7 @@
     }
 
     // Hàm mở form Chỉnh sửa
-    function editUser(id, username, email, role, ecoPoints, reputation) {
+    function editUser(id, username, displayName, email, role, ecoPoints, reputation) {
         // 1. Hiển thị form
         const formContainer = document.getElementById('user-form-container');
         formContainer.classList.remove('hidden');
@@ -227,6 +237,7 @@
         document.getElementById('form-action').value = 'update-user';
         document.getElementById('user-id').value = id;
         document.getElementById('username').value = username;
+        document.getElementById('displayName').value = displayName;
         document.getElementById('email').value = email;
         document.getElementById('role').value = role;
 

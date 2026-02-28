@@ -68,6 +68,7 @@ public class AdminUserServlet extends HttpServlet {
     private void addUser(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, IOException {
         String username = request.getParameter("username");
+        String displayName = request.getParameter("displayName"); // MỚI
         String email = request.getParameter("email");
         String plainPassword = request.getParameter("password");
         String roleStr = request.getParameter("role");
@@ -76,6 +77,7 @@ public class AdminUserServlet extends HttpServlet {
 
         User newUser = new User();
         newUser.setUsername(username);
+        newUser.setDisplayName(displayName); // MỚI
         newUser.setEmail(email);
         newUser.setPasswordHash(hashedPassword);
         
@@ -100,6 +102,7 @@ public class AdminUserServlet extends HttpServlet {
             throws SQLException, IOException {
         long id = Long.parseLong(request.getParameter("user_id"));
         String username = request.getParameter("username");
+        String displayName = request.getParameter("displayName"); // MỚI
         String email = request.getParameter("email");
         String plainPassword = request.getParameter("password");
         String roleStr = request.getParameter("role");
@@ -111,6 +114,7 @@ public class AdminUserServlet extends HttpServlet {
         }
 
         user.setUsername(username);
+        user.setDisplayName(displayName); // MỚI
         user.setEmail(email);
 
         // SỬA LỖI: Chuyển đổi String thành Enum Role

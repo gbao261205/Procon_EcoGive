@@ -177,7 +177,7 @@
                 <button id="user-menu-button" class="flex items-center gap-3 group cursor-pointer">
                     <div class="text-right hidden md:block">
                         <div class="text-sm font-bold text-slate-700 group-hover:text-primary transition">
-                            ${sessionScope.currentUser.username}
+                            ${sessionScope.currentUser.displayName != null ? sessionScope.currentUser.displayName : sessionScope.currentUser.username}
                         </div>
                         <div class="text-xs text-primary font-medium flex items-center justify-end gap-1">
                             <span class="material-symbols-outlined text-[14px]">eco</span>
@@ -191,8 +191,8 @@
                 <!-- Dropdown Menu -->
                 <div id="user-menu" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-slate-100 py-2 z-50 origin-top-right animate-scale-in">
                     <div class="px-4 py-2 border-b border-slate-100 mb-2">
-                        <div class="font-bold text-slate-800">${sessionScope.currentUser.username}</div>
-                        <div class="text-xs text-slate-500">${sessionScope.currentUser.email}</div>
+                        <div class="font-bold text-slate-800">${sessionScope.currentUser.displayName != null ? sessionScope.currentUser.displayName : sessionScope.currentUser.username}</div>
+                        <div class="text-xs text-slate-500">@${sessionScope.currentUser.username}</div>
                     </div>
                     <a href="javascript:void(0);" onclick="openAllItemsList()" class="flex md:hidden items-center gap-3 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors">
                         <span class="material-symbols-outlined text-slate-400">inventory_2</span>
@@ -1499,7 +1499,7 @@
                             <img src="https://api.dicebear.com/9.x/notionists-neutral/svg?seed=\${u.username}" class="w-full h-full rounded-full">
                         </div>
                         <div class="flex-1 min-w-0">
-                            <div class="font-bold text-sm truncate">\${u.username}</div>
+                            <div class="font-bold text-sm truncate">\${u.displayName != null ? u.displayName : u.username}</div>
                             <div class="text-[10px] opacity-80">Reputation: \${u.reputationScore}</div>
                         </div>
                         <div class="font-bold text-primary flex items-center gap-1 bg-white px-2 py-1 rounded-lg shadow-sm">
