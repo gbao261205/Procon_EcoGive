@@ -16,10 +16,13 @@ import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 @WebServlet("/register-collector")
 public class RegisterCollectorServlet extends HttpServlet {
     private UserDAO userDAO;
+    private static final String EMAIL_REGEX = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
+    private static final String PHONE_REGEX = "^0[0-9]{9}$"; // Bắt đầu bằng 0, theo sau là 9 chữ số
 
     @Override
     public void init() {
@@ -59,6 +62,24 @@ public class RegisterCollectorServlet extends HttpServlet {
             address == null || address.trim().isEmpty() ||
             password == null || password.isEmpty()) {
             request.setAttribute("error", "Vui lòng điền đầy đủ thông tin.");
+            request.getRequestDispatcher("/WEB-INF/views/register-collector.jsp").forward(request, response);
+            return;
+        }
+
+        if (!Pattern.matches(EMAIL_REGEX, email)) {
+            request.setAttribute("error", "Địa chỉ email không hợp lệ.");
+            request.getRequestDispatcher("/WEB-INF/views/register-collector.jsp").forward(request, response);
+            return;
+        }
+
+        if (!Pattern.matches(PHONE_REGEX, phoneNumber)) {
+            request.setAttribute("error", "Số điện thoại không hợp lệ (phải bắt đầu bằng 0 và có 10 chữ số).");
+            request.getRequestDispatcher("/WEB-INF/views/register-collector.jsp").forward(request, response);
+            return;
+        }
+
+        if (password.length() < 6) {
+            request.setAttribute("error", "Mật khẩu phải có ít nhất 6 ký tự.");
             request.getRequestDispatcher("/WEB-INF/views/register-collector.jsp").forward(request, response);
             return;
         }

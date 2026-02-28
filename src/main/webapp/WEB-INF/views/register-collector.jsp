@@ -329,7 +329,7 @@
                                         <label for="phoneNumber" class="block text-sm font-medium text-slate-700 mb-1.5">Số điện thoại</label>
                                         <input type="tel" id="phoneNumber" name="phoneNumber" value="${phoneNumber}"
                                                class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base md:text-sm"
-                                               placeholder="0912345678" required pattern="[0-9]+">
+                                               placeholder="0912345678" required pattern="0[0-9]{9}" title="Số điện thoại phải bắt đầu bằng 0 và có 10 chữ số">
                                     </div>
                                 </div>
 
@@ -606,7 +606,11 @@
                 }
 
                 const allFieldsFilled = [...form.querySelectorAll('input[required]')].every(input => input.value.trim() !== '');
-                submitButton.disabled = !(isPasswordMatch && isPasswordValid && allFieldsFilled);
+                // Check pattern validity for phone number
+                const phoneInput = document.getElementById('phoneNumber');
+                const isPhoneValid = phoneInput.checkValidity();
+
+                submitButton.disabled = !(isPasswordMatch && isPasswordValid && allFieldsFilled && isPhoneValid);
             }
 
             form.addEventListener('input', validateForm);

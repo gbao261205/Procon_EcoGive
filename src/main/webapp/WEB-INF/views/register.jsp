@@ -318,19 +318,23 @@
                                     <label for="password" class="block text-sm font-medium text-slate-700 mb-1.5">Mật khẩu</label>
                                     <input type="password" id="password" name="password"
                                            class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base md:text-sm"
-                                           placeholder="••••••••" required>
+                                           placeholder="Tối thiểu 6 ký tự" required minlength="6">
                                 </div>
                                 <div>
                                     <label for="confirmPassword" class="block text-sm font-medium text-slate-700 mb-1.5">Xác nhận mật khẩu</label>
                                     <input type="password" id="confirmPassword" name="confirmPassword"
                                            class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base md:text-sm"
-                                           placeholder="••••••••" required>
+                                           placeholder="Nhập lại mật khẩu" required minlength="6">
                                 </div>
                             </div>
+                            <p id="passwordError" class="text-xs text-red-600 font-medium hidden flex items-center gap-1">
+                                <span class="material-symbols-outlined text-sm">error</span>
+                                Mật khẩu xác nhận không khớp.
+                            </p>
 
                             <div class="pt-2">
-                                <button type="submit"
-                                        class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all transform hover:-translate-y-0.5 active:scale-95">
+                                <button type="submit" id="submitButton"
+                                        class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all transform hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
                                     Đăng ký tài khoản
                                 </button>
                             </div>
@@ -547,6 +551,36 @@
                 }
             }
         });
+
+        // Form Validation Logic
+        const form = document.getElementById('registerForm');
+        const password = document.getElementById('password');
+        const confirmPassword = document.getElementById('confirmPassword');
+        const passwordError = document.getElementById('passwordError');
+        const submitButton = document.getElementById('submitButton');
+
+        if (form && password && confirmPassword && passwordError && submitButton) {
+            function validateForm() {
+                const isPasswordMatch = password.value === confirmPassword.value;
+                const isPasswordValid = password.value.length >= 6;
+
+                if (!isPasswordMatch && confirmPassword.value) {
+                    passwordError.classList.remove('hidden');
+                    confirmPassword.classList.add('border-red-300', 'focus:ring-red-500');
+                    confirmPassword.classList.remove('border-slate-300', 'focus:ring-primary');
+                } else {
+                    passwordError.classList.add('hidden');
+                    confirmPassword.classList.remove('border-red-300', 'focus:ring-red-500');
+                    confirmPassword.classList.add('border-slate-300', 'focus:ring-primary');
+                }
+
+                const allFieldsFilled = [...form.querySelectorAll('input[required]')].every(input => input.value.trim() !== '');
+                submitButton.disabled = !(isPasswordMatch && isPasswordValid && allFieldsFilled);
+            }
+
+            form.addEventListener('input', validateForm);
+            validateForm();
+        }
     </script>
 
 </body>

@@ -16,10 +16,12 @@ import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 @WebServlet("/register")
 public class RegisterServlet extends HttpServlet {
     private UserDAO userDAO;
+    private static final String EMAIL_REGEX = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
 
     @Override
     public void init() {
@@ -45,6 +47,27 @@ public class RegisterServlet extends HttpServlet {
         request.setAttribute("username", username);
         request.setAttribute("displayName", displayName); // MỚI
         request.setAttribute("email", email);
+
+        // --- Validation ---
+        if (username == null || username.trim().isEmpty() ||
+            email == null || email.trim().isEmpty() ||
+            password == null || password.isEmpty()) {
+            request.setAttribute("error", "Vui lòng điền đầy đủ thông tin.");
+            request.getRequestDispatcher("/WEB-INF/views/register.jsp").forward(request, response);
+            return;
+        }
+
+        if (!Pattern.matches(EMAIL_REGEX, email)) {
+            request.setAttribute("error", "Địa chỉ email không hợp lệ.");
+            request.getRequestDispatcher("/WEB-INF/views/register.jsp").forward(request, response);
+            return;
+        }
+
+        if (password.length() < 6) {
+            request.setAttribute("error", "Mật khẩu phải có ít nhất 6 ký tự.");
+            request.getRequestDispatcher("/WEB-INF/views/register.jsp").forward(request, response);
+            return;
+        }
 
         if (!password.equals(confirmPassword)) {
             request.setAttribute("error", "Mật khẩu xác nhận không khớp.");
