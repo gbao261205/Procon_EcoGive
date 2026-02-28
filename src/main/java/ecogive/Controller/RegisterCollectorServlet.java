@@ -36,7 +36,8 @@ public class RegisterCollectorServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        String companyName = request.getParameter("companyName");
+        String username = request.getParameter("username"); // Tên đăng nhập (ID)
+        String displayName = request.getParameter("displayName"); // Tên Doanh nghiệp
         String email = request.getParameter("email");
         String phoneNumber = request.getParameter("phoneNumber");
         String address = request.getParameter("address");
@@ -44,13 +45,15 @@ public class RegisterCollectorServlet extends HttpServlet {
         String confirmPassword = request.getParameter("confirmPassword");
 
         // Keep user input in case of error
-        request.setAttribute("companyName", companyName);
+        request.setAttribute("username", username);
+        request.setAttribute("displayName", displayName);
         request.setAttribute("email", email);
         request.setAttribute("phoneNumber", phoneNumber);
         request.setAttribute("address", address);
 
         // --- Validation ---
-        if (companyName == null || companyName.trim().isEmpty() ||
+        if (username == null || username.trim().isEmpty() ||
+            displayName == null || displayName.trim().isEmpty() ||
             email == null || email.trim().isEmpty() ||
             phoneNumber == null || phoneNumber.trim().isEmpty() ||
             address == null || address.trim().isEmpty() ||
@@ -67,9 +70,9 @@ public class RegisterCollectorServlet extends HttpServlet {
         }
 
         try {
-            // Check if username (company name) already exists
-            if (userDAO.findByUsername(companyName) != null) {
-                request.setAttribute("error", "Tên doanh nghiệp đã tồn tại.");
+            // Check if username already exists
+            if (userDAO.findByUsername(username) != null) {
+                request.setAttribute("error", "Tên đăng nhập đã tồn tại.");
                 request.getRequestDispatcher("/WEB-INF/views/register-collector.jsp").forward(request, response);
                 return;
             }
@@ -86,7 +89,8 @@ public class RegisterCollectorServlet extends HttpServlet {
             String verificationToken = UUID.randomUUID().toString(); // Generate Token
 
             User newUser = new User();
-            newUser.setUsername(companyName); // Use company name as username
+            newUser.setUsername(username);
+            newUser.setDisplayName(displayName); // Lưu tên doanh nghiệp vào display_name
             newUser.setEmail(email);
             newUser.setPhoneNumber(phoneNumber);
             newUser.setAddress(address);
@@ -104,7 +108,7 @@ public class RegisterCollectorServlet extends HttpServlet {
                         + request.getContextPath() + "/verify?token=" + verificationToken;
 
                 String subject = "Xác thực tài khoản Doanh nghiệp EcoGive";
-                String content = "<p>Xin chào " + companyName + ",</p>"
+                String content = "<p>Xin chào " + displayName + ",</p>"
                         + "<p>Cảm ơn bạn đã đăng ký tài khoản Đối tác Thu gom tại EcoGive.</p>"
                         + "<p>Vui lòng nhấp vào liên kết bên dưới để kích hoạt tài khoản doanh nghiệp của bạn:</p>"
                         + "<p><a href=\"" + verifyLink + "\">Xác thực tài khoản ngay</a></p>"
