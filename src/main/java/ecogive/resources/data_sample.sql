@@ -23,11 +23,18 @@ INSERT INTO users (username, email, password_hash, role, phone_number, address, 
 
 -- 3.2 Categories - ĐÃ KHÔI PHỤC
 INSERT INTO categories (name, fixed_points) VALUES
-('Nội thất, Bàn ghế', 10.00),
-('Quần áo, Giày dép', 3.50),
-('Thiết bị điện tử nhỏ', 7.50),
-('Sách, Văn phòng phẩm', 1.00),
-('Nhựa tái chế', 2.00);
+('Nội thất, Bàn ghế', 20.00),
+('Quần áo, Giày dép', 5.00),
+('Thiết bị điện tử nhỏ', 10.00),
+('Sách, Văn phòng phẩm', 5.00),
+('Nhựa tái chế', 2.00),
+('Kim loại tái chế', 4.00),
+('Giấy & Carton', 2.00),
+('Thủy tinh', 3.00),
+('Rác thải nguy hại (bóng đèn huỳnh quang...)', 15.00),
+('Rác thải điện tử lớn', 30.00),
+('Phụ kiện dệt may', 3.00),
+('Lốp xe & Cao su', 8.00);
 
 -- 3.3 Items
 INSERT INTO items (giver_id, title, description, image_url, status, location, eco_points, category_id) VALUES
