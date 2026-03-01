@@ -1,6 +1,7 @@
 package ecogive.dao;
 
 import ecogive.Model.Role;
+import ecogive.Model.Tier;
 import ecogive.Model.User;
 import ecogive.util.DatabaseConnection;
 
@@ -111,7 +112,6 @@ public class UserDAO {
         return list;
     }
 
-    // --- MỚI: Tìm theo Role ---
     public List<User> findByRole(String role) throws SQLException {
         List<User> list = new ArrayList<>();
         String sql = "SELECT * FROM users WHERE role = ?";
@@ -131,7 +131,8 @@ public class UserDAO {
 
     public List<User> getTopUsers(int limit) throws SQLException {
         List<User> list = new ArrayList<>();
-        String sql = "SELECT * FROM users WHERE role = 'USER' ORDER BY eco_points DESC LIMIT ?";
+        // Sửa: Thêm điều kiện AND is_verified = TRUE
+        String sql = "SELECT * FROM users WHERE role = 'USER' AND is_verified = TRUE ORDER BY season_points DESC LIMIT ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, limit);
@@ -147,27 +148,33 @@ public class UserDAO {
     }
 
     public boolean insert(User user) throws SQLException {
-        String sql = "INSERT INTO users (username, display_name, email, password_hash, role, eco_points, reputation_score, join_date, phone_number, address, is_verified, verification_token) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO users (username, display_name, email, password_hash, role, current_points, lifetime_points, season_points, tier, reputation_score, join_date, phone_number, address, is_verified, verification_token) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             stmt.setString(1, user.getUsername());
-            stmt.setString(2, user.getDisplayName()); // MỚI
+            stmt.setString(2, user.getDisplayName());
             stmt.setString(3, user.getEmail());
             stmt.setString(4, user.getPasswordHash());
             stmt.setString(5, user.getRole().name());
-            stmt.setBigDecimal(6, user.getEcoPoints() != null ? user.getEcoPoints() : BigDecimal.ZERO);
-            stmt.setBigDecimal(7, user.getReputationScore() != null ? user.getReputationScore() : BigDecimal.valueOf(1.00));
+            
+            BigDecimal zero = BigDecimal.ZERO;
+            stmt.setBigDecimal(6, user.getCurrentPoints() != null ? user.getCurrentPoints() : zero);
+            stmt.setBigDecimal(7, user.getLifetimePoints() != null ? user.getLifetimePoints() : zero);
+            stmt.setBigDecimal(8, user.getSeasonPoints() != null ? user.getSeasonPoints() : zero);
+            stmt.setString(9, user.getTier() != null ? user.getTier().name() : "STANDARD");
+            
+            stmt.setBigDecimal(10, user.getReputationScore() != null ? user.getReputationScore() : BigDecimal.valueOf(1.00));
             if (user.getJoinDate() != null) {
-                stmt.setTimestamp(8, Timestamp.valueOf(user.getJoinDate()));
+                stmt.setTimestamp(11, Timestamp.valueOf(user.getJoinDate()));
             } else {
-                stmt.setTimestamp(8, new Timestamp(System.currentTimeMillis()));
+                stmt.setTimestamp(11, new Timestamp(System.currentTimeMillis()));
             }
-            stmt.setString(9, user.getPhoneNumber());
-            stmt.setString(10, user.getAddress());
-            stmt.setBoolean(11, user.isVerified());
-            stmt.setString(12, user.getVerificationToken());
+            stmt.setString(12, user.getPhoneNumber());
+            stmt.setString(13, user.getAddress());
+            stmt.setBoolean(14, user.isVerified());
+            stmt.setString(15, user.getVerificationToken());
 
             int affected = stmt.executeUpdate();
             if (affected > 0) {
@@ -191,7 +198,7 @@ public class UserDAO {
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, user.getUsername());
-            stmt.setString(2, user.getDisplayName()); // MỚI
+            stmt.setString(2, user.getDisplayName());
             stmt.setString(3, user.getEmail());
             stmt.setString(4, user.getPasswordHash());
             stmt.setString(5, user.getRole().name());
@@ -226,11 +233,68 @@ public class UserDAO {
     }
     
     public boolean addEcoPoints(long userId, BigDecimal pointsToAdd) throws SQLException {
-        String sql = "UPDATE users SET eco_points = eco_points + ? WHERE user_id = ?";
+        String updatePointsSql = "UPDATE users SET " +
+                "current_points = current_points + ?, " +
+                "lifetime_points = lifetime_points + ?, " +
+                "season_points = season_points + ? " +
+                "WHERE user_id = ?";
+        
+        String updateTierSql = "UPDATE users SET tier = CASE " +
+                "WHEN lifetime_points >= 2500 THEN 'DIAMOND' " +
+                "WHEN lifetime_points >= 800 THEN 'GOLD' " +
+                "WHEN lifetime_points >= 200 THEN 'SILVER' " +
+                "ELSE 'STANDARD' END " +
+                "WHERE user_id = ?";
+
+        Connection conn = null;
+        try {
+            conn = DatabaseConnection.getConnection();
+            conn.setAutoCommit(false);
+
+            try (PreparedStatement stmt = conn.prepareStatement(updatePointsSql)) {
+                stmt.setBigDecimal(1, pointsToAdd);
+                stmt.setBigDecimal(2, pointsToAdd);
+                stmt.setBigDecimal(3, pointsToAdd);
+                stmt.setLong(4, userId);
+                stmt.executeUpdate();
+            }
+
+            try (PreparedStatement stmt = conn.prepareStatement(updateTierSql)) {
+                stmt.setLong(1, userId);
+                stmt.executeUpdate();
+            }
+
+            conn.commit();
+            return true;
+        } catch (Exception e) {
+            if (conn != null) {
+                try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
+            }
+            throw new SQLException(e);
+        } finally {
+            if (conn != null) {
+                try { conn.setAutoCommit(true); conn.close(); } catch (SQLException ex) { ex.printStackTrace(); }
+            }
+        }
+    }
+    
+    public boolean deductPoints(long userId, BigDecimal pointsToDeduct) throws SQLException {
+        String sql = "UPDATE users SET current_points = current_points - ? WHERE user_id = ? AND current_points >= ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setBigDecimal(1, pointsToAdd);
+            stmt.setBigDecimal(1, pointsToDeduct);
             stmt.setLong(2, userId);
+            stmt.setBigDecimal(3, pointsToDeduct);
+            return stmt.executeUpdate() > 0;
+        } catch (Exception e) {
+            throw new SQLException(e);
+        }
+    }
+
+    public boolean resetSeasonPoints() throws SQLException {
+        String sql = "UPDATE users SET season_points = 0";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
             return stmt.executeUpdate() > 0;
         } catch (Exception e) {
             throw new SQLException(e);
@@ -248,8 +312,6 @@ public class UserDAO {
             throw new SQLException(e);
         }
     }
-
-    // --- MỚI: Các phương thức xác thực doanh nghiệp ---
 
     public boolean updateCompanyVerificationRequest(long userId, String documentUrl) throws SQLException {
         String sql = "UPDATE users SET company_verification_status = 'PENDING', verification_document = ? WHERE user_id = ?";
@@ -305,17 +367,33 @@ public class UserDAO {
         u.setUserId(rs.getLong("user_id"));
         u.setUsername(rs.getString("username"));
         
-        // MỚI: Map display_name
         try {
             u.setDisplayName(rs.getString("display_name"));
         } catch (SQLException e) {
-            // Nếu cột chưa tồn tại, fallback về username hoặc để null
             u.setDisplayName(u.getUsername());
         }
 
         u.setEmail(rs.getString("email"));
         u.setPasswordHash(rs.getString("password_hash"));
-        u.setEcoPoints(rs.getBigDecimal("eco_points"));
+        
+        try {
+            u.setCurrentPoints(rs.getBigDecimal("current_points"));
+            u.setLifetimePoints(rs.getBigDecimal("lifetime_points"));
+            u.setSeasonPoints(rs.getBigDecimal("season_points"));
+            
+            String tierStr = rs.getString("tier");
+            if (tierStr != null) {
+                u.setTier(Tier.valueOf(tierStr));
+            } else {
+                u.setTier(Tier.STANDARD);
+            }
+        } catch (SQLException e) {
+            u.setCurrentPoints(BigDecimal.ZERO);
+            u.setLifetimePoints(BigDecimal.ZERO);
+            u.setSeasonPoints(BigDecimal.ZERO);
+            u.setTier(Tier.STANDARD);
+        }
+        
         u.setReputationScore(rs.getBigDecimal("reputation_score"));
         u.setPhoneNumber(rs.getString("phone_number"));
         u.setAddress(rs.getString("address"));
@@ -323,13 +401,11 @@ public class UserDAO {
         u.setVerified(rs.getBoolean("is_verified"));
         u.setVerificationToken(rs.getString("verification_token"));
         
-        // Map các cột mới (cần kiểm tra xem cột có tồn tại không để tránh lỗi nếu DB chưa update)
         try {
             u.setCompanyVerified(rs.getBoolean("is_company_verified"));
             u.setCompanyVerificationStatus(rs.getString("company_verification_status"));
             u.setVerificationDocument(rs.getString("verification_document"));
         } catch (SQLException e) {
-            // Cột chưa tồn tại trong DB, bỏ qua hoặc set mặc định
             u.setCompanyVerified(false);
             u.setCompanyVerificationStatus("NONE");
         }
@@ -344,7 +420,6 @@ public class UserDAO {
             try {
                 u.setRole(Role.valueOf(roleStr.toUpperCase()));
             } catch (IllegalArgumentException e) {
-                System.err.println("Invalid role value in database: " + roleStr);
                 u.setRole(Role.USER);
             }
         } else {

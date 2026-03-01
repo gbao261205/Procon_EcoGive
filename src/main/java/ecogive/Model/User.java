@@ -6,10 +6,16 @@ import java.time.LocalDateTime;
 public class User {
     private long userId;
     private String username;
-    private String displayName; // MỚI: Tên hiển thị
+    private String displayName;
     private String email;
     private String passwordHash;
-    private BigDecimal ecoPoints;
+    
+    // --- MỚI: Hệ thống 3 quỹ điểm ---
+    private BigDecimal currentPoints;  // Điểm khả dụng để đổi quà
+    private BigDecimal lifetimePoints; // Điểm tích lũy trọn đời (xét hạng)
+    private BigDecimal seasonPoints;   // Điểm mùa giải (đua top)
+    private Tier tier;                 // Hạng thành viên (STANDARD, SILVER, GOLD, DIAMOND)
+
     private BigDecimal reputationScore;
     private LocalDateTime joinDate;
     private Role role;
@@ -20,14 +26,19 @@ public class User {
     private boolean isVerified;
     private String verificationToken;
 
-    // --- MỚI: Xác thực doanh nghiệp ---
+    // --- Xác thực doanh nghiệp ---
     private boolean isCompanyVerified;
     private String companyVerificationStatus; // NONE, PENDING, VERIFIED, REJECTED
     private String verificationDocument;
 
     public User() {
+        this.currentPoints = BigDecimal.ZERO;
+        this.lifetimePoints = BigDecimal.ZERO;
+        this.seasonPoints = BigDecimal.ZERO;
+        this.tier = Tier.STANDARD;
     }
 
+    // Constructor cũ (để tương thích ngược nếu cần, nhưng nên update dần)
     public User(long userId, String username, String displayName, String email, String passwordHash,
                 BigDecimal ecoPoints, BigDecimal reputationScore, LocalDateTime joinDate, Role role) {
         this.userId = userId;
@@ -35,24 +46,15 @@ public class User {
         this.displayName = displayName;
         this.email = email;
         this.passwordHash = passwordHash;
-        this.ecoPoints = ecoPoints;
+        // Map ecoPoints cũ vào cả 3 loại điểm mới tạm thời
+        this.currentPoints = ecoPoints;
+        this.lifetimePoints = ecoPoints;
+        this.seasonPoints = ecoPoints;
+        this.tier = Tier.STANDARD;
+        
         this.reputationScore = reputationScore;
         this.joinDate = joinDate;
         this.role = role;
-    }
-    
-    public User(long userId, String username, String displayName, String email, String passwordHash, BigDecimal ecoPoints, BigDecimal reputationScore, LocalDateTime joinDate, Role role, String phoneNumber, String address) {
-        this.userId = userId;
-        this.username = username;
-        this.displayName = displayName;
-        this.email = email;
-        this.passwordHash = passwordHash;
-        this.ecoPoints = ecoPoints;
-        this.reputationScore = reputationScore;
-        this.joinDate = joinDate;
-        this.role = role;
-        this.phoneNumber = phoneNumber;
-        this.address = address;
     }
 
     // Getters and Setters
@@ -96,13 +98,48 @@ public class User {
         this.passwordHash = passwordHash;
     }
 
+    // --- Getter/Setter cho điểm mới ---
+    public BigDecimal getCurrentPoints() {
+        return currentPoints;
+    }
+
+    public void setCurrentPoints(BigDecimal currentPoints) {
+        this.currentPoints = currentPoints;
+    }
+
+    public BigDecimal getLifetimePoints() {
+        return lifetimePoints;
+    }
+
+    public void setLifetimePoints(BigDecimal lifetimePoints) {
+        this.lifetimePoints = lifetimePoints;
+    }
+
+    public BigDecimal getSeasonPoints() {
+        return seasonPoints;
+    }
+
+    public void setSeasonPoints(BigDecimal seasonPoints) {
+        this.seasonPoints = seasonPoints;
+    }
+
+    public Tier getTier() {
+        return tier;
+    }
+
+    public void setTier(Tier tier) {
+        this.tier = tier;
+    }
+
+    // Giữ lại getEcoPoints để tương thích ngược với code cũ chưa sửa kịp (trả về currentPoints)
     public BigDecimal getEcoPoints() {
-        return ecoPoints;
+        return currentPoints;
     }
 
     public void setEcoPoints(BigDecimal ecoPoints) {
-        this.ecoPoints = ecoPoints;
+        this.currentPoints = ecoPoints;
     }
+    // ----------------------------------
 
     public BigDecimal getReputationScore() {
         return reputationScore;

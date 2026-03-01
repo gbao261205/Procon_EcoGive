@@ -21,7 +21,11 @@ CREATE TABLE users (
     password_hash VARCHAR(255) NOT NULL,
     phone_number VARCHAR(20) NULL,
     address TEXT NULL,
-    eco_points DECIMAL(10, 2) DEFAULT 0.00,
+    -- Thay đổi và thêm mới các cột điểm số
+    season_points DECIMAL(10, 2) DEFAULT 0.00,
+    current_points DECIMAL(10, 2) DEFAULT 0.00,
+    lifetime_points DECIMAL(10, 2) DEFAULT 0.00,
+    tier ENUM('STANDARD', 'SILVER', 'GOLD', 'DIAMOND') DEFAULT 'STANDARD',
     reputation_score DECIMAL(3, 2) DEFAULT 1.00,
     role ENUM('USER', 'ADMIN', 'COLLECTOR_COMPANY') NOT NULL DEFAULT 'USER',
     join_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -34,7 +38,7 @@ CREATE TABLE users (
     verification_document VARCHAR(255) NULL
 );
 
--- Bảng 2: Danh mục (Categories) - ĐÃ KHÔI PHỤC
+-- Bảng 2: Danh mục (Categories)
 CREATE TABLE categories (
     category_id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE,
@@ -59,19 +63,19 @@ CREATE TABLE items (
 );
 CREATE SPATIAL INDEX sp_index_location ON items (location);
 
--- Bảng MỚI: Loại hình điểm thu gom (Collection Point Types)
+-- Bảng 4: Loại hình điểm thu gom (Collection Point Types)
 CREATE TABLE collection_point_types (
     type_code VARCHAR(50) PRIMARY KEY,
     display_name VARCHAR(100) NOT NULL,
     description TEXT,
-    icon VARCHAR(50) DEFAULT '♻️' -- Icon hiển thị
+    icon VARCHAR(50) DEFAULT '♻️'
 );
 
--- Bảng 4: Điểm Thu gom (Collection Points)
+-- Bảng 5: Điểm Thu gom (Collection Points)
 CREATE TABLE collection_points (
     point_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    type VARCHAR(50) NOT NULL, -- Thay đổi từ ENUM sang VARCHAR để tham chiếu
+    type VARCHAR(50) NOT NULL,
     address TEXT,
     location POINT NOT NULL,
     owner_id BIGINT NULL,
@@ -80,33 +84,17 @@ CREATE TABLE collection_points (
 );
 CREATE SPATIAL INDEX sp_index_cp_location ON collection_points (location);
 
--- Bảng 5: Giao dịch (Transactions)
+-- Bảng 6: Giao dịch (Transactions)
 CREATE TABLE transactions (
     transaction_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     item_id BIGINT NOT NULL,
     receiver_id BIGINT NOT NULL,
     transaction_type ENUM('GIVE', 'TRADE') DEFAULT 'GIVE',
     offer_item_id BIGINT NULL,
-    status ENUM('PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELED', 'PENDING_TRADE',  'TRADE_ACCEPTED', 'CONFIRMED_BY_A', 'CONFIRMED_BY_B') DEFAULT 'PENDING',
-    exchange_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    giver_confirmed_date TIMESTAMP NULL DEFAULT NULL,
+    status ENUM('PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELED', 'PENDING_TRADE') DEFAULT 'PENDING',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (item_id) REFERENCES items(item_id) ON DELETE CASCADE,
     FOREIGN KEY (receiver_id) REFERENCES users(user_id) ON DELETE CASCADE,
-    CONSTRAINT fk_transactions_offer_item FOREIGN KEY (offer_item_id) REFERENCES items(item_id) ON DELETE SET NULL
-);
-
--- Bảng 6: Đánh giá (Reviews)
-CREATE TABLE reviews (
-    review_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    transaction_id BIGINT NOT NULL,
-    reviewer_id BIGINT NOT NULL,
-    rated_user_id BIGINT NOT NULL,
-    rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
-    comment TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (transaction_id) REFERENCES transactions(transaction_id) ON DELETE CASCADE,
-    FOREIGN KEY (reviewer_id) REFERENCES users(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (rated_user_id) REFERENCES users(user_id) ON DELETE CASCADE,
     UNIQUE INDEX idx_unique_transaction (transaction_id)
 );
 
@@ -115,8 +103,8 @@ CREATE TABLE messages (
     message_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     sender_id BIGINT NOT NULL,
     receiver_id BIGINT NOT NULL,
-    content TEXT CHARACTER SET utf8mb4, -- Cho phép NULL nếu chỉ gửi ảnh
-    image_url VARCHAR(255) NULL,        -- Cột mới để lưu link ảnh
+    content TEXT CHARACTER SET utf8mb4,
+    image_url VARCHAR(255) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_read BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (sender_id) REFERENCES users(user_id) ON DELETE CASCADE,
@@ -135,13 +123,49 @@ CREATE TABLE collection_requests (
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
--- Bảng 9: Thông báo
+-- Bảng 9: Quà tặng (Rewards)
+CREATE TABLE rewards (
+    reward_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    point_cost DECIMAL(10,2) NOT NULL,
+    image_url VARCHAR(255),
+    stock INT DEFAULT 0,
+    type ENUM('ADMIN', 'SPONSOR') DEFAULT 'ADMIN',
+    sponsor_name VARCHAR(255) NULL,
+    status ENUM('PENDING', 'APPROVED', 'REJECTED', 'HIDDEN') DEFAULT 'APPROVED',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Bảng 10: Lịch sử đổi quà (Reward Redemptions)
+CREATE TABLE reward_redemptions (
+    redemption_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    reward_id BIGINT NOT NULL,
+    points_spent DECIMAL(10,2) NOT NULL,
+    redeemed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status ENUM('PENDING', 'COMPLETED', 'CANCELLED') DEFAULT 'PENDING',
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (reward_id) REFERENCES rewards(reward_id) ON DELETE CASCADE
+);
+
+-- Bảng 11: Lịch sử mùa giải (Leaderboard History)
+CREATE TABLE leaderboard_history (
+    history_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    season_name VARCHAR(100) NOT NULL,
+    user_id BIGINT NOT NULL,
+    total_season_points DECIMAL(10,2) NOT NULL,
+    final_rank INT NOT NULL,
+    recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+-- Bảng 12: Thông báo
 CREATE TABLE IF NOT EXISTS notifications (
     notification_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT NOT NULL,
-    content TEXT NOT NULL,
-    type VARCHAR(50),
-    reference_id BIGINT,
+    title VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE

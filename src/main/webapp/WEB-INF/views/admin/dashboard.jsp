@@ -24,6 +24,12 @@
             <p class="text-sm text-slate-500 mt-1">Xin chào Administrator, đây là báo cáo hôm nay.</p>
         </div>
         <div class="flex items-center gap-3">
+            <!-- MỚI: Nút Kết thúc Mùa giải -->
+            <button onclick="confirmResetSeason()" class="hidden md:flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 text-xs font-bold rounded-xl border border-red-100 hover:bg-red-100 transition-colors shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                Kết thúc Mùa giải
+            </button>
+
             <span class="hidden md:flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full border border-emerald-100">
                 <span class="relative flex h-2 w-2">
                   <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -273,6 +279,37 @@
             container.appendChild(row);
         });
     })(categoryLabels, categoryData);
+
+    // --- MỚI: Logic Reset Season ---
+    async function confirmResetSeason() {
+        if (!confirm("⚠️ CẢNH BÁO: Bạn có chắc chắn muốn kết thúc mùa giải hiện tại?\n\nHành động này sẽ:\n1. Lưu Top 5 vào lịch sử.\n2. Cộng thưởng cho Top 5.\n3. Reset điểm Season của TẤT CẢ user về 0.\n4. Gửi email thông báo.\n\nHành động này KHÔNG THỂ hoàn tác!")) {
+            return;
+        }
+
+        try {
+            const btn = document.querySelector('button[onclick="confirmResetSeason()"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = 'Đang xử lý...';
+            btn.disabled = true;
+
+            const res = await fetch('${pageContext.request.contextPath}/admin/season-reset', {
+                method: 'POST'
+            });
+            const data = await res.json();
+
+            if (data.status === 'success') {
+                alert("✅ " + data.message);
+                location.reload();
+            } else {
+                alert("❌ Lỗi: " + data.message);
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        } catch (e) {
+            console.error(e);
+            alert("❌ Lỗi kết nối server!");
+        }
+    }
 </script>
 
 </body>

@@ -181,7 +181,7 @@
                         </div>
                         <div class="text-xs text-primary font-medium flex items-center justify-end gap-1">
                             <span class="material-symbols-outlined text-[14px]">eco</span>
-                            ${sessionScope.currentUser.ecoPoints} EcoPoints
+                            ${sessionScope.currentUser.seasonPoints} EcoPoints
                         </div>
                     </div>
                     <img src="https://api.dicebear.com/9.x/notionists-neutral/svg?seed=${sessionScope.currentUser.username}"
@@ -206,6 +206,10 @@
                     <a href="${pageContext.request.contextPath}/profile" class="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors">
                         <span class="material-symbols-outlined text-slate-400">person</span>
                         <span>Hồ sơ của tôi</span>
+                    </a>
+                    <a href="${pageContext.request.contextPath}/redeem" class="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors">
+                        <span class="material-symbols-outlined text-slate-400">redeem</span>
+                        <span>Đổi quà</span>
                     </a>
                     <div class="h-px bg-slate-100 my-1"></div>
                     <a href="${pageContext.request.contextPath}/logout" class="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors">
@@ -1496,6 +1500,9 @@
                     rankIcon = "🥉";
                 }
 
+                // Check if this user is me
+                const isMe = (currentUserId && u.userId === currentUserId) ? ' <span class="text-slate-400 font-normal text-xs">(bạn)</span>' : '';
+
                 listEl.innerHTML += `
                     <div class="flex items-center gap-3 p-3 mb-2 rounded-xl \${rankClass} transition hover:scale-[1.02]">
                         <div class="font-bold text-lg w-8 text-center">\${rankIcon || (index + 1)}</div>
@@ -1503,7 +1510,7 @@
                             <img src="https://api.dicebear.com/9.x/notionists-neutral/svg?seed=\${u.username}" class="w-full h-full rounded-full">
                         </div>
                         <div class="flex-1 min-w-0">
-                            <div class="font-bold text-sm truncate">\${u.displayName != null ? u.displayName : u.username}</div>
+                            <div class="font-bold text-sm truncate">\${u.displayName != null ? u.displayName : u.username}\${isMe}</div>
                             <div class="text-[10px] opacity-80">Reputation: \${u.reputationScore}</div>
                         </div>
                         <div class="font-bold text-primary flex items-center gap-1 bg-white px-2 py-1 rounded-lg shadow-sm">

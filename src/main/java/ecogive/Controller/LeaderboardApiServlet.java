@@ -40,7 +40,9 @@ public class LeaderboardApiServlet extends HttpServlet {
                 Map<String, Object> map = new HashMap<>();
                 map.put("userId", user.getUserId());
                 map.put("username", user.getUsername());
-                map.put("ecoPoints", user.getEcoPoints());
+                map.put("displayName", user.getDisplayName()); // Thêm displayName
+                // Sửa: Lấy seasonPoints thay vì ecoPoints (currentPoints)
+                map.put("ecoPoints", user.getSeasonPoints());
                 map.put("reputationScore", user.getReputationScore());
                 result.add(map);
             }

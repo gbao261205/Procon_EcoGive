@@ -125,23 +125,35 @@
                         <p class="text-slate-400 text-sm">${profileUser.email}</p>
                     </c:if>
                 </div>
-                <div class="grid grid-cols-3 gap-4 max-w-lg mx-auto md:mx-0">
-                    <div class="bg-slate-50 hover:bg-white hover:shadow-md transition-all duration-300 p-4 rounded-2xl border border-slate-100 text-center group">
-                        <div class="text-xs text-slate-400 uppercase font-bold tracking-wider mb-1">EcoPoints</div>
-                        <div class="text-xl md:text-2xl font-bold text-primary group-hover:scale-110 transition-transform duration-300 inline-block">
-                            ${profileUser.ecoPoints} <span class="text-lg">🌱</span>
+                <div class="flex flex-wrap md:flex-nowrap gap-3 md:gap-4 max-w-full justify-center md:justify-start">
+
+                    <div class="flex-1 min-w-[140px] bg-slate-50 hover:bg-white hover:shadow-lg transition-all duration-300 p-4 rounded-2xl border border-slate-100 text-center group">
+                        <div class="text-[10px] md:text-xs text-slate-400 uppercase font-bold tracking-wider mb-1 leading-tight">
+                            Eco Points <span class="block text-[9px]">(theo mùa)</span>
+                        </div>
+                        <div class="text-lg md:text-xl font-bold text-emerald-600 group-hover:scale-105 transition-transform duration-300 whitespace-nowrap">
+                            ${profileUser.seasonPoints} <span class="text-base">🌱</span>
                         </div>
                     </div>
-                    <div class="bg-slate-50 hover:bg-white hover:shadow-md transition-all duration-300 p-4 rounded-2xl border border-slate-100 text-center group">
-                        <div class="text-xs text-slate-400 uppercase font-bold tracking-wider mb-1">Uy tín</div>
-                        <div class="text-xl md:text-2xl font-bold text-blue-600 group-hover:scale-110 transition-transform duration-300 inline-block">
-                            ${profileUser.reputationScore} <span class="text-lg">⭐</span>
+
+                    <div class="flex-1 min-w-[100px] bg-slate-50 hover:bg-white hover:shadow-lg transition-all duration-300 p-4 rounded-2xl border border-slate-100 text-center group">
+                        <div class="text-[10px] md:text-xs text-slate-400 uppercase font-bold tracking-wider mb-1">Uy tín</div>
+                        <div class="text-lg md:text-xl font-bold text-blue-600 group-hover:scale-105 transition-transform duration-300 whitespace-nowrap">
+                            ${profileUser.reputationScore} <span class="text-base">⭐</span>
                         </div>
                     </div>
-                    <div class="bg-slate-50 hover:bg-white hover:shadow-md transition-all duration-300 p-4 rounded-2xl border border-slate-100 text-center group">
-                        <div class="text-xs text-slate-400 uppercase font-bold tracking-wider mb-1">Đã tặng</div>
-                        <div class="text-xl md:text-2xl font-bold text-slate-700 group-hover:scale-110 transition-transform duration-300 inline-block">
-                            ${fn:length(givenItems)} <span class="text-lg">🎁</span>
+
+                    <div class="flex-none min-w-fit bg-slate-50 hover:bg-white hover:shadow-lg transition-all duration-300 p-4 px-6 rounded-2xl border border-slate-100 text-center group">
+                        <div class="text-[10px] md:text-xs text-slate-400 uppercase font-bold tracking-wider mb-1">Hạng</div>
+                        <div class="text-lg md:text-xl font-bold text-blue-700 group-hover:scale-105 transition-transform duration-300 whitespace-nowrap">
+                            ${profileUser.tier} <span class="text-base">🏆</span>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 min-w-[100px] bg-slate-50 hover:bg-white hover:shadow-lg transition-all duration-300 p-4 rounded-2xl border border-slate-100 text-center group">
+                        <div class="text-[10px] md:text-xs text-slate-400 uppercase font-bold tracking-wider mb-1">Đã tặng</div>
+                        <div class="text-lg md:text-xl font-bold text-slate-700 group-hover:scale-105 transition-transform duration-300 whitespace-nowrap">
+                            ${fn:length(givenItems)} <span class="text-base">🎁</span>
                         </div>
                     </div>
                 </div>

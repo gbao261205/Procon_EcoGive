@@ -72,13 +72,22 @@
             Loại hình trạm
         </a>
 
+        <a href="${pageContext.request.contextPath}/admin/rewards"
+           class="group flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200
+           ${activeTab == 'rewards' || requestScope['javax.servlet.forward.servlet_path'] == '/admin/rewards' ? 'bg-emerald-50 text-emerald-700 shadow-sm' : 'text-slate-600 hover:bg-slate-50 hover:text-emerald-600'}">
+            <span class="${activeTab == 'rewards' || requestScope['javax.servlet.forward.servlet_path'] == '/admin/rewards' ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-500'} transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"></polyline><rect x="2" y="7" width="20" height="5"></rect><line x1="12" y1="22" x2="12" y2="7"></line><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path></svg>
+            </span>
+            Quản lý quà tặng
+        </a>
+
         <a href="${pageContext.request.contextPath}/admin?action=verify-requests"
            class="group flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200
            ${param.action == 'verify-requests' ? 'bg-emerald-50 text-emerald-700 shadow-sm' : 'text-slate-600 hover:bg-slate-50 hover:text-emerald-600'}">
             <span class="${param.action == 'verify-requests' ? 'text-emerald-600' : 'text-slate-400 group-hover:text-emerald-500'} transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
             </span>
-            Xác thực DN
+            Xác thực Doanh nghiệp
         </a>
     </nav>
 

@@ -117,7 +117,7 @@
 
                         <div class="grid grid-cols-2 gap-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
                             <div>
-                                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Điểm Eco</label>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Điểm Mùa Giải (Season)</label>
                                 <div class="text-xl font-bold text-emerald-600" id="displayEco">0.00</div>
                                 <input type="hidden" id="ecoPoints" name="ecoPoints" value="0.00">
                             </div>
@@ -153,7 +153,7 @@
                         <th class="px-6 py-4">User</th>
                         <th class="px-6 py-4">Tên hiển thị</th>
                         <th class="px-6 py-4">Vai trò</th>
-                        <th class="px-6 py-4">Điểm Eco</th>
+                        <th class="px-6 py-4">Điểm Mùa Giải</th>
                         <th class="px-6 py-4">Uy tín</th>
                         <th class="px-6 py-4">Ngày tham gia</th>
                         <th class="px-6 py-4 text-right">Thao tác</th>
@@ -190,7 +190,7 @@
                                 </c:choose>
                             </td>
                             <td class="px-6 py-4">
-                                <div class="font-bold text-emerald-600">${u.ecoPoints}</div>
+                                <div class="font-bold text-emerald-600">${u.seasonPoints}</div>
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-1 text-slate-700 font-medium">
@@ -203,7 +203,7 @@
                             </td>
                             <td class="px-6 py-4 text-right">
                                 <div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onclick="editUser(${u.userId}, '${u.username}', '${u.displayName != null ? u.displayName : ''}', '${u.email}', '${u.role}', ${u.ecoPoints}, ${u.reputationScore})"
+                                    <button onclick="editUser(${u.userId}, '${u.username}', '${u.displayName != null ? u.displayName : ''}', '${u.email}', '${u.role}', ${u.seasonPoints}, ${u.reputationScore})"
                                             class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Chỉnh sửa">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                                     </button>

@@ -24,7 +24,9 @@ public class DashboardDAO {
     }
 
     public double sumTotalEcoPoints() throws SQLException {
-        String sql = "SELECT SUM(eco_points) FROM users";
+        // Sửa: eco_points -> season_points (hoặc current_points tùy mục đích thống kê)
+        // Ở đây thống kê tổng điểm toàn hệ thống thì dùng season_points (tổng thành tích) hợp lý hơn
+        String sql = "SELECT SUM(season_points) FROM users";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
