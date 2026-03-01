@@ -140,6 +140,30 @@ public class ConfirmTransactionServlet extends HttpServlet {
                             itemDAO.updateStatus(trans.getOfferItemId(), ItemStatus.TRADE_COMPLETED);
                         }
                         
+                        // --- MỚI: Logic cộng điểm cho Trade (50% giá trị) ---
+                        BigDecimal itemPoints = item.getEcoPoints() != null ? item.getEcoPoints() : BigDecimal.ZERO;
+                        BigDecimal offerPoints = BigDecimal.ZERO;
+                        
+                        if (trans.getOfferItemId() != null) {
+                            Item offerItem = itemDAO.findById(trans.getOfferItemId());
+                            if (offerItem != null && offerItem.getEcoPoints() != null) {
+                                offerPoints = offerItem.getEcoPoints();
+                            }
+                        }
+                        
+                        // Tính 50% điểm
+                        BigDecimal half = new BigDecimal("0.5");
+                        BigDecimal pointsForOwner = itemPoints.multiply(half); // Chủ item nhận 50% điểm item của mình
+                        BigDecimal pointsForProposer = offerPoints.multiply(half); // Người đề nghị nhận 50% điểm item của họ
+                        
+                        if (pointsForOwner.compareTo(BigDecimal.ZERO) > 0) {
+                            userDAO.addEcoPoints(item.getGiverId(), pointsForOwner);
+                        }
+                        if (pointsForProposer.compareTo(BigDecimal.ZERO) > 0) {
+                            userDAO.addEcoPoints(trans.getReceiverId(), pointsForProposer);
+                        }
+                        // ----------------------------------------------------
+                        
                         String msgComplete = "SYSTEM_TRADE:Chúc mừng! Giao dịch trao đổi đã thành công tốt đẹp.";
                         ChatEndpoint.sendSystemMessage(String.valueOf(trans.getReceiverId()), msgComplete);
                         ChatEndpoint.sendSystemMessage(String.valueOf(item.getGiverId()), msgComplete);
