@@ -3,7 +3,6 @@ package ecogive.util;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import io.github.cdimascio.dotenv.Dotenv;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -24,8 +23,7 @@ public class GeminiService {
     private final HttpClient httpClient;
 
     public GeminiService() {
-        Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
-        this.apiKey = dotenv.get("GEMINI_API_KEY");
+        this.apiKey = EnvUtils.get("GEMINI_API_KEY");
         this.httpClient = HttpClient.newHttpClient();
     }
 
@@ -36,28 +34,22 @@ public class GeminiService {
         }
 
         try {
-            // 1. Tải ảnh từ URL và chuyển sang Base64
             String base64Image = downloadImageAsBase64(imageUrl);
             if (base64Image == null) return false;
 
-            // 2. Tạo JSON Payload
             JsonObject payload = new JsonObject();
             JsonArray contents = new JsonArray();
             JsonObject contentObj = new JsonObject();
             JsonArray parts = new JsonArray();
 
-            // Part 1: Text Prompt
-            // Đảm bảo categoryName không bị null
             if (categoryName == null) categoryName = "Unknown";
             
             JsonObject textPart = new JsonObject();
-            // Thêm hướng dẫn rõ ràng hơn cho Gemini
             textPart.addProperty("text", 
                 "Look at this image. Does it contain an item that belongs to the category: '" + categoryName + "'? " +
                 "Please answer with exactly one word: YES or NO.");
             parts.add(textPart);
 
-            // Part 2: Image Data
             JsonObject imagePart = new JsonObject();
             JsonObject inlineData = new JsonObject();
             inlineData.addProperty("mime_type", "image/jpeg");
@@ -69,7 +61,6 @@ public class GeminiService {
             contents.add(contentObj);
             payload.add("contents", contents);
 
-            // 3. Gửi Request (UTF-8)
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(API_URL + "?key=" + apiKey))
                     .header("Content-Type", "application/json; charset=utf-8")
@@ -78,7 +69,6 @@ public class GeminiService {
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
 
-            // 4. Xử lý Response
             if (response.statusCode() == 200) {
                 JsonObject jsonResponse = JsonParser.parseString(response.body()).getAsJsonObject();
                 try {
@@ -89,12 +79,10 @@ public class GeminiService {
                             .get(0).getAsJsonObject()
                             .get("text").getAsString().trim().toUpperCase();
                     
-                    // --- LOG DEBUG CHI TIẾT ---
                     System.out.println("--------------------------------------------------");
                     System.out.println("Gemini Request Category: " + categoryName);
                     System.out.println("Gemini Response Answer: [" + answer + "]");
                     System.out.println("--------------------------------------------------");
-                    // --------------------------
 
                     return answer.contains("YES");
                 } catch (Exception e) {
