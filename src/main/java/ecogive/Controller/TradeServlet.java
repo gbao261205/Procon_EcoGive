@@ -151,7 +151,7 @@ public class TradeServlet extends HttpServlet {
 
         if (transactionDAO.insert(trans)) {
             // --- CẬP NHẬT: Gửi thông báo và email ---
-            String content = "Bạn nhận được đề nghị trao đổi mới cho vật phẩm: " + targetItem.getTitle();
+            String content = "Bạn nhận được đề nghị trao đổi mới cho vật phẩm: " + targetItem.getTitle() + ", tình trạng: " + targetItem.getConditionPercentage() + "%";
             
             // 1. Gửi tin nhắn SYSTEM_TRADE_PROPOSAL để kích hoạt UI trên Web
             String proposalMsg = "SYSTEM_TRADE_PROPOSAL:" + trans.getTransactionId();
