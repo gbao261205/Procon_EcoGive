@@ -97,7 +97,20 @@ public class TradeServlet extends HttpServlet {
             newItem.setGiverId(user.getUserId());
             newItem.setTitle(req.getParameter("offerTitle"));
             newItem.setDescription(req.getParameter("offerDesc"));
-            newItem.setCategoryId(1); // Mặc định category chung
+            
+            // --- MỚI: Lấy Category ID từ request ---
+            String catIdStr = req.getParameter("offerCategoryId");
+            int catId = 1; // Default
+            if (catIdStr != null && !catIdStr.isEmpty()) {
+                try {
+                    catId = Integer.parseInt(catIdStr);
+                } catch (NumberFormatException e) {
+                    // Ignore, use default
+                }
+            }
+            newItem.setCategoryId(catId);
+            // ---------------------------------------
+
             newItem.setStatus(ItemStatus.TRADE_PENDING);
             
             Part filePart = req.getPart("offerImage");

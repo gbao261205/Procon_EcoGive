@@ -725,6 +725,12 @@
                 <!-- Tab Content: New -->
                 <div id="contentNew" class="hidden space-y-3">
                     <input type="text" id="tradeOfferTitle" placeholder="Tên vật phẩm..." class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary outline-none">
+
+                    <!-- MỚI: Dropdown chọn danh mục -->
+                    <select id="tradeOfferCategory" class="w-full p-3 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-primary outline-none">
+                        <option value="" disabled selected>-- Chọn danh mục --</option>
+                    </select>
+
                     <textarea id="tradeOfferDesc" placeholder="Mô tả..." rows="2" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary outline-none resize-none"></textarea>
                     <!-- Simple file input for now -->
                     <div class="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center hover:bg-slate-50 transition cursor-pointer relative">
@@ -1317,7 +1323,25 @@
         document.getElementById('itemEcoPoints').value = points ? points : '';
     }
 
-    async function loadCategories() { try { const r = await fetch('${pageContext.request.contextPath}/api/categories'); (await r.json()).forEach(c => document.getElementById('itemCategory').innerHTML += `<option value="\${c.categoryId}" data-points="\${c.fixedPoints}">\${c.name}</option>`); } catch(e){} }
+    async function loadCategories() {
+        try {
+            const r = await fetch('${pageContext.request.contextPath}/api/categories');
+            const categories = await r.json();
+
+            // Populate Post Item Dropdown
+            const postSelect = document.getElementById('itemCategory');
+            if(postSelect) {
+                categories.forEach(c => postSelect.innerHTML += `<option value="\${c.categoryId}" data-points="\${c.fixedPoints}">\${c.name}</option>`);
+            }
+
+            // Populate Trade Offer Dropdown (MỚI)
+            const tradeSelect = document.getElementById('tradeOfferCategory');
+            if(tradeSelect) {
+                categories.forEach(c => tradeSelect.innerHTML += `<option value="\${c.categoryId}">\${c.name}</option>`);
+            }
+
+        } catch(e){}
+    }
     loadCategories();
 
     async function loadCategoriesForFilter() {
@@ -1947,6 +1971,13 @@
             if (!title) { alert("Vui lòng nhập tên món đồ!"); return; }
             fd.append('offerTitle', title);
             fd.append('offerDesc', desc);
+
+            // --- MỚI: Lấy Category ID ---
+            const catId = document.getElementById('tradeOfferCategory').value;
+            if (catId) {
+                fd.append('offerCategoryId', catId);
+            }
+            // ----------------------------
 
             const fileInput = document.getElementById('tradeOfferPhoto');
             if (fileInput.files.length > 0) {
