@@ -252,7 +252,8 @@ public class ChatApiServlet extends HttpServlet {
             // 5. USER INFO
             else if ("user_info".equals(action)) {
                 long userId = Long.parseLong(req.getParameter("userId"));
-                String sql = "SELECT user_id, username, display_name, email, eco_points, reputation_score, join_date, role, address " +
+                // Sửa: eco_points -> season_points
+                String sql = "SELECT user_id, username, display_name, email, season_points, reputation_score, join_date, role, address " +
                              "FROM users WHERE user_id = ?";
                 PreparedStatement ps = conn.prepareStatement(sql);
                 ps.setLong(1, userId);
@@ -269,7 +270,8 @@ public class ChatApiServlet extends HttpServlet {
                     user.addProperty("displayName", displayName);
                     
                     user.addProperty("email", rs.getString("email"));
-                    user.addProperty("ecoPoints", rs.getBigDecimal("eco_points"));
+                    // Sửa: Lấy season_points
+                    user.addProperty("ecoPoints", rs.getBigDecimal("season_points"));
                     user.addProperty("reputationScore", rs.getBigDecimal("reputation_score"));
                     user.addProperty("joinDate", rs.getTimestamp("join_date").toString());
                     user.addProperty("role", rs.getString("role"));
