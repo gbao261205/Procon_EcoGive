@@ -7,10 +7,14 @@ import ecogive.util.DatabaseConnection;
 
 import java.math.BigDecimal;
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 public class UserDAO {
+    
+    private static final BigDecimal DAILY_CAP = new BigDecimal("500.00");
+
     public User findById(long id) throws SQLException {
         String sql = "SELECT * FROM users WHERE user_id = ?";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -131,7 +135,6 @@ public class UserDAO {
 
     public List<User> getTopUsers(int limit) throws SQLException {
         List<User> list = new ArrayList<>();
-        // Sửa: Thêm điều kiện AND is_verified = TRUE
         String sql = "SELECT * FROM users WHERE role = 'USER' AND is_verified = TRUE ORDER BY season_points DESC LIMIT ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -232,33 +235,71 @@ public class UserDAO {
         }
     }
     
+    // --- CẬP NHẬT: Hàm cộng điểm thông minh (Cộng cả 3 quỹ & Check Tier & Daily Cap) ---
     public boolean addEcoPoints(long userId, BigDecimal pointsToAdd) throws SQLException {
-        String updatePointsSql = "UPDATE users SET " +
-                "current_points = current_points + ?, " +
-                "lifetime_points = lifetime_points + ?, " +
-                "season_points = season_points + ? " +
-                "WHERE user_id = ?";
-        
-        String updateTierSql = "UPDATE users SET tier = CASE " +
-                "WHEN lifetime_points >= 2500 THEN 'DIAMOND' " +
-                "WHEN lifetime_points >= 800 THEN 'GOLD' " +
-                "WHEN lifetime_points >= 200 THEN 'SILVER' " +
-                "ELSE 'STANDARD' END " +
-                "WHERE user_id = ?";
+        if (pointsToAdd.compareTo(BigDecimal.ZERO) <= 0) return false;
 
         Connection conn = null;
         try {
             conn = DatabaseConnection.getConnection();
             conn.setAutoCommit(false);
 
+            // 1. Kiểm tra Daily Cap
+            LocalDate today = LocalDate.now();
+            BigDecimal currentDailyPoints = BigDecimal.ZERO;
+            
+            String checkDailySql = "SELECT points_earned FROM daily_points WHERE user_id = ? AND date = ?";
+            try (PreparedStatement ps = conn.prepareStatement(checkDailySql)) {
+                ps.setLong(1, userId);
+                ps.setDate(2, Date.valueOf(today));
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        currentDailyPoints = rs.getBigDecimal("points_earned");
+                    }
+                }
+            }
+
+            BigDecimal remainingCap = DAILY_CAP.subtract(currentDailyPoints);
+            if (remainingCap.compareTo(BigDecimal.ZERO) <= 0) {
+                // Đã đạt giới hạn ngày, không cộng thêm
+                conn.rollback();
+                return true; // Trả về true để không báo lỗi, nhưng thực tế không cộng
+            }
+
+            BigDecimal actualPointsToAdd = pointsToAdd.min(remainingCap);
+
+            // 2. Cập nhật Daily Points
+            String updateDailySql = "INSERT INTO daily_points (user_id, date, points_earned) VALUES (?, ?, ?) " +
+                                    "ON DUPLICATE KEY UPDATE points_earned = points_earned + ?";
+            try (PreparedStatement ps = conn.prepareStatement(updateDailySql)) {
+                ps.setLong(1, userId);
+                ps.setDate(2, Date.valueOf(today));
+                ps.setBigDecimal(3, actualPointsToAdd);
+                ps.setBigDecimal(4, actualPointsToAdd);
+                ps.executeUpdate();
+            }
+
+            // 3. Cộng điểm vào User
+            String updatePointsSql = "UPDATE users SET " +
+                    "current_points = current_points + ?, " +
+                    "lifetime_points = lifetime_points + ?, " +
+                    "season_points = season_points + ? " +
+                    "WHERE user_id = ?";
             try (PreparedStatement stmt = conn.prepareStatement(updatePointsSql)) {
-                stmt.setBigDecimal(1, pointsToAdd);
-                stmt.setBigDecimal(2, pointsToAdd);
-                stmt.setBigDecimal(3, pointsToAdd);
+                stmt.setBigDecimal(1, actualPointsToAdd);
+                stmt.setBigDecimal(2, actualPointsToAdd);
+                stmt.setBigDecimal(3, actualPointsToAdd);
                 stmt.setLong(4, userId);
                 stmt.executeUpdate();
             }
 
+            // 4. Cập nhật Tier
+            String updateTierSql = "UPDATE users SET tier = CASE " +
+                    "WHEN lifetime_points >= 2500 THEN 'DIAMOND' " +
+                    "WHEN lifetime_points >= 800 THEN 'GOLD' " +
+                    "WHEN lifetime_points >= 200 THEN 'SILVER' " +
+                    "ELSE 'STANDARD' END " +
+                    "WHERE user_id = ?";
             try (PreparedStatement stmt = conn.prepareStatement(updateTierSql)) {
                 stmt.setLong(1, userId);
                 stmt.executeUpdate();
