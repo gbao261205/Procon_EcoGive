@@ -47,19 +47,20 @@ CREATE TABLE categories (
 
 -- Bảng 3: Vật phẩm (Items)
 CREATE TABLE items (
-   item_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-   giver_id BIGINT NOT NULL,
-   category_id INT,
-   title VARCHAR(255) NOT NULL,
-   description TEXT,
-   image_url VARCHAR(255) NOT NULL,
-   status ENUM('AVAILABLE', 'PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED', 'TRADE_PENDING', 'TRADE_COMPLETED') DEFAULT 'AVAILABLE',
-   eco_points DECIMAL(10, 2) DEFAULT 0.00,
-   post_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-   address VARCHAR(255),
-   location POINT NOT NULL,
-   FOREIGN KEY (giver_id) REFERENCES users(user_id) ON DELETE CASCADE,
-   FOREIGN KEY (category_id) REFERENCES categories(category_id) ON DELETE SET NULL
+    item_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    giver_id BIGINT NOT NULL,
+    category_id INT,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    condition_percentage INT DEFAULT 100,
+    image_url VARCHAR(255) NOT NULL,
+    status ENUM('AVAILABLE', 'PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED', 'TRADE_PENDING', 'TRADE_COMPLETED') DEFAULT 'AVAILABLE',
+    eco_points DECIMAL(10, 2) DEFAULT 0.00,
+    post_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    address VARCHAR(255),
+    location POINT NOT NULL,
+    FOREIGN KEY (giver_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (category_id) REFERENCES categories(category_id) ON DELETE SET NULL
 );
 CREATE SPATIAL INDEX sp_index_location ON items (location);
 
@@ -168,5 +169,13 @@ CREATE TABLE IF NOT EXISTS notifications (
     message TEXT NOT NULL,
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+CREATE TABLE daily_points (
+    user_id BIGINT NOT NULL,
+    date DATE NOT NULL,
+    points_earned DECIMAL(10,2) DEFAULT 0.00,
+    PRIMARY KEY (user_id, date),
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );

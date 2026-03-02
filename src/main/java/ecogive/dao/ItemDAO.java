@@ -376,8 +376,9 @@ public class ItemDAO {
     }
 
     public boolean insert(Item item) throws SQLException {
-        String sql = "INSERT INTO items (giver_id, title, description, category_id, image_url, status, post_date, location, eco_points, address) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?, ST_GeomFromText(?), ?, ?)";
+        // Cập nhật câu lệnh INSERT để thêm condition_percentage
+        String sql = "INSERT INTO items (giver_id, title, description, category_id, image_url, status, post_date, location, eco_points, address, condition_percentage) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ST_GeomFromText(?), ?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
@@ -392,6 +393,7 @@ public class ItemDAO {
             stmt.setString(8, toWKT(item.getLocation()));
             stmt.setBigDecimal(9, item.getEcoPoints());
             stmt.setString(10, item.getAddress());
+            stmt.setInt(11, item.getConditionPercentage()); // MỚI
 
             int affected = stmt.executeUpdate();
             if (affected > 0) {
@@ -541,6 +543,13 @@ public class ItemDAO {
         item.setImageUrl(rs.getString("image_url"));
         item.setEcoPoints(rs.getBigDecimal("eco_points"));
         item.setAddress(rs.getString("address"));
+        
+        // Map condition_percentage
+        try {
+            item.setConditionPercentage(rs.getInt("condition_percentage"));
+        } catch (SQLException e) {
+            item.setConditionPercentage(100); // Default
+        }
 
         String statusStr = rs.getString("status");
         if (statusStr != null) {

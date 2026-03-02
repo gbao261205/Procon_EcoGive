@@ -14,13 +14,17 @@ public class Item {
     private LocalDateTime postDate;
     private GeoPoint location;
     private String giverName;
-    private String giverDisplayName; // MỚI: Tên hiển thị của người tặng
-    private BigDecimal ecoPoints; // Số điểm thưởng cho vật phẩm
-    private String categoryName; // Tên danh mục
-    private String address; // Địa chỉ chi tiết
-    private boolean isCompanyVerified; // Trạng thái xác thực doanh nghiệp của người tặng
+    private String giverDisplayName;
+    private BigDecimal ecoPoints;
+    private String categoryName;
+    private String address;
+    private boolean isCompanyVerified;
+    
+    // --- MỚI: Tình trạng vật phẩm ---
+    private int conditionPercentage; // 0-100
 
     public Item() {
+        this.conditionPercentage = 100; // Default
     }
 
     // Constructor đầy đủ
@@ -37,6 +41,7 @@ public class Item {
         this.giverName = giverName;
         this.ecoPoints = ecoPoints;
         this.address = address;
+        this.conditionPercentage = 100;
     }
 
     // Getters and Setters
@@ -158,5 +163,13 @@ public class Item {
 
     public void setCompanyVerified(boolean companyVerified) {
         isCompanyVerified = companyVerified;
+    }
+
+    public int getConditionPercentage() {
+        return conditionPercentage;
+    }
+
+    public void setConditionPercentage(int conditionPercentage) {
+        this.conditionPercentage = conditionPercentage;
     }
 }

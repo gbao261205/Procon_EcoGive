@@ -430,6 +430,20 @@
                     <option value="" disabled selected>-- Chọn danh mục --</option>
                 </select>
             </div>
+
+            <!-- MỚI: Dropdown Tình trạng -->
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Tình trạng</label>
+                <select id="itemCondition" class="w-full p-3 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-primary outline-none transition" required onchange="updateEcoPoints()">
+                    <option value="100">Mới 100% (Nguyên seal)</option>
+                    <option value="90">Như mới (90-99%)</option>
+                    <option value="80">Tốt (80-89%)</option>
+                    <option value="70">Khá (70-79%)</option>
+                    <option value="50">Trung bình (50-69%)</option>
+                    <option value="30">Cũ (< 50%)</option>
+                </select>
+            </div>
+
             <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1">Điểm thưởng (EcoPoints)</label>
                 <div class="relative">
@@ -557,6 +571,17 @@
 
                 <!-- Thông tin chi tiết -->
                 <div class="space-y-6 mb-8">
+                    <!-- MỚI: Hiển thị Tình trạng -->
+                    <div>
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Tình trạng</h4>
+                        <div class="flex items-center gap-3">
+                            <div class="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                                <div id="detailConditionBar" class="h-full bg-primary rounded-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                            <span id="detailConditionText" class="text-sm font-bold text-slate-700">100%</span>
+                        </div>
+                    </div>
+
                     <div>
                         <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Mô tả</h4>
                         <p id="detailDesc" class="text-slate-600 leading-relaxed">...</p>
@@ -729,6 +754,16 @@
                     <!-- MỚI: Dropdown chọn danh mục -->
                     <select id="tradeOfferCategory" class="w-full p-3 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-primary outline-none">
                         <option value="" disabled selected>-- Chọn danh mục --</option>
+                    </select>
+
+                    <!-- MỚI: Dropdown chọn tình trạng -->
+                    <select id="tradeOfferCondition" class="w-full p-3 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-primary outline-none mt-3">
+                        <option value="100">Mới 100% (Nguyên seal)</option>
+                        <option value="90">Như mới (90-99%)</option>
+                        <option value="80">Tốt (80-89%)</option>
+                        <option value="70">Khá (70-79%)</option>
+                        <option value="50">Trung bình (50-69%)</option>
+                        <option value="30">Cũ (< 50%)</option>
                     </select>
 
                     <textarea id="tradeOfferDesc" placeholder="Mô tả..." rows="2" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary outline-none resize-none"></textarea>
@@ -1042,6 +1077,19 @@
 
         document.getElementById('detailAvatar').innerText = displayName.charAt(0).toUpperCase();
         document.getElementById('detailGiverPoints').innerText = item.giverEcoPoints || "0";
+
+        // --- MỚI: Hiển thị Tình trạng ---
+        const condition = item.conditionPercentage || 100;
+        document.getElementById('detailConditionText').innerText = condition + '%';
+        const bar = document.getElementById('detailConditionBar');
+        bar.style.width = condition + '%';
+
+        // Màu sắc thanh tiến trình
+        if(condition >= 90) bar.className = "h-full rounded-full transition-all duration-500 bg-emerald-500";
+        else if(condition >= 70) bar.className = "h-full rounded-full transition-all duration-500 bg-blue-500";
+        else if(condition >= 50) bar.className = "h-full rounded-full transition-all duration-500 bg-yellow-500";
+        else bar.className = "h-full rounded-full transition-all duration-500 bg-orange-500";
+        // --------------------------------
 
         let dateStr = "Vừa xong";
         if (item.postDate) {
@@ -1472,6 +1520,10 @@
         fd.append("longitude", currentLatLng.lng);
         fd.append("address", document.getElementById('itemAddress').value);
 
+        // --- MỚI: Lấy condition ---
+        fd.append("condition", document.getElementById('itemCondition').value);
+        // -------------------------
+
         try {
             const res = await fetch('${pageContext.request.contextPath}/post-item', {method:'POST', body:fd});
             const data = await res.json();
@@ -1687,6 +1739,15 @@
                     `;
                 }
 
+                // --- MỚI: Logic hiển thị Condition Badge ---
+                const condition = item.conditionPercentage || 100;
+                let condClass = 'bg-slate-100 text-slate-600 border border-slate-200';
+                if(condition >= 90) condClass = 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+                else if(condition >= 70) condClass = 'bg-blue-50 text-blue-700 border border-blue-200';
+                else if(condition >= 50) condClass = 'bg-yellow-50 text-yellow-700 border border-yellow-200';
+                else condClass = 'bg-orange-50 text-orange-700 border border-orange-200';
+                // -------------------------------------------
+
                 const itemHtml = `
                 <div onclick="openItemDetail(\${item.itemId})" class="bg-white rounded-xl p-3 md:p-4 shadow-sm border border-slate-100 hover:shadow-lg transition-shadow duration-300 cursor-pointer">
                     <div class="flex gap-3 md:gap-4">
@@ -1704,6 +1765,10 @@
                             </p>
                             <div class="flex flex-wrap gap-2 pt-1">
                                  <span class="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase text-slate-600">\${catName}</span>
+                                 <!-- MỚI: Condition Badge -->
+                                 <span class="\${condClass} px-2 py-0.5 rounded text-[10px] font-bold uppercase flex items-center gap-1">
+                                    \${condition}%
+                                 </span>
                                  <span class="bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase text-emerald-700 flex items-center gap-1">
                                     <span class="material-symbols-outlined text-[12px]">eco</span> \${item.ecoPoints || 0} PTS
                                  </span>
@@ -1978,6 +2043,13 @@
                 fd.append('offerCategoryId', catId);
             }
             // ----------------------------
+
+            // --- MỚI: Lấy Condition ---
+            const cond = document.getElementById('tradeOfferCondition').value;
+            if (cond) {
+                fd.append('offerCondition', cond);
+            }
+            // --------------------------
 
             const fileInput = document.getElementById('tradeOfferPhoto');
             if (fileInput.files.length > 0) {
