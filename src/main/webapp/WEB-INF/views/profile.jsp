@@ -270,7 +270,7 @@
                             <div class="group bg-white border border-slate-100 rounded-2xl p-4 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 relative">
                                 <div class="absolute top-4 right-4 z-10"><span class="bg-emerald-500/90 backdrop-blur text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm">Đã nhận</span></div>
                                 <div class="h-48 bg-slate-50 rounded-xl mb-4 overflow-hidden relative">
-                                    <img src="${finalImgUrl}" alt="${item.title}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" onerror="this.src='https://placehold.co/300x200?text=No+Image'">
+                                    <img src="${finalImgUrl}" alt="${item.title}" class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500" onerror="this.src='https://placehold.co/300x200?text=No+Image'">
                                     <div class="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors"></div>
                                 </div>
                                 <h3 class="font-bold text-slate-800 text-lg truncate mb-1">${item.title}</h3>
