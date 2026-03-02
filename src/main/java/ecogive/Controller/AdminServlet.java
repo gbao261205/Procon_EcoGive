@@ -1,5 +1,6 @@
 package ecogive.Controller;
 
+import com.google.gson.Gson;
 import ecogive.Model.*;
 import ecogive.dao.*;
 import ecogive.util.GeminiService;
@@ -29,6 +30,7 @@ public class AdminServlet extends HttpServlet {
     private final CollectionPointDAO stationDAO = new CollectionPointDAO();
     private final CollectionPointTypeDAO stationTypeDAO = new CollectionPointTypeDAO();
     private final GeminiService geminiService = new GeminiService();
+    private final Gson gson = new Gson();
 
     private boolean checkAdmin(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         HttpSession session = req.getSession(false);
@@ -83,7 +85,6 @@ public class AdminServlet extends HttpServlet {
                 case "delete-station-type":
                     deleteStationType(req, resp);
                     break;
-                // --- MỚI: Quản lý xác thực doanh nghiệp ---
                 case "verify-requests":
                     listVerifyRequests(req, resp);
                     break;
@@ -293,6 +294,7 @@ public class AdminServlet extends HttpServlet {
         req.setAttribute("totalStations", dashboardDAO.countCollectionPoints());
 
         try {
+            // Category Chart Data
             java.util.LinkedHashMap<String, Integer> counts = dashboardDAO.getCategoryCounts();
             StringJoiner labels = new StringJoiner(",", "[", "]");
             StringJoiner data = new StringJoiner(",", "[", "]");
@@ -304,9 +306,15 @@ public class AdminServlet extends HttpServlet {
             }
             req.setAttribute("categoryLabelsJson", labels.toString());
             req.setAttribute("categoryDataJson", data.toString());
+
+            // --- MỚI: Time Series Data ---
+            Map<String, List<Object[]>> timeSeries = dashboardDAO.getTransactionTimeSeries();
+            req.setAttribute("timeSeriesDataJson", gson.toJson(timeSeries));
+
         } catch (Exception ex) {
             req.setAttribute("categoryLabelsJson", "[]");
             req.setAttribute("categoryDataJson", "[]");
+            req.setAttribute("timeSeriesDataJson", "{}");
         }
 
         req.getRequestDispatcher("/WEB-INF/views/admin/dashboard.jsp").forward(req, resp);

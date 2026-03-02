@@ -7,6 +7,7 @@
     <title>Tổng quan - EcoGive Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
@@ -17,14 +18,13 @@
 <jsp:include page="sidebar.jsp" />
 
 <main class="md:ml-64 min-h-screen transition-all duration-300 flex flex-col">
-    <!-- Header -->
     <header class="bg-white border-b border-slate-200 sticky top-0 z-10 px-8 py-4 flex justify-between items-center shadow-sm">
         <div>
             <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Tổng quan</h1>
             <p class="text-sm text-slate-500 mt-1">Xin chào Administrator, đây là báo cáo hôm nay.</p>
         </div>
+
         <div class="flex items-center gap-3">
-            <!-- MỚI: Nút Kết thúc Mùa giải -->
             <button onclick="confirmResetSeason()" class="hidden md:flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 text-xs font-bold rounded-xl border border-red-100 hover:bg-red-100 transition-colors shadow-sm">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
                 Kết thúc Mùa giải
@@ -45,9 +45,7 @@
 
     <div class="p-8 max-w-7xl mx-auto w-full space-y-8">
 
-        <!-- Stats Grid -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <!-- Card 1: Pending Items -->
             <a href="${pageContext.request.contextPath}/admin?action=items&status=PENDING" class="group bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-amber-200 transition-all relative overflow-hidden">
                 <div class="flex justify-between items-start mb-4">
                     <div>
@@ -64,7 +62,6 @@
                 </div>
             </a>
 
-            <!-- Card 2: Stations -->
             <a href="${pageContext.request.contextPath}/admin?action=stations" class="group bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-rose-200 transition-all relative overflow-hidden">
                 <div class="flex justify-between items-start mb-4">
                     <div>
@@ -78,7 +75,6 @@
                 <div class="text-xs text-slate-500">Trạm thu gom hoạt động</div>
             </a>
 
-            <!-- Card 3: Total Items -->
             <a href="${pageContext.request.contextPath}/admin?action=items" class="group bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-blue-200 transition-all relative overflow-hidden">
                 <div class="flex justify-between items-start mb-4">
                     <div>
@@ -92,7 +88,6 @@
                 <div class="text-xs text-slate-500">Toàn bộ tin đã đăng</div>
             </a>
 
-            <!-- Card 4: EcoPoints -->
             <div class="group bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-purple-200 transition-all relative overflow-hidden">
                 <div class="flex justify-between items-start mb-4">
                     <div>
@@ -107,7 +102,6 @@
             </div>
         </div>
 
-        <!-- Map Banner -->
         <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 text-center relative overflow-hidden flex flex-col justify-center items-center shadow-lg">
             <div class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-emerald-500 opacity-20 blur-3xl"></div>
             <div class="absolute bottom-0 left-0 -ml-16 -mb-16 w-64 h-64 rounded-full bg-blue-500 opacity-20 blur-3xl"></div>
@@ -131,26 +125,23 @@
             </div>
         </div>
 
-        <!-- Charts Section -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Impact Chart -->
             <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                 <div class="flex justify-between items-center mb-6">
                     <div>
-                        <h3 class="text-lg font-bold text-slate-800">Tác động Môi trường</h3>
-                        <p class="text-xs text-slate-400 mt-1">Lượng rác thải giảm thiểu (kg) theo tháng</p>
+                        <h3 class="text-lg font-bold text-slate-800">Thống kê Giao dịch</h3>
+                        <p class="text-xs text-slate-400 mt-1">Số lượng giao dịch Give và Trade theo thời gian</p>
                     </div>
-                    <select class="text-xs font-medium border border-slate-200 rounded-lg px-3 py-1.5 bg-slate-50 outline-none focus:ring-2 focus:ring-emerald-500 text-slate-600">
-                        <option>6 tháng gần đây</option>
-                        <option>Năm nay</option>
-                    </select>
+                    <div>
+                        <select id="yearFilter" class="bg-white border border-slate-200 text-slate-700 text-sm rounded-xl focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2.5 outline-none transition-all shadow-sm cursor-pointer font-medium">
+                            <option value="all">Tất cả các năm</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="relative h-72 w-full">
-                    <canvas id="impactChart"></canvas>
-                </div>
+
+                <div id="echartsContainer" class="w-full h-80"></div>
             </div>
 
-            <!-- Category Chart -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col">
                 <h3 class="text-lg font-bold text-slate-800 mb-1">Danh mục vật phẩm</h3>
                 <p class="text-xs text-slate-400 mb-6">Tỷ lệ phân bố theo loại rác thải</p>
@@ -160,7 +151,6 @@
                 </div>
 
                 <div id="categoryLegend" class="mt-auto space-y-3 overflow-y-auto max-h-40 custom-scrollbar pr-2">
-                    <!-- Legend items injected by JS -->
                 </div>
             </div>
         </div>
@@ -168,61 +158,155 @@
 </main>
 
 <script>
-    // 1. Impact Chart (Line)
-    const ctxImpact = document.getElementById('impactChart').getContext('2d');
-    new Chart(ctxImpact, {
-        type: 'line',
-        data: {
-            labels: ['T7', 'T8', 'T9', 'T10', 'T11', 'T12'],
-            datasets: [{
-                label: 'Rác thải giảm thiểu (kg)',
-                data: [65, 80, 120, 145, 180, 250],
-                borderColor: '#059669', // Emerald 600
-                backgroundColor: (context) => {
-                    const ctx = context.chart.ctx;
-                    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-                    gradient.addColorStop(0, 'rgba(5, 150, 105, 0.2)');
-                    gradient.addColorStop(1, 'rgba(5, 150, 105, 0)');
-                    return gradient;
-                },
-                tension: 0.4,
-                fill: true,
-                pointBackgroundColor: '#fff',
-                pointBorderColor: '#059669',
-                pointBorderWidth: 2,
-                pointRadius: 4,
-                pointHoverRadius: 6
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: '#1e293b',
-                    padding: 12,
-                    titleFont: { size: 13 },
-                    bodyFont: { size: 13 },
-                    cornerRadius: 8,
-                    displayColors: false
-                }
-            },
-            scales: {
-                y: {
-                    grid: { borderDash: [4, 4], color: '#f1f5f9' },
-                    beginAtZero: true,
-                    ticks: { font: { size: 11 }, color: '#64748b' }
-                },
-                x: {
-                    grid: { display: false },
-                    ticks: { font: { size: 11 }, color: '#64748b' }
-                }
+    // --- ECharts Setup ---
+    document.addEventListener("DOMContentLoaded", function() {
+        var chartDom = document.getElementById('echartsContainer');
+        var myChart = echarts.init(chartDom);
+        var option;
+
+        // Lấy dữ liệu từ Server
+        const rawData = <%= request.getAttribute("timeSeriesDataJson") != null ? request.getAttribute("timeSeriesDataJson") : "{}" %>;
+
+        // 1. Hàm lọc, sắp xếp dữ liệu và trích xuất các năm có trong data
+        function processAndExtractYears(dataMap) {
+            let yearsSet = new Set();
+            let processedGive = [];
+            let processedTrade = [];
+
+            if (dataMap.GIVE) {
+                processedGive = dataMap.GIVE.filter(item => item && item[0]).sort((a, b) => new Date(a[0]) - new Date(b[0]));
+                processedGive.forEach(item => {
+                    const year = new Date(item[0]).getFullYear();
+                    if(!isNaN(year)) yearsSet.add(year);
+                });
             }
+            if (dataMap.TRADE) {
+                processedTrade = dataMap.TRADE.filter(item => item && item[0]).sort((a, b) => new Date(a[0]) - new Date(b[0]));
+                processedTrade.forEach(item => {
+                    const year = new Date(item[0]).getFullYear();
+                    if(!isNaN(year)) yearsSet.add(year);
+                });
+            }
+
+            return {
+                years: Array.from(yearsSet).sort((a,b) => b - a), // Sắp xếp năm mới nhất lên đầu
+                allGive: processedGive,
+                allTrade: processedTrade
+            };
         }
+
+        const { years, allGive, allTrade } = processAndExtractYears(rawData);
+
+        // 2. Tự động đổ danh sách năm vào Dropdown
+        const yearSelect = document.getElementById('yearFilter');
+        years.forEach(year => {
+            const opt = document.createElement('option');
+            opt.value = year;
+            opt.textContent = `Năm ` + year;
+            yearSelect.appendChild(opt);
+        });
+
+        // 3. Cấu hình cơ bản của ECharts
+        option = {
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: { type: 'line' }
+            },
+            legend: {
+                data: ['Give', 'Trade'],
+                bottom: 0
+            },
+            grid: {
+                left: '3%', right: '4%', bottom: '15%', top: '10%', containLabel: true
+            },
+            xAxis: {
+                type: 'time',
+                boundaryGap: false,
+                min: 'dataMin', // Ép trục X bắt đầu từ điểm dữ liệu đầu tiên
+                max: 'dataMax', // Ép trục X kết thúc ở điểm dữ liệu cuối cùng
+                axisLabel: {
+                    formatter: {
+                        year: '{yyyy}',
+                        month: '{MMM} {yyyy}',
+                        day: '{dd}/{MM}',
+                        hour: '{HH}:{mm}'
+                    },
+                    color: '#64748b'
+                },
+                axisLine: { lineStyle: { color: '#e2e8f0' } }
+            },
+            yAxis: {
+                type: 'value',
+                axisLabel: { color: '#64748b' },
+                splitLine: { lineStyle: { color: '#f1f5f9', type: 'dashed' } }
+            },
+            dataZoom: [
+                { type: 'inside', xAxisIndex: 0, filterMode: 'none', start: 0, end: 100 },
+                {
+                    type: 'slider', xAxisIndex: 0, filterMode: 'none', start: 0, end: 100,
+                    height: 20, bottom: 30,
+                    handleIcon: 'path://M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
+                    handleSize: '80%',
+                    handleStyle: {
+                        color: '#fff',
+                        shadowBlur: 3,
+                        shadowColor: 'rgba(0, 0, 0, 0.6)',
+                        shadowOffsetX: 2,
+                        shadowOffsetY: 2
+                    }
+                }
+            ]
+        };
+
+        // Gắn cấu hình cơ bản vào Chart
+        myChart.setOption(option);
+
+        // 4. Hàm cập nhật lại đường vẽ (Series) dựa trên năm được chọn
+        function updateChartByYear(selectedYear) {
+            let filteredGive = allGive;
+            let filteredTrade = allTrade;
+
+            // Nếu không phải chọn "Tất cả", tiến hành lọc dữ liệu theo năm
+            if (selectedYear !== 'all') {
+                const yearNum = parseInt(selectedYear);
+                filteredGive = allGive.filter(item => new Date(item[0]).getFullYear() === yearNum);
+                filteredTrade = allTrade.filter(item => new Date(item[0]).getFullYear() === yearNum);
+            }
+
+            // Ghi đè cấu hình series để biểu đồ tự động vẽ lại
+            myChart.setOption({
+                series: [
+                    {
+                        name: 'Give', type: 'line', smooth: true,
+                        showSymbol: false, symbol: 'circle', symbolSize: 6,
+                        data: filteredGive,
+                        itemStyle: { color: '#10b981' }, lineStyle: { width: 2 }
+                    },
+                    {
+                        name: 'Trade', type: 'line', smooth: true,
+                        showSymbol: false, symbol: 'circle', symbolSize: 6,
+                        data: filteredTrade,
+                        itemStyle: { color: '#f59e0b' }, lineStyle: { width: 2 }
+                    }
+                ]
+            });
+        }
+
+        // 5. Lắng nghe sự kiện khi Admin đổi năm trong Dropdown
+        yearSelect.addEventListener('change', function(e) {
+            updateChartByYear(e.target.value);
+        });
+
+        // Vẽ biểu đồ lần đầu tiên (hiển thị tất cả các năm mặc định)
+        updateChartByYear('all');
+
+        // Resize chart khi đổi kích thước màn hình
+        window.addEventListener('resize', function() {
+            myChart.resize();
+        });
     });
 
-    // 2. Category Chart (Doughnut)
+    // 2. Category Chart (Doughnut) - Giữ nguyên code cũ
     const categoryLabels = <%= request.getAttribute("categoryLabelsJson") != null ? request.getAttribute("categoryLabelsJson") : "[]" %>;
     const categoryData = <%= request.getAttribute("categoryDataJson") != null ? request.getAttribute("categoryDataJson") : "[]" %>;
 
@@ -280,7 +364,7 @@
         });
     })(categoryLabels, categoryData);
 
-    // --- MỚI: Logic Reset Season ---
+    // --- Logic Reset Season ---
     async function confirmResetSeason() {
         if (!confirm("⚠️ CẢNH BÁO: Bạn có chắc chắn muốn kết thúc mùa giải hiện tại?\n\nHành động này sẽ:\n1. Lưu Top 5 vào lịch sử.\n2. Cộng thưởng cho Top 5.\n3. Reset điểm Season của TẤT CẢ user về 0.\n4. Gửi email thông báo.\n\nHành động này KHÔNG THỂ hoàn tác!")) {
             return;
