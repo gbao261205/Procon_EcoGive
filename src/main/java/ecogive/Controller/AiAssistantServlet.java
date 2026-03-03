@@ -35,6 +35,8 @@ public class AiAssistantServlet extends HttpServlet {
         this.groqApiKey = dotenv.get("GROQ_API_KEY");
         if (this.groqApiKey == null || this.groqApiKey.isEmpty()) {
             System.err.println("FATAL ERROR: GROQ_API_KEY not found in .env file!");
+        } else {
+            System.out.println("GROQ_API_KEY loaded: " + this.groqApiKey.substring(0, 5) + "...");
         }
     }
 
@@ -110,7 +112,39 @@ public class AiAssistantServlet extends HttpServlet {
                     }
                 }
             }
-            // --- 3. HƯỚNG DẪN TÍCH ĐIỂM ---
+            // --- 3. TÌM SẢN PHẨM TỰ NHIÊN (MỚI) ---
+            else if (lowerQuestion.contains("muốn tìm") || lowerQuestion.startsWith("tìm ") || lowerQuestion.startsWith("có "))  {
+                // Trích xuất keyword
+                String keyword = lowerQuestion.replace("tôi muốn tìm", "")
+                                              .replace("tìm giúp tôi", "")
+                                              .replace("tìm", "")
+                                              .replace("có", "")
+                                              .replace("không", "")
+                                              .replace("?", "")
+                                              .trim();
+                
+                if (keyword.isEmpty()) {
+                    answer = "Bạn muốn tìm sản phẩm gì? Hãy nhập tên cụ thể nhé.";
+                } else {
+                    List<Item> items = itemDAO.searchByTitle(keyword);
+                    if (items.isEmpty()) {
+                        answer = "Rất tiếc, hiện tại không có sản phẩm '" + keyword + "' nào trên hệ thống. Vui lòng quay lại sau!";
+                    } else {
+                        answer = "Tìm thấy " + items.size() + " sản phẩm '" + keyword + "' phù hợp:";
+                        for (Item item : items) {
+                            JsonObject iJson = new JsonObject();
+                            iJson.addProperty("name", "📦 " + item.getTitle());
+                            iJson.addProperty("address", item.getDescription());
+                            if (item.getLocation() != null) {
+                                iJson.addProperty("lat", item.getLocation().getLatitude());
+                                iJson.addProperty("lng", item.getLocation().getLongitude());
+                            }
+                            suggestions.add(iJson);
+                        }
+                    }
+                }
+            }
+            // --- 4. HƯỚNG DẪN TÍCH ĐIỂM ---
             else if (lowerQuestion.contains("cách tích điểm") || lowerQuestion.contains("ecopoints")) {
                 answer = "Bạn có thể tích điểm EcoPoints bằng cách:\n" +
                          "1. Đăng tin tặng đồ cũ (được duyệt).\n" +
@@ -118,7 +152,7 @@ public class AiAssistantServlet extends HttpServlet {
                          "3. Tham gia các sự kiện xanh của EcoGive.\n" +
                          "Điểm này có thể dùng để đổi quà hoặc vinh danh trên bảng xếp hạng!";
             }
-            // --- 4. HƯỚNG DẪN TÁI CHẾ (GỌI GROQ API) ---
+            // --- 5. HƯỚNG DẪN TÁI CHẾ (GỌI GROQ API) ---
             else if (lowerQuestion.startsWith("hướng dẫn cách tái chế:") || lowerQuestion.contains("tái chế")) {
                 String itemToRecycle = "";
                 if (lowerQuestion.startsWith("hướng dẫn cách tái chế:")) {
@@ -130,7 +164,7 @@ public class AiAssistantServlet extends HttpServlet {
                 if (itemToRecycle.isEmpty()) {
                     answer = "Vui lòng nhập tên vật phẩm bạn muốn tái chế.";
                 } else {
-                    // 4.1. Kiểm tra xem có điểm thu gom nào trên web phù hợp không
+                    // 5.1. Kiểm tra xem có điểm thu gom nào trên web phù hợp không
                     String localSuggestion = "";
                     String type = detectWasteType(itemToRecycle);
                     
@@ -157,7 +191,7 @@ public class AiAssistantServlet extends HttpServlet {
                         }
                     }
 
-                    // 4.2. Gọi AI để lấy hướng dẫn chi tiết
+                    // 5.2. Gọi AI để lấy hướng dẫn chi tiết
                     String aiAdvice = callGroqApi(itemToRecycle);
                     
                     if (!localSuggestion.isEmpty()) {
@@ -167,7 +201,7 @@ public class AiAssistantServlet extends HttpServlet {
                     }
                 }
             }
-            // --- 5. TÌM ĐIỂM THU GOM (LOGIC CŨ) ---
+            // --- 6. TÌM ĐIỂM THU GOM (LOGIC CŨ) ---
             else {
                 typeToSearch = detectWasteType(lowerQuestion);
                 
@@ -226,7 +260,7 @@ public class AiAssistantServlet extends HttpServlet {
         return null;
     }
 
-    private String callGroqApi(String item) {
+    private String callGroqApi(String userQuestion) {
         if (groqApiKey == null || groqApiKey.isEmpty()) {
             return "Lỗi cấu hình: Không tìm thấy Groq API Key.";
         }
@@ -243,17 +277,19 @@ public class AiAssistantServlet extends HttpServlet {
         JsonArray messages = new JsonArray();
         JsonObject systemMsg = new JsonObject();
         systemMsg.addProperty("role", "system");
-        // Cập nhật Rule: Chỉ trả lời về tái chế/môi trường
-        systemMsg.addProperty("content", "Bạn là một trợ lý AI chuyên về tái chế và bảo vệ môi trường của EcoGive. " +
-                "QUY TẮC QUAN TRỌNG: Bạn CHỈ được phép trả lời các câu hỏi liên quan đến tái chế, phân loại rác, bảo vệ môi trường, sống xanh. " +
-                "Nếu người dùng hỏi về các chủ đề khác (chính trị, giải trí, code, toán học, đời sống cá nhân...), hãy từ chối lịch sự và yêu cầu họ hỏi về chủ đề tái chế. " +
-                "Hãy hướng dẫn người dùng cách tái chế hoặc xử lý loại rác thải họ hỏi một cách ngắn gọn, súc tích và an toàn. " +
-                "Chỉ trả lời bằng tiếng Việt.");
+        
+        // --- BILINGUAL SYSTEM PROMPT ---
+        systemMsg.addProperty("content", "You are an AI assistant for EcoGive, specializing in recycling and environmental protection.\n" +
+                "IMPORTANT RULES:\n" +
+                "1. You must ONLY answer questions related to recycling, waste sorting, and environmental protection.\n" +
+                "2. If the user asks about other topics, politely refuse.\n" +
+                "3. Provide concise, clear, and safe instructions.\n" +
+                "4. LANGUAGE REQUIREMENT: Always match the language of the user's question. If they ask in Vietnamese, answer in Vietnamese. If they ask in English, answer in English.");
         messages.add(systemMsg);
 
         JsonObject userMsg = new JsonObject();
         userMsg.addProperty("role", "user");
-        userMsg.addProperty("content", item); // Gửi trực tiếp nội dung người dùng nhập
+        userMsg.addProperty("content", userQuestion);
         messages.add(userMsg);
 
         jsonBody.add("messages", messages);
@@ -268,6 +304,10 @@ public class AiAssistantServlet extends HttpServlet {
 
         try (Response response = client.newCall(request).execute()) {
             if (!response.isSuccessful()) {
+                // --- DEBUG LOGGING ---
+                String errorBody = response.body() != null ? response.body().string() : "No body";
+                System.err.println("Groq API Error: Code=" + response.code() + ", Body=" + errorBody);
+                // ---------------------
                 return "Xin lỗi, hiện tại tôi không thể kết nối với máy chủ AI. Vui lòng thử lại sau.";
             }
             
