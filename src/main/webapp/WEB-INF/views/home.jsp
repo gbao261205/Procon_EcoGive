@@ -221,7 +221,10 @@
         </c:if>
 
         <c:if test="${sessionScope.currentUser == null}">
-            <a href="${pageContext.request.contextPath}/login" class="px-3 py-1.5 md:px-5 md:py-2 text-xs md:text-sm font-bold text-primary bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors">Đăng nhập</a>
+            <div class="flex items-center gap-2">
+                <a href="${pageContext.request.contextPath}/login" class="px-3 py-1.5 md:px-5 md:py-2 text-xs md:text-sm font-bold text-primary bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors">Đăng nhập</a>
+                <a href="${pageContext.request.contextPath}/register" class="px-3 py-1.5 md:px-5 md:py-2 text-xs md:text-sm font-bold text-white bg-primary hover:bg-primary-hover rounded-lg transition-colors">Đăng ký</a>
+            </div>
         </c:if>
     </div>
 </header>
@@ -1359,8 +1362,18 @@
     }
 
     // --- ĐĂNG TIN ---
-    document.getElementById('btnPostItem').addEventListener('click', () => { document.getElementById('giveAwayModal').classList.remove('hidden'); document.getElementById('step1').classList.remove('hidden'); });
-    document.getElementById('btnPostItemMobile').addEventListener('click', () => { document.getElementById('giveAwayModal').classList.remove('hidden'); document.getElementById('step1').classList.remove('hidden'); });
+    function handlePostItemClick() {
+        if (!currentUserId) {
+            window.location.href = '${pageContext.request.contextPath}/login';
+            return;
+        }
+        document.getElementById('giveAwayModal').classList.remove('hidden');
+        document.getElementById('step1').classList.remove('hidden');
+    }
+
+    document.getElementById('btnPostItem').addEventListener('click', handlePostItemClick);
+    document.getElementById('btnPostItemMobile').addEventListener('click', handlePostItemClick);
+
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
     function nextStep(n) { document.querySelectorAll('.modal-step').forEach(e=>e.classList.add('hidden')); document.getElementById('step'+n).classList.remove('hidden'); if(n===3) setTimeout(()=>{ if(!miniMap) {miniMap=L.map('miniMap').setView([currentLatLng.lat, currentLatLng.lng], 15); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'OSM'}).addTo(miniMap); locationMarker=L.marker([currentLatLng.lat,currentLatLng.lng],{draggable:true}).addTo(miniMap); locationMarker.on('dragend',e=>currentLatLng=e.target.getLatLng()); } else miniMap.invalidateSize(); },200); }
 

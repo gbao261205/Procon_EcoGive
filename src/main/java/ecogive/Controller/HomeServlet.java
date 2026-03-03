@@ -36,24 +36,19 @@ public class HomeServlet extends HttpServlet {
         HttpSession session = request.getSession(false);
 
         // Check if the user is logged in
-        if (session == null || session.getAttribute("currentUser") == null) {
-            // Nếu chưa đăng nhập, vẫn cho xem trang chủ nhưng không có thông tin user
-            // Hoặc chuyển hướng login tùy logic. Ở đây logic cũ là redirect login.
-            response.sendRedirect(request.getContextPath() + "/login");
-            return;
-        }
-
-        // --- MỚI: Refresh User Session ---
-        User sessionUser = (User) session.getAttribute("currentUser");
-        try {
-            User updatedUser = userDAO.findById(sessionUser.getUserId());
-            if (updatedUser != null) {
-                session.setAttribute("currentUser", updatedUser);
+        if (session != null && session.getAttribute("currentUser") != null) {
+            // --- MỚI: Refresh User Session ---
+            User sessionUser = (User) session.getAttribute("currentUser");
+            try {
+                User updatedUser = userDAO.findById(sessionUser.getUserId());
+                if (updatedUser != null) {
+                    session.setAttribute("currentUser", updatedUser);
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
+            // ---------------------------------
         }
-        // ---------------------------------
 
         try {
             // Fetch all items from the database
