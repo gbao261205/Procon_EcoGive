@@ -303,7 +303,7 @@
 
 <!-- 1. All Items List Modal -->
 <div id="allItemsModal" class="fixed inset-0 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-0 md:p-4 z-[80]">
-    <div class="bg-white rounded-none md:rounded-2xl w-full h-full md:w-full md:max-w-2xl md:h-auto shadow-2xl relative flex flex-col md:max-h-[85vh] overflow-hidden modal-animate">
+    <div class="bg-white rounded-none md:rounded-2xl w-full h-full md:w-full md:max-w-[95vw] md:h-auto shadow-2xl relative flex flex-col md:max-h-[95vh] overflow-hidden modal-animate">
         <!-- Header -->
         <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-white shrink-0">
             <div class="flex items-end gap-2">
@@ -335,9 +335,9 @@
         </div>
 
         <!-- List -->
-        <div id="allItemsList" class="flex-1 overflow-y-auto p-2 md:p-4 space-y-2 md:space-y-4 custom-scrollbar bg-slate-50">
+        <div id="allItemsList" class="flex-1 overflow-y-auto p-4 md:p-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 custom-scrollbar bg-slate-50 content-start">
             <!-- Items will be injected here -->
-            <div class="text-center text-slate-500 py-8">Đang tải...</div>
+            <div class="text-center text-slate-500 col-span-full">Đang tải...</div>
         </div>
     </div>
 </div>
@@ -721,7 +721,7 @@
         <div class="p-6 space-y-6">
             <!-- Target Item Info -->
             <div class="flex gap-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
-                <img id="tradeTargetImg" src="" class="w-16 h-16 rounded-lg object-cover bg-white">
+                <img id="tradeTargetImg" src="" class="w-16 h-16 rounded-lg object-contain bg-white">
                 <div>
                     <div class="text-xs text-slate-500 uppercase font-bold mb-1">Bạn muốn đổi lấy:</div>
                     <div id="tradeTargetName" class="font-bold text-slate-800">...</div>
@@ -817,7 +817,7 @@
     let currentPagePoints = 1;
     let isLoadingPoints = false;
     let hasMorePoints = true;
-    const ITEMS_PER_PAGE = 10;
+    const ITEMS_PER_PAGE = 12;
     // ----------------------------
 
     // --- ICONS ---
@@ -1132,7 +1132,7 @@
                 relatedContainer.innerHTML += `
                     <div class="cursor-pointer group" onclick="showRelatedItem(\${r.itemId})">
                         <div class="h-24 bg-slate-100 rounded-xl overflow-hidden mb-2 border border-slate-200 relative">
-                            <img src="\${rImg}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                            <img src="\${rImg}" class="w-full h-full object-contain group-hover:scale-110 transition duration-500">
                             <div class="absolute bottom-1 right-1 bg-black/50 text-white text-[9px] px-1.5 py-0.5 rounded backdrop-blur">\${r.ecoPoints || 0} pts</div>
                         </div>
                         <div class="text-xs font-bold text-slate-700 truncate group-hover:text-primary transition">\${r.title}</div>
@@ -1748,40 +1748,37 @@
                 else condClass = 'bg-orange-50 text-orange-700 border border-orange-200';
                 // -------------------------------------------
 
+                // HTML GIAO DIỆN GRID (THẺ DỌC - NHỎ GỌN)
+                // Đảm bảo thuộc tính onclick="openItemDetail(...)" nằm ngay thẻ div bao ngoài cùng
                 const itemHtml = `
-                <div onclick="openItemDetail(\${item.itemId})" class="bg-white rounded-xl p-3 md:p-4 shadow-sm border border-slate-100 hover:shadow-lg transition-shadow duration-300 cursor-pointer">
-                    <div class="flex gap-3 md:gap-4">
-                        <div class="w-20 h-20 md:w-24 md:h-24 rounded-lg md:rounded-xl bg-slate-100 overflow-hidden shrink-0">
-                            <img src="\${imgUrl}" class="w-full h-full object-cover">
-                        </div>
-                        <div class="flex-1 min-w-0 space-y-1.5">
-                            <div class="flex justify-between items-start gap-2">
-                                <h4 class="font-bold text-base md:text-lg text-slate-800 leading-tight line-clamp-2">\${item.title}</h4>
-                                <span class="bg-emerald-50 text-emerald-700 rounded-lg px-2 py-1 text-xs font-bold whitespace-nowrap">\${distStr}</span>
-                            </div>
-                            <p class="text-slate-500 text-sm flex items-center gap-1.5">
-                                <span class="material-symbols-outlined text-base">person</span>
-                                \${displayName}
-                            </p>
-                            <div class="flex flex-wrap gap-2 pt-1">
-                                 <span class="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase text-slate-600">\${catName}</span>
-                                 <!-- MỚI: Condition Badge -->
-                                 <span class="\${condClass} px-2 py-0.5 rounded text-[10px] font-bold uppercase flex items-center gap-1">
-                                    \${condition}%
-                                 </span>
-                                 <span class="bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase text-emerald-700 flex items-center gap-1">
-                                    <span class="material-symbols-outlined text-[12px]">eco</span> \${item.ecoPoints || 0} PTS
-                                 </span>
-                            </div>
+                <div onclick="openItemDetail(\${item.itemId})" class="bg-white rounded-xl p-3 shadow-sm border border-slate-100 hover:shadow-lg hover:border-primary/30 transition-all duration-300 cursor-pointer flex flex-col h-full group">
+
+                    <div class="w-full aspect-[4/5] rounded-lg bg-slate-100 overflow-hidden shrink-0 relative mb-3">
+                        <img src="\${imgUrl}" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500">
+                        <div class="absolute top-2 right-2 bg-white/90 backdrop-blur text-primary rounded text-[10px] px-1.5 py-0.5 font-bold shadow-sm">\${distStr}</div>
+                    </div>
+
+                    <div class="flex-1 min-w-0 flex flex-col space-y-1.5 px-1">
+                        <h4 class="font-bold text-sm text-slate-800 leading-tight line-clamp-1" title="\${item.title}">\${item.title}</h4>
+                        <p class="text-slate-500 text-xs flex items-center gap-1 truncate">
+                            <span class="material-symbols-outlined text-[13px]">person</span>
+                            \${displayName}
+                        </p>
+
+                        <div class="flex flex-wrap gap-1 mt-auto pb-1">
+                             <span class="\${condClass} px-1.5 py-0.5 rounded text-[10px] font-bold uppercase">\${condition}%</span>
+                             <span class="bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase text-emerald-700 flex items-center gap-0.5">
+                                <span class="material-symbols-outlined text-[10px]">eco</span> \${item.ecoPoints || 0}
+                             </span>
                         </div>
                     </div>
-                    <div class="border-t border-slate-100 pt-3 mt-3 flex justify-between items-center">
-                        <div class="flex items-center gap-1 text-xs text-slate-500">
-                            <span class="material-symbols-outlined text-[14px]">schedule</span>
-                            <span>Đăng \${postedAgo}</span>
+
+                    <div class="border-t border-slate-50 pt-2 mt-2 flex flex-col gap-2 px-1">
+                        <div class="flex items-center text-[10px] text-slate-400 w-full justify-between">
+                            <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[11px]">schedule</span> \${postedAgo}</span>
                         </div>
-                        <div class="flex items-center gap-2">
-                             \${requestBtn}
+                        <div class="w-full">
+                            \${requestBtn}
                         </div>
                     </div>
                 </div>
