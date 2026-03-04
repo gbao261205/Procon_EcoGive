@@ -29,7 +29,8 @@
         </div>
         <form action="${pageContext.request.contextPath}/admin" method="post">
             <input type="hidden" name="action" value="auto-approve">
-            <button type="submit" onclick="return confirm('Hệ thống sẽ tự động duyệt các vật phẩm PENDING bằng AI. Tiếp tục?')"
+            <fmt:message key="admin.items.confirm_auto_approve" var="confirmAutoApprove" />
+            <button type="submit" onclick="return confirm('${confirmAutoApprove}')"
                     class="group relative inline-flex items-center justify-center px-5 py-2.5 text-sm font-bold text-white transition-all duration-200 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-xl hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 shadow-lg shadow-purple-200">
                 <span class="mr-2">✨</span> <fmt:message key="admin.items.auto_approve" />
             </button>
@@ -151,7 +152,10 @@
 
                             <td class="px-6 py-4">
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
-                                    ${categoryMap[item.categoryId]}
+                                    <c:set var="catName" value="${categoryMap[item.categoryId]}" />
+                                    <c:set var="catKey" value="type.${catName}" />
+                                    <fmt:message key="${catKey}" var="translatedCat" />
+                                    <c:out value="${!fn:contains(translatedCat, '???') ? translatedCat : catName}" />
                                 </span>
                             </td>
 
@@ -188,12 +192,12 @@
                                     </c:when>
                                     <c:when test="${item.status == 'TRADE_PENDING'}">
                                         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
-                                            <span class="w-2 h-2 rounded-full bg-indigo-500"></span> Trade Pending
+                                            <span class="w-2 h-2 rounded-full bg-indigo-500"></span> <fmt:message key="admin.items.trade_pending" />
                                         </span>
                                     </c:when>
                                     <c:when test="${item.status == 'TRADE_COMPLETED'}">
                                         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-pink-50 text-pink-700 border border-pink-100">
-                                            <span class="w-2 h-2 rounded-full bg-pink-500"></span> Trade Completed
+                                            <span class="w-2 h-2 rounded-full bg-pink-500"></span> <fmt:message key="admin.items.trade_completed" />
                                         </span>
                                     </c:when>
                                 </c:choose>
@@ -207,16 +211,18 @@
                                                class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-sm transition-colors">
                                                 <fmt:message key="admin.items.approve" />
                                             </a>
+                                            <fmt:message key="admin.items.confirm_reject" var="confirmReject" />
                                             <a href="${pageContext.request.contextPath}/admin?action=reject-item&id=${item.itemId}"
-                                               onclick="return confirm('Từ chối vật phẩm này?');"
+                                               onclick="return confirm('${confirmReject}');"
                                                class="px-3 py-1.5 bg-white border border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 text-slate-600 text-xs font-bold rounded-lg transition-colors">
                                                 <fmt:message key="admin.items.reject" />
                                             </a>
                                         </div>
                                     </c:when>
                                     <c:when test="${item.status == 'AVAILABLE'}">
+                                        <fmt:message key="admin.items.confirm_remove" var="confirmRemove" />
                                         <a href="${pageContext.request.contextPath}/admin?action=reject-item&id=${item.itemId}"
-                                           onclick="return confirm('Gỡ bỏ vật phẩm này?');"
+                                           onclick="return confirm('${confirmRemove}');"
                                            class="px-3 py-1.5 bg-white border border-slate-200 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 text-slate-600 text-xs font-bold rounded-lg transition-colors">
                                             <fmt:message key="profile.action.remove" />
                                         </a>
@@ -237,7 +243,7 @@
                                         <span class="text-3xl opacity-50">📭</span>
                                     </div>
                                     <h3 class="text-slate-800 font-bold mb-1"><fmt:message key="admin.common.no_data" /></h3>
-                                    <p class="text-slate-500 text-sm">Thử thay đổi bộ lọc trạng thái xem sao.</p>
+                                    <p class="text-slate-500 text-sm"><fmt:message key="admin.items.filter_hint" /></p>
                                 </div>
                             </td>
                         </tr>
@@ -304,8 +310,8 @@
 
                                 <div class="bg-emerald-50 rounded-xl p-4 border border-emerald-100 flex items-center justify-between">
                                     <div>
-                                        <p class="text-[10px] font-bold text-emerald-800 uppercase tracking-wider mb-0.5">Eco Points</p>
-                                        <p class="text-xs text-emerald-600/80">Điểm thưởng dự kiến</p>
+                                        <p class="text-[10px] font-bold text-emerald-800 uppercase tracking-wider mb-0.5"><fmt:message key="admin.items.eco_points_label" /></p>
+                                        <p class="text-xs text-emerald-600/80"><fmt:message key="admin.items.eco_points_desc" /></p>
                                     </div>
                                     <div class="relative">
                                         <input type="number" id="modalPoints" name="eco_points" step="0.5"
@@ -318,18 +324,22 @@
                             <!-- Right: Info -->
                             <div class="w-full md:w-7/12 space-y-6">
                                 <div>
-                                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Tiêu đề</label>
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1"><fmt:message key="admin.items.title_label" /></label>
                                     <h2 id="modalItemTitle" class="text-xl font-bold text-slate-800 leading-snug"></h2>
                                 </div>
 
                                 <div>
-                                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Thông tin chi tiết</label>
+                                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2"><fmt:message key="admin.items.details_label" /></label>
                                     <div class="grid grid-cols-2 gap-4 mb-4">
                                         <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
                                             <span class="text-xs text-slate-500 block mb-1"><fmt:message key="admin.items.table.category" /></span>
                                             <select id="modalCategory" name="category_id" class="w-full bg-transparent text-sm font-semibold text-slate-700 focus:outline-none cursor-pointer">
                                                 <c:forEach var="cat" items="${categories}">
-                                                    <option value="${cat.categoryId}">${cat.name}</option>
+                                                    <c:set var="catKey" value="type.${cat.name}" />
+                                                    <fmt:message key="${catKey}" var="translatedCat" />
+                                                    <option value="${cat.categoryId}">
+                                                        <c:out value="${!fn:contains(translatedCat, '???') ? translatedCat : cat.name}" />
+                                                    </option>
                                                 </c:forEach>
                                             </select>
                                         </div>
@@ -359,7 +369,7 @@
                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
                                         </div>
                                         <div>
-                                            <p class="text-xs font-bold text-slate-700"><fmt:message key="profile.address" /></p>
+                                            <p class="text-xs font-bold text-slate-700"><fmt:message key="admin.items.address_label" /></p>
                                             <p id="modalAddress" class="text-sm text-slate-500"></p>
                                         </div>
                                     </div>
@@ -378,7 +388,8 @@
                             <a id="btnModalApprove" href="#" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-xl shadow-lg shadow-emerald-200 transition-all active:scale-95">
                                 ✓ <fmt:message key="admin.items.approve" />
                             </a>
-                            <a id="btnModalReject" href="#" onclick="return confirm('Xác nhận hành động này?');" class="px-5 py-2.5 bg-white border border-slate-200 text-red-600 hover:bg-red-50 hover:border-red-200 text-sm font-bold rounded-xl transition-all">
+                            <fmt:message key="admin.items.confirm_action" var="confirmAction" />
+                            <a id="btnModalReject" href="#" onclick="return confirm('${confirmAction}');" class="px-5 py-2.5 bg-white border border-slate-200 text-red-600 hover:bg-red-50 hover:border-red-200 text-sm font-bold rounded-xl transition-all">
                                 ✗ <fmt:message key="admin.items.reject" />
                             </a>
                         </div>
@@ -403,7 +414,7 @@
         document.getElementById('modalDesc').innerText = d.desc;
         document.getElementById('modalImg').src = d.image;
         document.getElementById('modalGiver').innerText = 'ID: ' + d.giver;
-        document.getElementById('modalAddress').innerText = d.address || 'Chưa cập nhật';
+        document.getElementById('modalAddress').innerText = d.address || '<fmt:message key="admin.items.not_updated" />';
         document.getElementById('modalCategory').value = d.category;
         document.getElementById('modalPoints').value = d.points;
 
