@@ -1,11 +1,14 @@
 <%@ page contentType="text/html; charset=UTF-8" language="java" %>
 <%@ page isELIgnored="false" %>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<fmt:setBundle basename="messages" scope="session" />
+
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="${sessionScope.lang != null ? sessionScope.lang : 'vi'}">
 <head>
     <meta charset="UTF-8">
-    <title>Quản lý Doanh nghiệp - EcoGive</title>
+    <title><fmt:message key="company.title" /> - EcoGive</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -61,7 +64,7 @@
                     <span class="material-symbols-rounded">business</span>
                 </div>
                 <div class="min-w-0">
-                    <h3 class="text-sm font-bold text-slate-800 truncate">Doanh Nghiệp</h3>
+                    <h3 class="text-sm font-bold text-slate-800 truncate">${sessionScope.currentUser.username}</h3>
                     <p class="text-xs text-slate-500 font-medium">Partner Portal</p>
                 </div>
             </div>
@@ -69,16 +72,16 @@
 
         <!-- Navigation -->
         <nav class="flex-1 px-4 space-y-2 overflow-y-auto">
-            <p class="px-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 mt-2">Quản lý</p>
+            <p class="px-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 mt-2"><fmt:message key="home.manage" /></p>
 
             <a href="#" class="flex items-center gap-3 px-4 py-3.5 text-primary bg-primary-light rounded-xl font-semibold transition-all shadow-sm ring-1 ring-primary/10">
                 <span class="material-symbols-rounded">recycling</span>
-                Điểm thu gom
+                <fmt:message key="sidebar.stations" />
             </a>
 
             <a href="${pageContext.request.contextPath}/verify-company" class="flex items-center gap-3 px-4 py-3.5 text-slate-500 hover:bg-slate-50 hover:text-primary rounded-xl font-medium transition-all group">
                 <span class="material-symbols-rounded group-hover:scale-110 transition-transform">verified_user</span>
-                Xác thực tài khoản
+                <fmt:message key="verify.title" />
             </a>
         </nav>
 
@@ -86,7 +89,7 @@
         <div class="p-4 border-t border-slate-50">
             <a href="${pageContext.request.contextPath}/logout" class="flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 rounded-xl font-medium transition-colors">
                 <span class="material-symbols-rounded">logout</span>
-                Đăng xuất
+                <fmt:message key="sidebar.logout" />
             </a>
         </div>
     </aside>
@@ -110,12 +113,12 @@
                 <!-- Page Header & Actions -->
                 <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
                     <div>
-                        <h1 class="text-3xl font-bold text-slate-800 tracking-tight mb-2">Điểm thu gom</h1>
-                        <p class="text-slate-500">Quản lý danh sách các địa điểm tập kết rác thải tái chế của bạn.</p>
+                        <h1 class="text-3xl font-bold text-slate-800 tracking-tight mb-2"><fmt:message key="company.my_points" /></h1>
+                        <p class="text-slate-500"><fmt:message key="company.welcome" /></p>
                     </div>
                     <a href="${pageContext.request.contextPath}/home" class="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-primary/20 transition-all transform hover:-translate-y-1 active:scale-95">
                         <span class="material-symbols-rounded">add_location_alt</span>
-                        Thêm điểm mới
+                        <fmt:message key="company.add_point" />
                     </a>
                 </div>
 
@@ -127,7 +130,7 @@
                             <span class="material-symbols-rounded text-3xl">location_on</span>
                         </div>
                         <div>
-                            <p class="text-slate-400 text-xs font-bold uppercase tracking-wider">Tổng điểm thu gom</p>
+                            <p class="text-slate-400 text-xs font-bold uppercase tracking-wider"><fmt:message key="company.total_points" /></p>
                             <p class="text-3xl font-bold text-slate-800 mt-1"><c:out value="${collectionPoints != null ? collectionPoints.size() : 0}"/></p>
                         </div>
                     </div>
@@ -138,8 +141,8 @@
                             <span class="material-symbols-rounded text-3xl">check_circle</span>
                         </div>
                         <div>
-                            <p class="text-slate-400 text-xs font-bold uppercase tracking-wider">Trạng thái</p>
-                            <p class="text-lg font-bold text-slate-800 mt-1">Đang hoạt động</p>
+                            <p class="text-slate-400 text-xs font-bold uppercase tracking-wider"><fmt:message key="company.status" /></p>
+                            <p class="text-lg font-bold text-slate-800 mt-1"><fmt:message key="company.active" /></p>
                         </div>
                     </div>
                 </div>
@@ -156,9 +159,9 @@
                 <!-- Data Table Card -->
                 <div class="bg-white rounded-3xl shadow-card overflow-hidden">
                     <div class="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-white">
-                        <h3 class="font-bold text-slate-800 text-lg">Danh sách điểm</h3>
+                        <h3 class="font-bold text-slate-800 text-lg"><fmt:message key="company.list_title" /></h3>
                         <div class="text-xs font-medium text-slate-400 bg-slate-50 px-3 py-1 rounded-full border border-slate-100">
-                            Cập nhật mới nhất
+                            <fmt:message key="company.updated" />
                         </div>
                     </div>
 
@@ -166,9 +169,9 @@
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="bg-slate-50/80 border-b border-slate-100 text-xs uppercase font-bold text-slate-400 tracking-wider">
-                                    <th class="px-8 py-5">Thông tin điểm</th>
-                                    <th class="px-8 py-5">Loại rác tiếp nhận</th>
-                                    <th class="px-8 py-5 text-right">Hành động</th>
+                                    <th class="px-8 py-5"><fmt:message key="company.table.info" /></th>
+                                    <th class="px-8 py-5"><fmt:message key="company.table.type" /></th>
+                                    <th class="px-8 py-5 text-right"><fmt:message key="company.table.action" /></th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-50">
@@ -196,10 +199,11 @@
                                                     </span>
                                                 </td>
                                                 <td class="px-8 py-5 text-right align-middle">
-                                                    <form action="${pageContext.request.contextPath}/dashboard/company" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn xóa điểm này? Hành động này không thể hoàn tác.');" class="inline-block">
+                                                    <fmt:message key="company.delete_confirm" var="deleteConfirm" />
+                                                    <form action="${pageContext.request.contextPath}/dashboard/company" method="post" onsubmit="return confirm('${deleteConfirm}');" class="inline-block">
                                                         <input type="hidden" name="action" value="delete">
                                                         <input type="hidden" name="pointId" value="${point.pointId}">
-                                                        <button type="submit" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-100 transition-all" title="Xóa điểm này">
+                                                        <button type="submit" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-100 transition-all" title="<fmt:message key='company.delete' />">
                                                             <span class="material-symbols-rounded">delete</span>
                                                         </button>
                                                     </form>
@@ -214,11 +218,11 @@
                                                     <div class="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mb-6 text-slate-300 border border-slate-100">
                                                         <span class="material-symbols-rounded text-5xl">location_off</span>
                                                     </div>
-                                                    <h3 class="text-slate-800 font-bold text-xl mb-2">Chưa có điểm thu gom nào</h3>
-                                                    <p class="text-slate-500 text-sm max-w-xs mx-auto mb-8 leading-relaxed">Danh sách của bạn đang trống. Hãy đóng góp cho môi trường bằng cách thêm địa điểm đầu tiên.</p>
+                                                    <h3 class="text-slate-800 font-bold text-xl mb-2"><fmt:message key="company.no_points" /></h3>
+                                                    <p class="text-slate-500 text-sm max-w-xs mx-auto mb-8 leading-relaxed"><fmt:message key="company.empty_desc" /></p>
                                                     <a href="${pageContext.request.contextPath}/home" class="inline-flex items-center gap-2 text-primary font-bold hover:underline text-sm bg-primary-light/50 px-4 py-2 rounded-lg hover:bg-primary-light transition-colors">
                                                         <span class="material-symbols-rounded text-lg">add</span>
-                                                        Thêm điểm mới ngay
+                                                        <fmt:message key="company.add_now" />
                                                     </a>
                                                 </div>
                                             </td>
@@ -231,10 +235,10 @@
 
                     <!-- Pagination (Static for now) -->
                     <div class="px-8 py-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
-                        <span class="text-xs text-slate-500 font-medium">Hiển thị <span class="text-slate-800"><c:out value="${collectionPoints != null ? collectionPoints.size() : 0}"/></span> kết quả</span>
+                        <span class="text-xs text-slate-500 font-medium"><fmt:message key="company.showing" /> <span class="text-slate-800"><c:out value="${collectionPoints != null ? collectionPoints.size() : 0}"/></span> <fmt:message key="company.results" /></span>
                         <div class="flex gap-2 opacity-50 pointer-events-none">
-                            <button class="px-3 py-1.5 text-xs font-bold border border-slate-200 rounded-lg bg-white text-slate-400">Trước</button>
-                            <button class="px-3 py-1.5 text-xs font-bold border border-slate-200 rounded-lg bg-white text-slate-400">Sau</button>
+                            <button class="px-3 py-1.5 text-xs font-bold border border-slate-200 rounded-lg bg-white text-slate-400"><fmt:message key="company.prev" /></button>
+                            <button class="px-3 py-1.5 text-xs font-bold border border-slate-200 rounded-lg bg-white text-slate-400"><fmt:message key="company.next" /></button>
                         </div>
                     </div>
                 </div>

@@ -1,11 +1,15 @@
 <%@ page contentType="text/html; charset=UTF-8" language="java" %>
 <%@ page isELIgnored="false" %>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+
+<fmt:setBundle basename="messages" scope="session" />
+
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="${sessionScope.lang != null ? sessionScope.lang : 'en'}">
 <head>
     <meta charset="UTF-8">
-    <title>Đăng ký - EcoGive</title>
+    <title><fmt:message key="register.title" /></title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- Tailwind CSS -->
@@ -280,8 +284,8 @@
                                 <span class="material-symbols-outlined text-primary" style="font-size: 40px;">spa</span>
                                 <span class="text-2xl font-bold tracking-tight text-[#111816]">EcoGive</span>
                             </div>
-                            <h1 class="text-2xl md:text-3xl font-bold text-slate-900">Tạo tài khoản mới 🚀</h1>
-                            <p class="text-slate-500 text-sm md:text-base">Bắt đầu hành trình sống xanh của bạn ngay hôm nay.</p>
+                            <h1 class="text-2xl md:text-3xl font-bold text-slate-900"><fmt:message key="register.header" /></h1>
+                            <p class="text-slate-500 text-sm md:text-base"><fmt:message key="register.subtitle" /></p>
                         </div>
 
                         <c:if test="${not empty error}">
@@ -293,58 +297,63 @@
 
                         <form id="registerForm" method="post" action="${pageContext.request.contextPath}/register" class="space-y-4">
                             <div>
-                                <label for="username" class="block text-sm font-medium text-slate-700 mb-1.5">Tên đăng nhập (ID)</label>
+                                <label for="username" class="block text-sm font-medium text-slate-700 mb-1.5"><fmt:message key="register.username" /></label>
+                                <fmt:message key="register.username.placeholder" var="usernamePlaceholder" />
                                 <input type="text" id="username" name="username" value="${username}"
                                        class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base md:text-sm"
-                                       placeholder="Ví dụ: user123" required>
+                                       placeholder="${usernamePlaceholder}" required>
                             </div>
 
                             <div>
-                                <label for="displayName" class="block text-sm font-medium text-slate-700 mb-1.5">Tên hiển thị</label>
+                                <label for="displayName" class="block text-sm font-medium text-slate-700 mb-1.5"><fmt:message key="register.display_name" /></label>
+                                <fmt:message key="register.display_name.placeholder" var="displayNamePlaceholder" />
                                 <input type="text" id="displayName" name="displayName" value="${displayName}"
                                        class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base md:text-sm"
-                                       placeholder="Ví dụ: Nguyễn Văn A">
+                                       placeholder="${displayNamePlaceholder}">
                             </div>
 
                             <div>
-                                <label for="email" class="block text-sm font-medium text-slate-700 mb-1.5">Email</label>
+                                <label for="email" class="block text-sm font-medium text-slate-700 mb-1.5"><fmt:message key="register.email" /></label>
+                                <fmt:message key="register.email.placeholder" var="emailPlaceholder" />
                                 <input type="email" id="email" name="email" value="${email}"
                                        class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base md:text-sm"
-                                       placeholder="email@example.com" required>
+                                       placeholder="${emailPlaceholder}" required>
                             </div>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label for="password" class="block text-sm font-medium text-slate-700 mb-1.5">Mật khẩu</label>
+                                    <label for="password" class="block text-sm font-medium text-slate-700 mb-1.5"><fmt:message key="register.password" /></label>
+                                    <fmt:message key="register.password.placeholder" var="passwordPlaceholder" />
                                     <input type="password" id="password" name="password"
                                            class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base md:text-sm"
-                                           placeholder="Tối thiểu 6 ký tự" required minlength="6">
+                                           placeholder="${passwordPlaceholder}" required minlength="6">
                                 </div>
                                 <div>
-                                    <label for="confirmPassword" class="block text-sm font-medium text-slate-700 mb-1.5">Xác nhận mật khẩu</label>
+                                    <label for="confirmPassword" class="block text-sm font-medium text-slate-700 mb-1.5"><fmt:message key="register.confirm_password" /></label>
+                                    <fmt:message key="register.confirm_password.placeholder" var="confirmPasswordPlaceholder" />
                                     <input type="password" id="confirmPassword" name="confirmPassword"
                                            class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base md:text-sm"
-                                           placeholder="Nhập lại mật khẩu" required minlength="6">
+                                           placeholder="${confirmPasswordPlaceholder}" required minlength="6">
                                 </div>
                             </div>
                             <p id="passwordError" class="text-xs text-red-600 font-medium hidden flex items-center gap-1">
                                 <span class="material-symbols-outlined text-sm">error</span>
-                                Mật khẩu xác nhận không khớp.
+                                <fmt:message key="register.password_mismatch" />
                             </p>
 
                             <div class="pt-2">
                                 <button type="submit" id="submitButton"
                                         class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all transform hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
-                                    Đăng ký tài khoản
+                                    <fmt:message key="register.button" />
                                 </button>
                             </div>
                         </form>
 
                         <div class="space-y-4 text-center">
                             <p class="text-sm text-slate-600">
-                                Đã có tài khoản?
+                                <fmt:message key="register.have_account" />
                                 <a href="${pageContext.request.contextPath}/login" class="font-semibold text-primary hover:text-primary-hover hover:underline ml-1">
-                                    Đăng nhập ngay
+                                    <fmt:message key="register.login_now" />
                                 </a>
                             </p>
 
@@ -353,13 +362,13 @@
                                     <div class="w-full border-t border-gray-200"></div>
                                 </div>
                                 <div class="relative flex justify-center text-sm">
-                                    <span class="px-2 bg-white text-slate-500">Hoặc</span>
+                                    <span class="px-2 bg-white text-slate-500"><fmt:message key="register.or" /></span>
                                 </div>
                             </div>
 
                             <a href="${pageContext.request.contextPath}/register-collector" class="inline-flex items-center justify-center w-full px-4 py-2.5 border border-slate-300 rounded-lg shadow-sm text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 transition-colors">
                                 <span class="material-symbols-outlined text-slate-500 mr-2">business</span>
-                                Đăng ký cho Doanh nghiệp / Điểm thu gom
+                                <fmt:message key="register.collector" />
                             </a>
                         </div>
                     </div>

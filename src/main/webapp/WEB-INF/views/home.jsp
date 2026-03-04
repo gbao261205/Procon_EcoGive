@@ -1,10 +1,20 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+
+<%-- LOGIC MỚI: Nếu chưa có ngôn ngữ trong session, ép cứng là 'en' --%>
+<c:if test="${empty sessionScope.lang}">
+    <c:set var="lang" value="en" scope="session" />
+    <fmt:setLocale value="en" scope="session" />
+</c:if>
+
+<fmt:setBundle basename="messages" scope="session" />
+
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="${sessionScope.lang}">
 <head>
     <meta charset="UTF-8">
-    <title>Bản đồ EcoGive - Chia sẻ & Tái chế</title>
+    <title><fmt:message key="home.title" /></title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
     <!-- Fonts & Icons -->
@@ -96,50 +106,61 @@
     <!-- Logo Section -->
     <div class="flex items-center gap-2">
         <span class="material-symbols-outlined text-primary" style="font-size: 28px; md:32px;">spa</span>
-        <h1 class="text-lg md:text-xl font-bold tracking-tight text-slate-800">EcoGive <span class="text-slate-400 font-normal text-sm ml-1 hidden md:inline">Map</span></h1>
+        <h1 class="text-lg md:text-xl font-bold tracking-tight text-slate-800">EcoGive <span class="text-slate-400 font-normal text-sm ml-1 hidden md:inline"><fmt:message key="home.map" /></span></h1>
     </div>
 
     <!-- Actions & Profile -->
     <div class="flex items-center gap-2 md:gap-4">
+
+        <!-- Language Switcher -->
+        <div class="flex items-center gap-2 mr-2">
+            <a href="${pageContext.request.contextPath}/language?lang=en" class="w-6 h-6 md:w-8 md:h-8 rounded-full overflow-hidden border-2 ${sessionScope.lang == 'en' || sessionScope.lang == null ? 'border-primary' : 'border-transparent'} hover:scale-110 transition-transform" title="English">
+                <img src="https://flagcdn.com/w40/gb.png" class="w-full h-full object-cover">
+            </a>
+            <a href="${pageContext.request.contextPath}/language?lang=vi" class="w-6 h-6 md:w-8 md:h-8 rounded-full overflow-hidden border-2 ${sessionScope.lang == 'vi' ? 'border-primary' : 'border-transparent'} hover:scale-110 transition-transform" title="Tiếng Việt">
+                <img src="https://flagcdn.com/w40/vn.png" class="w-full h-full object-cover">
+            </a>
+        </div>
+
         <!-- Action Buttons Group (Desktop) -->
         <div class="hidden md:flex items-center gap-3 pr-4 border-r border-slate-200">
             <!-- NEW BUTTONS: Show All Items & Points -->
-            <button onclick="openAllItemsList()" class="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-slate-600 bg-slate-50 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-all" title="Danh sách vật phẩm">
+            <button onclick="openAllItemsList()" class="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-slate-600 bg-slate-50 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-all" title="<fmt:message key='home.items' />">
                 <span class="material-symbols-outlined text-[20px]">inventory_2</span>
-                <span>Vật phẩm</span>
+                <span><fmt:message key="home.items" /></span>
             </button>
-            <button onclick="openAllPointsList()" class="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-slate-600 bg-slate-50 hover:bg-green-50 hover:text-green-600 rounded-lg transition-all" title="Danh sách điểm tập kết">
+            <button onclick="openAllPointsList()" class="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-slate-600 bg-slate-50 hover:bg-green-50 hover:text-green-600 rounded-lg transition-all" title="<fmt:message key='home.points' />">
                 <span class="material-symbols-outlined text-[20px]">recycling</span>
-                <span>Điểm tập kết</span>
+                <span><fmt:message key="home.points" /></span>
             </button>
             <div class="w-px h-6 bg-slate-200 mx-1"></div>
             <!-- End New Buttons -->
 
             <c:if test="${sessionScope.currentUser.role == 'ADMIN'}">
                 <a href="${pageContext.request.contextPath}/admin?action=dashboard"
-                   class="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-slate-600 bg-slate-50 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-all" title="Trang quản trị">
+                   class="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-slate-600 bg-slate-50 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-all" title="<fmt:message key='home.dashboard' />">
                     <span class="material-symbols-outlined text-[20px]">analytics</span>
-                    <span>Dashboard</span>
+                    <span><fmt:message key="home.dashboard" /></span>
                 </a>
             </c:if>
             <c:if test="${sessionScope.currentUser.role == 'COLLECTOR_COMPANY'}">
                 <a href="${pageContext.request.contextPath}/dashboard/company"
-                   class="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-slate-600 bg-slate-50 hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-all" title="Quản lý Doanh nghiệp">
+                   class="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-slate-600 bg-slate-50 hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-all" title="<fmt:message key='home.manage' />">
                     <span class="material-symbols-outlined text-[20px]">domain</span>
-                    <span>Quản lý</span>
+                    <span><fmt:message key="home.manage" /></span>
                 </a>
             </c:if>
              <c:if test="${sessionScope.currentUser.role == 'ADMIN' || sessionScope.currentUser.role == 'COLLECTOR_COMPANY'}">
                 <button id="btnAddPoint"
-                        class="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg shadow-sm transition-all transform active:scale-95" title="Thêm điểm tập kết">
+                        class="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg shadow-sm transition-all transform active:scale-95" title="<fmt:message key='home.add_point' />">
                     <span class="material-symbols-outlined text-[20px]">add_location_alt</span>
-                    <span>Thêm điểm</span>
+                    <span><fmt:message key="home.add_point" /></span>
                 </button>
             </c:if>
             <button id="btnPostItem"
                     class="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-primary hover:bg-primary-hover rounded-lg shadow-md hover:shadow-lg transition-all transform active:scale-95">
                 <span class="material-symbols-outlined text-[20px]">volunteer_activism</span>
-                <span>Đăng tin</span>
+                <span><fmt:message key="home.post_item" /></span>
             </button>
         </div>
 
@@ -160,15 +181,15 @@
                 <!-- Notification Dropdown -->
                 <div id="noti-dropdown" class="hidden absolute right-0 mt-2 w-80 md:w-96 bg-white rounded-xl shadow-2xl border border-slate-100 z-50 origin-top-right animate-scale-in overflow-hidden">
                     <div class="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                        <h3 class="font-bold text-slate-800 text-sm">Thông báo</h3>
-                        <button onclick="markAllRead()" class="text-xs text-primary font-bold hover:underline">Đã đọc tất cả</button>
+                        <h3 class="font-bold text-slate-800 text-sm"><fmt:message key="home.notifications" /></h3>
+                        <button onclick="markAllRead()" class="text-xs text-primary font-bold hover:underline"><fmt:message key="home.mark_all_read" /></button>
                     </div>
                     <div id="noti-list" class="max-h-80 overflow-y-auto custom-scrollbar">
                         <!-- Notifications will be loaded here -->
-                        <div class="text-center py-8 text-slate-400 text-xs">Đang tải...</div>
+                        <div class="text-center py-8 text-slate-400 text-xs"><fmt:message key="home.loading" /></div>
                     </div>
                     <div class="px-4 py-2 border-t border-slate-100 bg-slate-50 text-center">
-                        <a href="${pageContext.request.contextPath}/chat" class="text-xs font-bold text-slate-500 hover:text-primary">Xem tất cả trong tin nhắn</a>
+                        <a href="${pageContext.request.contextPath}/chat" class="text-xs font-bold text-slate-500 hover:text-primary"><fmt:message key="home.view_all_messages" /></a>
                     </div>
                 </div>
             </div>
@@ -196,11 +217,11 @@
                     </div>
                     <a href="javascript:void(0);" onclick="openAllItemsList()" class="flex md:hidden items-center gap-3 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors">
                         <span class="material-symbols-outlined text-slate-400">inventory_2</span>
-                        <span>Tất cả vật phẩm</span>
+                        <span><fmt:message key="home.items" /></span>
                     </a>
                     <a href="javascript:void(0);" onclick="openAllPointsList()" class="flex md:hidden items-center gap-3 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors">
                         <span class="material-symbols-outlined text-slate-400">recycling</span>
-                        <span>Tất cả điểm tập kết</span>
+                        <span><fmt:message key="home.points" /></span>
                     </a>
                     <div class="h-px bg-slate-100 my-1 md:hidden"></div>
                     <a href="${pageContext.request.contextPath}/profile" class="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors">
@@ -222,8 +243,8 @@
 
         <c:if test="${sessionScope.currentUser == null}">
             <div class="flex items-center gap-2">
-                <a href="${pageContext.request.contextPath}/login" class="px-3 py-1.5 md:px-5 md:py-2 text-xs md:text-sm font-bold text-primary bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors">Đăng nhập</a>
-                <a href="${pageContext.request.contextPath}/register" class="px-3 py-1.5 md:px-5 md:py-2 text-xs md:text-sm font-bold text-white bg-primary hover:bg-primary-hover rounded-lg transition-colors">Đăng ký</a>
+                <a href="${pageContext.request.contextPath}/login" class="px-3 py-1.5 md:px-5 md:py-2 text-xs md:text-sm font-bold text-primary bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors"><fmt:message key="home.login" /></a>
+                <a href="${pageContext.request.contextPath}/register" class="px-3 py-1.5 md:px-5 md:py-2 text-xs md:text-sm font-bold text-white bg-primary hover:bg-primary-hover rounded-lg transition-colors"><fmt:message key="home.register" /></a>
             </div>
         </c:if>
     </div>
@@ -236,14 +257,14 @@
     <!-- FILTER BUTTON (Floating - Right Side, Low Z-Index) -->
     <button onclick="toggleFilterPanel()"
             class="absolute top-4 right-4 md:top-6 md:right-6 z-20 w-10 h-10 md:w-12 md:h-12 bg-white text-slate-700 rounded-full shadow-lg hover:text-primary hover:scale-110 transition-all duration-300 flex items-center justify-center border border-slate-100 group"
-            title="Bộ lọc bản đồ">
+            title="<fmt:message key='home.filter' />">
         <span class="material-symbols-outlined group-hover:rotate-180 transition-transform duration-500 text-xl md:text-2xl">filter_alt</span>
     </button>
 
     <!-- LOCATION BUTTON -->
     <button onclick="map.locate({setView: true, maxZoom: 14})"
             class="absolute top-16 right-4 md:top-20 md:right-6 z-20 w-10 h-10 md:w-12 md:h-12 bg-white text-slate-700 rounded-full shadow-lg hover:text-primary hover:scale-110 transition-all duration-300 flex items-center justify-center border border-slate-100 group"
-            title="Vị trí của tôi">
+            title="<fmt:message key='home.my_location' />">
         <span class="material-symbols-outlined text-xl md:text-2xl">my_location</span>
     </button>
 
@@ -253,7 +274,7 @@
         <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-50">
             <h3 class="font-bold text-slate-800 flex items-center gap-2 text-sm md:text-base">
                 <span class="material-symbols-outlined text-primary text-lg">tune</span>
-                Bộ lọc hiển thị
+                <fmt:message key="home.filter" />
             </h3>
             <button onclick="toggleFilterPanel()" class="text-slate-400 hover:text-slate-600 transition">
                 <span class="material-symbols-outlined text-lg">close</span>
@@ -264,10 +285,10 @@
         <div class="space-y-4">
             <!-- Category Select -->
             <div>
-                <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Danh mục</label>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5"><fmt:message key="home.category" /></label>
                 <div class="relative">
                     <select id="filterCategory" class="w-full pl-3 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:ring-2 focus:ring-primary focus:border-transparent outline-none appearance-none cursor-pointer transition" onchange="reloadMapData()">
-                        <option value="">Tất cả danh mục</option>
+                        <option value=""><fmt:message key="home.all_categories" /></option>
                     </select>
                     <span class="absolute right-3 top-2.5 pointer-events-none text-slate-500">
                         <span class="material-symbols-outlined text-lg">expand_more</span>
@@ -277,7 +298,7 @@
 
             <!-- Checkboxes -->
             <div>
-                <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Loại điểm</label>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-2"><fmt:message key="home.point_type" /></label>
                 <div class="space-y-2">
                     <label class="flex items-center gap-3 cursor-pointer group p-2 hover:bg-slate-50 rounded-lg transition -mx-2">
                         <div class="relative flex items-center">
@@ -285,7 +306,7 @@
                             <div class="w-5 h-5 border-2 border-slate-300 rounded peer-checked:bg-primary peer-checked:border-primary transition-all"></div>
                             <span class="material-symbols-outlined text-white text-[14px] absolute top-0.5 left-0.5 opacity-0 peer-checked:opacity-100">check</span>
                         </div>
-                        <span class="text-sm text-slate-700 font-medium group-hover:text-primary transition-colors">♻️ Điểm công cộng</span>
+                        <span class="text-sm text-slate-700 font-medium group-hover:text-primary transition-colors"><fmt:message key="home.public_point" /></span>
                     </label>
 
                     <label class="flex items-center gap-3 cursor-pointer group p-2 hover:bg-slate-50 rounded-lg transition -mx-2">
@@ -294,7 +315,7 @@
                             <div class="w-5 h-5 border-2 border-slate-300 rounded peer-checked:bg-yellow-500 peer-checked:border-yellow-500 transition-all"></div>
                             <span class="material-symbols-outlined text-white text-[14px] absolute top-0.5 left-0.5 opacity-0 peer-checked:opacity-100">check</span>
                         </div>
-                        <span class="text-sm text-slate-700 font-medium group-hover:text-yellow-600 transition-colors">🏢 Điểm doanh nghiệp</span>
+                        <span class="text-sm text-slate-700 font-medium group-hover:text-yellow-600 transition-colors"><fmt:message key="home.company_point" /></span>
                     </label>
                 </div>
             </div>
@@ -310,7 +331,7 @@
         <!-- Header -->
         <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-white shrink-0">
             <div class="flex items-end gap-2">
-                <h3 class="font-bold text-2xl text-slate-900">Vật phẩm gần bạn</h3>
+                <h3 class="font-bold text-2xl text-slate-900"><fmt:message key="home.items_nearby" /></h3>
             </div>
             <button onclick="document.getElementById('allItemsModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition">
                 <span class="material-symbols-outlined">close</span>
@@ -324,7 +345,8 @@
                 <span class="absolute left-4 top-3.5 text-slate-400">
                     <span class="material-symbols-outlined">search</span>
                 </span>
-                <input type="text" id="searchItemInput" onkeyup="filterList('searchItemInput', 'allItemsList')" placeholder="Tìm vật phẩm gần bạn..." class="w-full pl-12 pr-4 py-3 rounded-full bg-slate-50 border-none text-sm font-medium focus:ring-0 outline-none text-slate-700 placeholder-slate-400">
+                <fmt:message key="home.search_items" var="searchItemsPlaceholder" />
+                <input type="text" id="searchItemInput" onkeyup="filterList('searchItemInput', 'allItemsList')" placeholder="${searchItemsPlaceholder}" class="w-full pl-12 pr-4 py-3 rounded-full bg-slate-50 border-none text-sm font-medium focus:ring-0 outline-none text-slate-700 placeholder-slate-400">
             </div>
 
             <!-- Filters -->
@@ -340,7 +362,7 @@
         <!-- List -->
         <div id="allItemsList" class="flex-1 overflow-y-auto p-4 md:p-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 custom-scrollbar bg-slate-50 content-start">
             <!-- Items will be injected here -->
-            <div class="text-center text-slate-500 col-span-full">Đang tải...</div>
+            <div class="text-center text-slate-500 col-span-full"><fmt:message key="home.loading" /></div>
         </div>
     </div>
 </div>
@@ -351,7 +373,7 @@
         <!-- Header -->
         <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-white shrink-0">
             <div class="flex items-end gap-2">
-                <h3 class="font-bold text-2xl text-slate-900">Điểm tập kết gần bạn</h3>
+                <h3 class="font-bold text-2xl text-slate-900"><fmt:message key="home.points_nearby" /></h3>
             </div>
             <button onclick="document.getElementById('allPointsModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition">
                 <span class="material-symbols-outlined">close</span>
@@ -365,7 +387,8 @@
                 <span class="absolute left-4 top-3.5 text-slate-400">
                     <span class="material-symbols-outlined">search</span>
                 </span>
-                <input type="text" id="searchPointInput" onkeyup="filterList('searchPointInput', 'allPointsList')" placeholder="Tìm điểm tập kết..." class="w-full pl-12 pr-4 py-3 rounded-full bg-slate-50 border-none text-sm font-medium focus:ring-0 outline-none text-slate-700 placeholder-slate-400">
+                <fmt:message key="home.search_points" var="searchPointsPlaceholder" />
+                <input type="text" id="searchPointInput" onkeyup="filterList('searchPointInput', 'allPointsList')" placeholder="${searchPointsPlaceholder}" class="w-full pl-12 pr-4 py-3 rounded-full bg-slate-50 border-none text-sm font-medium focus:ring-0 outline-none text-slate-700 placeholder-slate-400">
             </div>
 
             <!-- Filters -->
@@ -386,7 +409,7 @@
 
         <!-- List -->
         <div id="allPointsList" class="flex-1 overflow-y-auto p-2 md:p-4 space-y-2 md:space-y-4 custom-scrollbar bg-slate-50">
-            <div class="text-center text-slate-500 py-8">Đang tải...</div>
+            <div class="text-center text-slate-500 py-8"><fmt:message key="home.loading" /></div>
         </div>
     </div>
 </div>
@@ -628,7 +651,7 @@
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-xl backdrop-blur-sm">🏆</div>
                 <div>
-                    <h3 class="font-bold text-lg">Bảng Xếp Hạng</h3>
+                    <h3 class="font-bold text-lg"><fmt:message key="home.leaderboard" /></h3>
                     <p class="text-[10px] opacity-90">Top thành viên tích cực nhất</p>
                 </div>
             </div>
@@ -639,7 +662,7 @@
 
         <div class="flex-1 overflow-y-auto p-4 bg-slate-50 custom-scrollbar" id="leaderboardList">
             <!-- Leaderboard items will be injected here -->
-            <div class="text-center text-slate-500 py-4">Đang tải dữ liệu...</div>
+            <div class="text-center text-slate-500 py-4"><fmt:message key="home.loading" /></div>
         </div>
     </div>
 </div>
@@ -649,20 +672,20 @@
     <!-- Leaderboard Button -->
     <button onclick="toggleLeaderboardModal()" class="w-12 h-12 md:w-14 md:h-14 bg-yellow-400 hover:bg-yellow-500 text-white rounded-full shadow-lg shadow-yellow-200 transition transform hover:scale-110 flex items-center justify-center border-2 border-white group relative">
         <span class="text-xl md:text-2xl">🏆</span>
-        <span class="absolute right-full mr-3 bg-slate-800 text-white text-xs font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none hidden md:block">Bảng xếp hạng</span>
+        <span class="absolute right-full mr-3 bg-slate-800 text-white text-xs font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none hidden md:block"><fmt:message key="home.leaderboard" /></span>
     </button>
 
     <!-- AI Button -->
     <button onclick="toggleAiModal()" class="w-12 h-12 md:w-14 md:h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg shadow-blue-200 transition transform hover:scale-110 flex items-center justify-center border-2 border-white group relative">
         <span class="text-xl md:text-2xl">🤖</span>
-        <span class="absolute right-full mr-3 bg-slate-800 text-white text-xs font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none hidden md:block">Trợ lý AI</span>
+        <span class="absolute right-full mr-3 bg-slate-800 text-white text-xs font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none hidden md:block"><fmt:message key="home.ai_assistant" /></span>
     </button>
 
     <!-- Chat Button -->
     <a href="${pageContext.request.contextPath}/chat" class="w-12 h-12 md:w-14 md:h-14 bg-primary hover:bg-primary-hover text-white rounded-full shadow-lg shadow-emerald-200 transition transform hover:scale-110 flex items-center justify-center border-2 border-white relative group">
         <span class="material-symbols-outlined text-xl md:text-2xl">chat</span>
         <span id="msgBadge" class="absolute top-0 right-0 w-4 h-4 bg-red-500 border-2 border-white rounded-full hidden"></span>
-        <span class="absolute right-full mr-3 bg-slate-800 text-white text-xs font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none hidden md:block">Tin nhắn</span>
+        <span class="absolute right-full mr-3 bg-slate-800 text-white text-xs font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none hidden md:block"><fmt:message key="home.messages" /></span>
     </a>
 </div>
 
@@ -1003,16 +1026,19 @@
 
                     let actionBtn = '';
                     const displayName = item.giverDisplayName || item.giverName || 'Người tặng';
+                    // Escape quotes for HTML attributes
+                    const displayNameEscaped = displayName.replace(/'/g, "\\'");
+                    const itemTitleEscaped = item.title.replace(/'/g, "\\'");
 
                     if (currentUserId) {
                         if (item.giverId === currentUserId) {
-                            actionBtn = `<button onclick="openManageChat(\${item.itemId}, '\${item.title}')" class="w-full bg-slate-100 text-slate-700 text-xs font-bold py-2 rounded-lg hover:bg-slate-200 border border-slate-200 transition">Quản lý & Chốt đơn 📩</button>`;
+                            actionBtn = `<button onclick="openManageChat(\${item.itemId})" class="w-full bg-slate-100 text-slate-700 text-xs font-bold py-2 rounded-lg hover:bg-slate-200 border border-slate-200 transition">Quản lý & Chốt đơn 📩</button>`;
                         } else {
                             // Cập nhật nút bấm trong Popup
                             actionBtn = `
                                 <div class="flex flex-col gap-1 mt-2">
-                                    <button onclick="requestItem(\${item.itemId}, \${item.giverId}, '\${displayName}', '\${item.title}')" class="w-full bg-primary text-white text-xs font-bold py-2 rounded-lg hover:bg-primary-hover shadow-md transition">Xin món này 🎁</button>
-                                    <button onclick="openTradeProposal(\${item.itemId}, '\${item.title}', '\${imgUrl}')" class="w-full bg-white text-primary text-xs font-bold py-2 rounded-lg border border-primary hover:bg-emerald-50 transition">Trao đổi 🔄</button>
+                                    <button onclick="requestItem(\${item.itemId})" class="w-full bg-primary text-white text-xs font-bold py-2 rounded-lg hover:bg-primary-hover shadow-md transition">Xin món này 🎁</button>
+                                    <button onclick="openTradeProposal(\${item.itemId})" class="w-full bg-white text-primary text-xs font-bold py-2 rounded-lg border border-primary hover:bg-emerald-50 transition">Trao đổi 🔄</button>
                                 </div>
                             `;
                         }
@@ -1107,13 +1133,13 @@
         const actionContainer = document.getElementById('detailActionContainer');
         if (currentUserId) {
             if (item.giverId === currentUserId) {
-                actionContainer.innerHTML = `<button onclick="openManageChat(\${item.itemId}, '\${item.title}'); document.getElementById('itemDetailModal').classList.add('hidden');" class="w-full bg-slate-100 text-slate-700 font-bold py-3 px-6 rounded-xl hover:bg-slate-200 border border-slate-200 transition">Quản lý tin đăng</button>`;
+                actionContainer.innerHTML = `<button onclick="openManageChat(\${item.itemId}); document.getElementById('itemDetailModal').classList.add('hidden');" class="w-full bg-slate-100 text-slate-700 font-bold py-3 px-6 rounded-xl hover:bg-slate-200 border border-slate-200 transition">Quản lý tin đăng</button>`;
             } else {
                 // Thêm nút Trao đổi
                 actionContainer.innerHTML = `
                     <div class="flex flex-col gap-2 w-full">
-                        <button onclick="requestItem(\${item.itemId}, \${item.giverId}, '\${displayName}', '\${item.title}'); document.getElementById('itemDetailModal').classList.add('hidden');" class="w-full bg-primary text-white font-bold py-3 px-6 rounded-xl hover:bg-primary-hover shadow-lg shadow-emerald-200 transition">Xin món này 🎁</button>
-                        <button onclick="openTradeProposal(\${item.itemId}, '\${item.title}', '\${imgUrl}'); document.getElementById('itemDetailModal').classList.add('hidden');" class="w-full bg-white text-primary font-bold py-3 px-6 rounded-xl border-2 border-primary hover:bg-emerald-50 transition">Đề nghị trao đổi 🔄</button>
+                        <button onclick="requestItem(\${item.itemId}); document.getElementById('itemDetailModal').classList.add('hidden');" class="w-full bg-primary text-white font-bold py-3 px-6 rounded-xl hover:bg-primary-hover shadow-lg shadow-emerald-200 transition">Xin món này 🎁</button>
+                        <button onclick="openTradeProposal(\${item.itemId}); document.getElementById('itemDetailModal').classList.add('hidden');" class="w-full bg-white text-primary font-bold py-3 px-6 rounded-xl border-2 border-primary hover:bg-emerald-50 transition">Đề nghị trao đổi 🔄</button>
                     </div>
                 `;
             }
@@ -1192,16 +1218,24 @@
                             </div>
                         `;
                     }
-
                     const content = `
-                        <div class="text-center p-4">
-                            \${popupHeader}
-                            <h3 class="font-bold text-slate-800 text-sm mb-1">\${p.name}</h3>
-                            \${isCompany && ownerDisplayName ? `<p class="text-xs text-slate-500 mb-1">Doanh nghiệp: <span class="font-bold text-slate-700">\${ownerDisplayName}</span></p>` : ''}
-                            <p class="text-xs text-slate-500 mb-3">📍 \${p.address}</p>
-                            <a href="https://www.google.com/maps/search/?api=1&query=\${p.latitude},\${p.longitude}" target="_blank" class="block w-full bg-slate-50 text-slate-600 text-xs font-bold py-2 rounded-lg hover:bg-slate-100 border border-slate-200 transition">🗺️ Chỉ đường</a>
-                            \${extraActions}
-                        </div>`;
+    <div class="text-center p-4">
+        \${popupHeader}
+        <h3 class="font-bold text-slate-800 text-sm mb-1">\${p.name}</h3>
+        \${isCompany && ownerDisplayName ? '<p class="text-xs text-slate-500 mb-1">Doanh nghiệp: <span class="font-bold text-slate-700">' + ownerDisplayName + '</span></p>' : ''}
+        <p class="text-xs text-slate-500 mb-3">📍 \${p.address}</p>
+        <a href="https://www.google.com/maps/search/?api=1&query=\${p.latitude},\${p.longitude}" target="_blank" class="block w-full bg-slate-50 text-slate-600 text-xs font-bold py-2 rounded-lg hover:bg-slate-100 border border-slate-200 transition">🗺️ Chỉ đường</a>
+        \${extraActions}
+    </div>`;
+                    // const content = `
+                    //     <div class="text-center p-4">
+                    //         \${popupHeader}
+                    //         <h3 class="font-bold text-slate-800 text-sm mb-1">\${p.name}</h3>
+                    //         \${isCompany && ownerDisplayName ? `<p class="text-xs text-slate-500 mb-1">Doanh nghiệp: <span class="font-bold text-slate-700">\${ownerDisplayName}</span></p>` : ''}
+                    //         <p class="text-xs text-slate-500 mb-3">📍 \${p.address}</p>
+                    //         <a href="https://www.google.com/maps/search/?api=1&query=\${p.latitude},\${p.longitude}" target="_blank" class="block w-full bg-slate-50 text-slate-600 text-xs font-bold py-2 rounded-lg hover:bg-slate-100 border border-slate-200 transition">🗺️ Chỉ đường</a>
+                    //         \${extraActions}
+                    //     </div>`;
                     const marker = L.marker([p.latitude, p.longitude], {icon: icon}).addTo(map).bindPopup(content);
                     pointLayers.push(marker);
                 }
@@ -1210,8 +1244,11 @@
     }
 
     // --- 2. LOGIC NÚT BẤM (User Items) ---
-    async function requestItem(itemId, giverId, giverName, itemTitle) {
+    async function requestItem(itemId) {
         if (!currentUserId) { window.location.href = '${pageContext.request.contextPath}/login'; return; }
+
+        const item = itemDataCache[itemId];
+        if (!item) return;
 
         // Gửi request tạo transaction trước
         try {
@@ -1220,12 +1257,11 @@
         } catch(e){}
 
         // Chuyển hướng sang trang chat
-        window.location.href = '${pageContext.request.contextPath}/chat?partnerId=' + giverId + '&itemId=' + itemId;
+        window.location.href = '${pageContext.request.contextPath}/chat?partnerId=' + item.giverId + '&itemId=' + itemId;
     }
 
-    async function openManageChat(itemId, itemTitle) {
+    async function openManageChat(itemId) {
         // Chuyển hướng sang trang chat (không cần partnerId cụ thể, user sẽ chọn từ list)
-        // Hoặc có thể tìm partner gần nhất nếu muốn
         window.location.href = '${pageContext.request.contextPath}/chat';
     }
 
@@ -1728,6 +1764,10 @@
             }
 
             items.forEach(item => {
+                // --- FIX: Add item to cache so openItemDetail works ---
+                itemDataCache[item.itemId] = item;
+                // -----------------------------------------------------
+
                 let imgUrl = item.imageUrl && item.imageUrl.startsWith('http') ? item.imageUrl : (item.imageUrl ? '${pageContext.request.contextPath}/images?path=' + encodeURIComponent(item.imageUrl) : 'https://placehold.co/100x100');
 
                 const dist = calculateDistance(currentLatLng.lat, currentLatLng.lng, item.location.latitude, item.location.longitude);
@@ -1744,10 +1784,11 @@
                     // Owner: No request button
                     requestBtn = '<span class="text-xs font-bold text-slate-400 px-4 py-2">Vật phẩm của bạn</span>';
                 } else {
+                    // --- FIX: Simplify onclick handlers ---
                     requestBtn = `
                         <div class="flex gap-2">
-                            <button onclick="event.stopPropagation(); requestItem(\${item.itemId}, \${item.giverId}, '\${displayNameEscaped}', '\${itemTitle}');" class="bg-primary text-white text-xs font-bold px-4 py-2 rounded-full hover:bg-primary-hover transition shadow-sm">Xin</button>
-                            <button onclick="event.stopPropagation(); openTradeProposal(\${item.itemId}, '\${itemTitle}', '\${imgUrl}');" class="bg-white text-primary text-xs font-bold px-4 py-2 rounded-full border border-primary hover:bg-emerald-50 transition shadow-sm">Đổi 🔄</button>
+                            <button onclick="event.stopPropagation(); requestItem(\${item.itemId});" class="bg-primary text-white text-xs font-bold px-4 py-2 rounded-full hover:bg-primary-hover transition shadow-sm">Xin</button>
+                            <button onclick="event.stopPropagation(); openTradeProposal(\${item.itemId});" class="bg-white text-primary text-xs font-bold px-4 py-2 rounded-full border border-primary hover:bg-emerald-50 transition shadow-sm">Đổi 🔄</button>
                         </div>
                     `;
                 }
@@ -1762,9 +1803,9 @@
                 // -------------------------------------------
 
                 // HTML GIAO DIỆN GRID (THẺ DỌC - NHỎ GỌN)
-                // Đảm bảo thuộc tính onclick="openItemDetail(...)" nằm ngay thẻ div bao ngoài cùng
+                // --- FIX: Pass ID as string to prevent BigInt issues ---
                 const itemHtml = `
-                <div onclick="openItemDetail(\${item.itemId})" class="bg-white rounded-xl p-3 shadow-sm border border-slate-100 hover:shadow-lg hover:border-primary/30 transition-all duration-300 cursor-pointer flex flex-col h-full group">
+                <div onclick="openItemDetail('\${item.itemId}')" class="bg-white rounded-xl p-3 shadow-sm border border-slate-100 hover:shadow-lg hover:border-primary/30 transition-all duration-300 cursor-pointer flex flex-col h-full group">
 
                     <div class="w-full aspect-[4/5] rounded-lg bg-slate-100 overflow-hidden shrink-0 relative mb-3">
                         <img src="\${imgUrl}" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500">
@@ -1904,28 +1945,51 @@
                 }
 
                 const pointHtml = `
-                    <div class="bg-white rounded-xl p-3 md:p-4 shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
-                        <!-- Row 1 -->
-                        <div class="flex justify-between items-start">
-                            <h4 class="font-bold text-base md:text-lg text-slate-800">\${p.name}</h4>
-                            <span class="bg-emerald-50 text-emerald-700 rounded-lg px-2 py-1 text-xs font-bold whitespace-nowrap">\${distStr}</span>
-                        </div>
+    <div class="bg-white rounded-xl p-3 md:p-4 shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+        <!-- Row 1 -->
+        <div class="flex justify-between items-start">
+            <h4 class="font-bold text-base md:text-lg text-slate-800">\${p.name}</h4>
+            <span class="bg-emerald-50 text-emerald-700 rounded-lg px-2 py-1 text-xs font-bold whitespace-nowrap">\${distStr}</span>
+        </div>
 
-                        <!-- Row 2 -->
-                        \${isCompany && ownerDisplayName ? `<p class="text-xs text-slate-500 mt-1">Doanh nghiệp: <span class="font-bold text-slate-700">\${ownerDisplayName}</span></p>` : ''}
-                        <p class="text-slate-500 text-sm mt-2">\${p.address}</p>
+        <!-- Row 2 -->
+        \${isCompany && ownerDisplayName ? '<p class="text-xs text-slate-500 mt-1">Doanh nghiệp: <span class="font-bold text-slate-700">' + ownerDisplayName + '</span></p>' : ''}
+        <p class="text-slate-500 text-sm mt-2">\${p.address}</p>
 
-                        <!-- Row 3: Tags -->
-                        <div class="flex flex-wrap gap-2 mt-3">
-                             \${tagsHtml}
-                        </div>
+        <!-- Row 3: Tags -->
+        <div class="flex flex-wrap gap-2 mt-3">
+             \${tagsHtml}
+        </div>
 
-                        <!-- Row 4: Footer -->
-                        <div class="border-t border-slate-50 pt-3 mt-3 flex justify-end items-center">
-                            \${actionHtml}
-                        </div>
-                    </div>
-                `;
+        <!-- Row 4: Footer -->
+        <div class="border-t border-slate-50 pt-3 mt-3 flex justify-end items-center">
+            \${actionHtml}
+        </div>
+    </div>
+`;
+                // const pointHtml = `
+                //     <div class="bg-white rounded-xl p-3 md:p-4 shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                //         <!-- Row 1 -->
+                //         <div class="flex justify-between items-start">
+                //             <h4 class="font-bold text-base md:text-lg text-slate-800">\${p.name}</h4>
+                //             <span class="bg-emerald-50 text-emerald-700 rounded-lg px-2 py-1 text-xs font-bold whitespace-nowrap">\${distStr}</span>
+                //         </div>
+                //
+                //         <!-- Row 2 -->
+                //         \${isCompany && ownerDisplayName ? `<p class="text-xs text-slate-500 mt-1">Doanh nghiệp: <span class="font-bold text-slate-700">\${ownerDisplayName}</span></p>` : ''}
+                //         <p class="text-slate-500 text-sm mt-2">\${p.address}</p>
+                //
+                //         <!-- Row 3: Tags -->
+                //         <div class="flex flex-wrap gap-2 mt-3">
+                //              \${tagsHtml}
+                //         </div>
+                //
+                //         <!-- Row 4: Footer -->
+                //         <div class="border-t border-slate-50 pt-3 mt-3 flex justify-end items-center">
+                //             \${actionHtml}
+                //         </div>
+                //     </div>
+                // `;
                 listEl.insertAdjacentHTML('beforeend', pointHtml);
             });
 
@@ -1958,9 +2022,14 @@
     }
 
     // --- TRADE LOGIC (MỚI) ---
-    function openTradeProposal(targetItemId, targetItemTitle, targetItemImg) {
-        document.getElementById('tradeTargetName').innerText = targetItemTitle;
-        document.getElementById('tradeTargetImg').src = targetItemImg;
+    // --- FIX: Simplified signature to use cache ---
+    function openTradeProposal(targetItemId) {
+        const item = itemDataCache[targetItemId];
+        if (!item) return;
+
+        document.getElementById('tradeTargetName').innerText = item.title;
+        let imgUrl = item.imageUrl && item.imageUrl.startsWith('http') ? item.imageUrl : (item.imageUrl ? '${pageContext.request.contextPath}/images?path=' + encodeURIComponent(item.imageUrl) : 'https://placehold.co/100x100');
+        document.getElementById('tradeTargetImg').src = imgUrl;
         currentTradeTargetId = targetItemId;
 
         // Load user's items for trade
@@ -2117,22 +2186,39 @@
                 const color = n.type === 'GIFT_REQUEST' ? 'text-primary' : (n.type === 'TRADE_REQUEST' ? 'text-purple-500' : 'text-slate-500');
 
                 const html = `
-                    <div class="px-4 py-3 border-b border-slate-50 hover:bg-slate-50 transition \${bgClass} group relative">
-                        <div class="flex gap-3">
-                            <div class="w-8 h-8 rounded-full bg-white border border-slate-100 flex items-center justify-center shrink-0 shadow-sm">
-                                <span class="material-symbols-outlined text-lg \${color}">\${icon}</span>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-sm text-slate-700 leading-snug">\${n.content}</p>
-                                <p class="text-[10px] text-slate-400 mt-1">\${timeAgo(n.createdAt)}</p>
-                            </div>
-                        </div>
-                        <div class="absolute top-2 right-2 hidden group-hover:flex gap-1 bg-white/80 backdrop-blur rounded-lg p-1 shadow-sm">
-                            \${!n.isRead ? `<button onclick="markRead(\${n.id})" class="p-1 hover:bg-blue-100 rounded text-blue-600" title="Đã đọc"><span class="material-symbols-outlined text-[16px]">check</span></button>` : ''}
-                            <button onclick="deleteNoti(\${n.id})" class="p-1 hover:bg-red-100 rounded text-red-600" title="Xóa"><span class="material-symbols-outlined text-[16px]">delete</span></button>
-                        </div>
-                    </div>
-                `;
+    <div class="px-4 py-3 border-b border-slate-50 hover:bg-slate-50 transition \${bgClass} group relative">
+        <div class="flex gap-3">
+            <div class="w-8 h-8 rounded-full bg-white border border-slate-100 flex items-center justify-center shrink-0 shadow-sm">
+                <span class="material-symbols-outlined text-lg \${color}">\${icon}</span>
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm text-slate-700 leading-snug">\${n.content}</p>
+                <p class="text-[10px] text-slate-400 mt-1">\${timeAgo(n.createdAt)}</p>
+            </div>
+        </div>
+        <div class="absolute top-2 right-2 hidden group-hover:flex gap-1 bg-white/80 backdrop-blur rounded-lg p-1 shadow-sm">
+            \${!n.isRead ? '<button onclick="markRead(' + n.id + ')" class="p-1 hover:bg-blue-100 rounded text-blue-600" title="Đã đọc"><span class="material-symbols-outlined text-[16px]">check</span></button>' : ''}
+            <button onclick="deleteNoti(\${n.id})" class="p-1 hover:bg-red-100 rounded text-red-600" title="Xóa"><span class="material-symbols-outlined text-[16px]">delete</span></button>
+        </div>
+    </div>
+`;
+                // const html = `
+                //     <div class="px-4 py-3 border-b border-slate-50 hover:bg-slate-50 transition \${bgClass} group relative">
+                //         <div class="flex gap-3">
+                //             <div class="w-8 h-8 rounded-full bg-white border border-slate-100 flex items-center justify-center shrink-0 shadow-sm">
+                //                 <span class="material-symbols-outlined text-lg \${color}">\${icon}</span>
+                //             </div>
+                //             <div class="flex-1 min-w-0">
+                //                 <p class="text-sm text-slate-700 leading-snug">\${n.content}</p>
+                //                 <p class="text-[10px] text-slate-400 mt-1">\${timeAgo(n.createdAt)}</p>
+                //             </div>
+                //         </div>
+                //         <div class="absolute top-2 right-2 hidden group-hover:flex gap-1 bg-white/80 backdrop-blur rounded-lg p-1 shadow-sm">
+                //             \${!n.isRead ? `<button onclick="markRead(\${n.id})" class="p-1 hover:bg-blue-100 rounded text-blue-600" title="Đã đọc"><span class="material-symbols-outlined text-[16px]">check</span></button>` : ''}
+                //             <button onclick="deleteNoti(\${n.id})" class="p-1 hover:bg-red-100 rounded text-red-600" title="Xóa"><span class="material-symbols-outlined text-[16px]">delete</span></button>
+                //         </div>
+                //     </div>
+                // `;
                 listEl.insertAdjacentHTML('beforeend', html);
             });
         } catch(e) { console.error(e); }

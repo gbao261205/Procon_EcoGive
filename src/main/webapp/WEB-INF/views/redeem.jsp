@@ -1,11 +1,13 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<fmt:setBundle basename="messages" scope="session" />
+
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="${sessionScope.lang != null ? sessionScope.lang : 'vi'}">
 <head>
     <meta charset="UTF-8">
-    <title>Đổi Quà - EcoGive</title>
+    <title><fmt:message key="redeem.title" /> - EcoGive</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -47,7 +49,7 @@
     <div class="flex items-center gap-4">
         <a href="${pageContext.request.contextPath}/home" class="hidden md:flex items-center gap-2 px-3 py-2 text-sm font-semibold text-slate-600 bg-slate-50 hover:bg-emerald-50 hover:text-primary rounded-lg transition-all">
             <span class="material-symbols-outlined text-[20px]">map</span>
-            <span>Về bản đồ</span>
+            <span><fmt:message key="profile.back_map" /></span>
         </a>
         <div class="h-6 w-px bg-slate-200 hidden md:block"></div>
 
@@ -63,7 +65,7 @@
             <a href="${pageContext.request.contextPath}/profile" class="w-9 h-9 md:w-10 md:h-10 rounded-full bg-slate-100 overflow-hidden border border-slate-200 hover:border-primary transition-colors">
                 <img src="https://api.dicebear.com/9.x/notionists-neutral/svg?seed=${sessionScope.currentUser.username}" alt="Avatar" class="w-full h-full object-cover">
             </a>
-            <a href="${pageContext.request.contextPath}/logout" class="flex items-center justify-center w-9 h-9 rounded-full text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all" title="Đăng xuất">
+            <a href="${pageContext.request.contextPath}/logout" class="flex items-center justify-center w-9 h-9 rounded-full text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all" title="<fmt:message key='sidebar.logout' />">
                 <span class="material-symbols-outlined text-[20px]">logout</span>
             </a>
         </div>
@@ -76,8 +78,8 @@
     <div class="bg-gradient-to-r from-emerald-600 to-teal-500 rounded-3xl shadow-lg p-8 md:p-12 mb-10 text-white relative overflow-hidden">
         <div class="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl pointer-events-none"></div>
         <div class="relative z-10 max-w-2xl">
-            <h1 class="text-3xl md:text-5xl font-bold mb-4 tracking-tight">Đổi điểm lấy quà xanh 🌱</h1>
-            <p class="text-emerald-100 text-lg mb-8">Sử dụng EcoPoints tích lũy từ việc tái chế để đổi lấy những phần quà hấp dẫn và thân thiện với môi trường.</p>
+            <h1 class="text-3xl md:text-5xl font-bold mb-4 tracking-tight"><fmt:message key="redeem.header" /></h1>
+            <p class="text-emerald-100 text-lg mb-8"><fmt:message key="redeem.subtitle" /></p>
 
             <div class="flex flex-wrap gap-4">
                 <div class="bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/30 flex items-center gap-3 min-w-[180px]">
@@ -85,7 +87,7 @@
                         <span class="material-symbols-outlined">eco</span>
                     </div>
                     <div>
-                        <div class="text-xs text-emerald-100 uppercase font-bold">Điểm khả dụng</div>
+                        <div class="text-xs text-emerald-100 uppercase font-bold"><fmt:message key="redeem.available_points" /></div>
                         <div class="text-2xl font-bold">${sessionScope.currentUser.currentPoints}</div>
                     </div>
                 </div>
@@ -95,7 +97,7 @@
                         <span class="material-symbols-outlined">military_tech</span>
                     </div>
                     <div>
-                        <div class="text-xs text-emerald-100 uppercase font-bold">Hạng thành viên</div>
+                        <div class="text-xs text-emerald-100 uppercase font-bold"><fmt:message key="redeem.member_tier" /></div>
                         <div class="text-2xl font-bold">${sessionScope.currentUser.tier}</div>
                     </div>
                 </div>
@@ -107,18 +109,19 @@
     <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
         <h2 class="text-2xl font-bold text-slate-800 flex items-center gap-2">
             <span class="material-symbols-outlined text-primary">redeem</span>
-            Danh sách quà tặng
+            <fmt:message key="redeem.list_title" />
         </h2>
         <div class="flex gap-3 w-full md:w-auto">
             <div class="relative flex-1 md:w-64">
                 <span class="absolute left-3 top-2.5 text-slate-400 material-symbols-outlined text-lg">search</span>
-                <input type="text" placeholder="Tìm kiếm quà..." class="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary outline-none text-sm">
+                <fmt:message key="redeem.search_placeholder" var="searchPlaceholder" />
+                <input type="text" placeholder="${searchPlaceholder}" class="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary outline-none text-sm">
             </div>
             <select class="px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-600 focus:ring-2 focus:ring-primary outline-none cursor-pointer">
-                <option value="all">Tất cả loại quà</option>
-                <option value="voucher">Voucher giảm giá</option>
-                <option value="product">Sản phẩm xanh</option>
-                <option value="donation">Quyên góp từ thiện</option>
+                <option value="all"><fmt:message key="redeem.filter.all" /></option>
+                <option value="voucher"><fmt:message key="redeem.filter.voucher" /></option>
+                <option value="product"><fmt:message key="redeem.filter.product" /></option>
+                <option value="donation"><fmt:message key="redeem.filter.donation" /></option>
             </select>
         </div>
     </div>
@@ -131,13 +134,13 @@
                 <div class="h-48 bg-slate-50 relative overflow-hidden">
                     <img src="${reward.imageUrl}" alt="${reward.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.src='https://placehold.co/400x300?text=No+Image'">
                     <div class="absolute top-3 right-3 bg-white/90 backdrop-blur px-2.5 py-1 rounded-lg text-xs font-bold text-slate-700 shadow-sm border border-slate-100">
-                        Còn ${reward.stock}
+                        <fmt:message key="redeem.stock" /> ${reward.stock}
                     </div>
                     <c:if test="${reward.type == 'SPONSOR'}">
                         <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3 pt-8">
                             <div class="text-[10px] text-white font-medium flex items-center gap-1">
                                 <span class="material-symbols-outlined text-[14px]">verified</span>
-                                Tài trợ bởi ${reward.sponsorName}
+                                <fmt:message key="redeem.sponsored" /> ${reward.sponsorName}
                             </div>
                         </div>
                     </c:if>
@@ -155,10 +158,12 @@
                             <span class="material-symbols-outlined">eco</span>
                             ${reward.pointCost}
                         </div>
+                        <fmt:message key="redeem.redeem_btn" var="redeemBtn" />
+                        <fmt:message key="redeem.out_of_stock" var="outOfStock" />
                         <button onclick="confirmRedeem(${reward.rewardId}, '${reward.name}', ${reward.pointCost})"
                                 class="px-4 py-2 bg-primary text-white text-sm font-bold rounded-xl hover:bg-primary-hover transition shadow-md shadow-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed"
                                 ${reward.stock <= 0 || sessionScope.currentUser.currentPoints < reward.pointCost ? 'disabled' : ''}>
-                            ${reward.stock <= 0 ? 'Hết hàng' : 'Đổi ngay'}
+                            ${reward.stock <= 0 ? outOfStock : redeemBtn}
                         </button>
                     </div>
                 </div>
@@ -170,8 +175,8 @@
                 <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
                     <span class="material-symbols-outlined text-4xl">inventory_2</span>
                 </div>
-                <h3 class="text-lg font-bold text-slate-700">Chưa có quà tặng nào</h3>
-                <p class="text-slate-500 text-sm">Hãy quay lại sau nhé!</p>
+                <h3 class="text-lg font-bold text-slate-700"><fmt:message key="redeem.empty" /></h3>
+                <p class="text-slate-500 text-sm"><fmt:message key="redeem.come_back" /></p>
             </div>
         </c:if>
     </div>
@@ -189,12 +194,12 @@
             <span class="material-symbols-outlined">redeem</span>
         </div>
 
-        <h3 class="text-xl font-bold text-slate-800 mb-2">Xác nhận đổi quà?</h3>
-        <p class="text-slate-500 text-sm mb-6">Bạn sẽ dùng <span class="font-bold text-primary" id="modalCost">0</span> EcoPoints để đổi lấy <span class="font-bold text-slate-700" id="modalName">...</span>.</p>
+        <h3 class="text-xl font-bold text-slate-800 mb-2"><fmt:message key="redeem.modal.title" /></h3>
+        <p class="text-slate-500 text-sm mb-6"><fmt:message key="redeem.modal.desc" /> <span class="font-bold text-primary" id="modalCost">0</span> <fmt:message key="redeem.modal.desc2" /> <span class="font-bold text-slate-700" id="modalName">...</span>.</p>
 
         <div class="flex gap-3">
-            <button onclick="closeModal()" class="flex-1 py-2.5 border border-slate-200 rounded-xl text-slate-600 font-bold hover:bg-slate-50 transition">Hủy</button>
-            <button onclick="processRedeem()" class="flex-1 py-2.5 bg-primary text-white rounded-xl font-bold hover:bg-primary-hover transition shadow-lg shadow-emerald-100">Xác nhận</button>
+            <button onclick="closeModal()" class="flex-1 py-2.5 border border-slate-200 rounded-xl text-slate-600 font-bold hover:bg-slate-50 transition"><fmt:message key="redeem.modal.cancel" /></button>
+            <button onclick="processRedeem()" class="flex-1 py-2.5 bg-primary text-white rounded-xl font-bold hover:bg-primary-hover transition shadow-lg shadow-emerald-100"><fmt:message key="redeem.modal.confirm" /></button>
         </div>
     </div>
 </div>

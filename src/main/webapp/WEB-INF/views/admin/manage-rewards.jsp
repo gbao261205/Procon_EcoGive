@@ -1,11 +1,13 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<fmt:setBundle basename="messages" scope="session" />
+
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="${sessionScope.lang != null ? sessionScope.lang : 'vi'}">
 <head>
     <meta charset="UTF-8">
-    <title>Quản lý Quà tặng - EcoGive Admin</title>
+    <title><fmt:message key="admin.rewards.title" /> - EcoGive Admin</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -44,7 +46,7 @@
                 <button class="md:hidden text-slate-500 hover:text-slate-700">
                     <span class="material-symbols-outlined">menu</span>
                 </button>
-                <h1 class="text-xl font-bold text-slate-800">Quản lý Quà tặng</h1>
+                <h1 class="text-xl font-bold text-slate-800"><fmt:message key="admin.rewards.title" /></h1>
             </div>
             <div class="flex items-center gap-4">
                 <div class="text-right hidden sm:block">
@@ -61,11 +63,12 @@
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <div class="relative w-full sm:w-64">
                     <span class="absolute left-3 top-2.5 text-slate-400 material-symbols-outlined text-lg">search</span>
-                    <input type="text" placeholder="Tìm kiếm quà tặng..." class="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary outline-none text-sm">
+                    <fmt:message key="admin.common.search" var="searchPlaceholder" />
+                    <input type="text" placeholder="${searchPlaceholder}" class="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-primary outline-none text-sm">
                 </div>
                 <button onclick="openAddModal()" class="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary-hover transition shadow-sm">
                     <span class="material-symbols-outlined text-lg">add</span>
-                    Thêm quà mới
+                    <fmt:message key="admin.common.add" />
                 </button>
             </div>
 
@@ -76,13 +79,13 @@
                         <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-bold tracking-wider border-b border-slate-200">
                             <tr>
                                 <th class="px-6 py-4">ID</th>
-                                <th class="px-6 py-4">Hình ảnh</th>
-                                <th class="px-6 py-4">Tên quà tặng</th>
-                                <th class="px-6 py-4">Điểm đổi</th>
-                                <th class="px-6 py-4">Kho</th>
-                                <th class="px-6 py-4">Loại</th>
-                                <th class="px-6 py-4">Trạng thái</th>
-                                <th class="px-6 py-4 text-right">Hành động</th>
+                                <th class="px-6 py-4"><fmt:message key="admin.rewards.image" /></th>
+                                <th class="px-6 py-4"><fmt:message key="admin.rewards.name" /></th>
+                                <th class="px-6 py-4"><fmt:message key="admin.rewards.cost" /></th>
+                                <th class="px-6 py-4"><fmt:message key="admin.rewards.stock" /></th>
+                                <th class="px-6 py-4"><fmt:message key="admin.rewards.type" /></th>
+                                <th class="px-6 py-4"><fmt:message key="admin.rewards.status" /></th>
+                                <th class="px-6 py-4 text-right"><fmt:message key="admin.common.action" /></th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 text-sm">
@@ -114,11 +117,11 @@
                                     <td class="px-6 py-4 text-right">
                                         <div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <button onclick="openEditModal(${r.rewardId}, '${r.name}', '${r.description}', ${r.pointCost}, ${r.stock}, '${r.type}', '${r.sponsorName}', '${r.status}', '${r.imageUrl}')"
-                                                    class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Sửa">
+                                                    class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition" title="<fmt:message key='admin.common.edit' />">
                                                 <span class="material-symbols-outlined text-lg">edit</span>
                                             </button>
                                             <button onclick="deleteReward(${r.rewardId})"
-                                                    class="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition" title="Xóa">
+                                                    class="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition" title="<fmt:message key='admin.common.delete' />">
                                                 <span class="material-symbols-outlined text-lg">delete</span>
                                             </button>
                                         </div>
@@ -127,7 +130,7 @@
                             </c:forEach>
                             <c:if test="${empty rewards}">
                                 <tr>
-                                    <td colspan="8" class="text-center py-12 text-slate-400">Chưa có dữ liệu quà tặng.</td>
+                                    <td colspan="8" class="text-center py-12 text-slate-400"><fmt:message key="admin.common.no_data" /></td>
                                 </tr>
                             </c:if>
                         </tbody>
@@ -142,7 +145,7 @@
 <div id="rewardModal" class="fixed inset-0 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-fade-in">
         <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-white shrink-0">
-            <h3 class="font-bold text-xl text-slate-800" id="modalTitle">Thêm quà tặng mới</h3>
+            <h3 class="font-bold text-xl text-slate-800" id="modalTitle"><fmt:message key="admin.rewards.add_modal" /></h3>
             <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100 transition">
                 <span class="material-symbols-outlined">close</span>
             </button>
@@ -153,36 +156,36 @@
                 <input type="hidden" id="rewardId" name="id">
 
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Tên quà tặng</label>
+                    <label class="block text-sm font-medium text-slate-700 mb-1"><fmt:message key="admin.rewards.name" /></label>
                     <input type="text" id="rewardName" name="name" required class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary outline-none transition">
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Mô tả</label>
+                    <label class="block text-sm font-medium text-slate-700 mb-1"><fmt:message key="admin.rewards.desc" /></label>
                     <textarea id="rewardDesc" name="description" rows="3" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary outline-none transition resize-none"></textarea>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Điểm đổi</label>
+                        <label class="block text-sm font-medium text-slate-700 mb-1"><fmt:message key="admin.rewards.cost" /></label>
                         <input type="number" id="rewardCost" name="pointCost" required class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary outline-none transition">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Số lượng kho</label>
+                        <label class="block text-sm font-medium text-slate-700 mb-1"><fmt:message key="admin.rewards.stock" /></label>
                         <input type="number" id="rewardStock" name="stock" required class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary outline-none transition">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Loại quà</label>
+                        <label class="block text-sm font-medium text-slate-700 mb-1"><fmt:message key="admin.rewards.type" /></label>
                         <select id="rewardType" name="type" class="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white focus:ring-2 focus:ring-primary outline-none transition">
                             <option value="ADMIN">ADMIN (Hệ thống)</option>
                             <option value="SPONSOR">SPONSOR (Tài trợ)</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Trạng thái</label>
+                        <label class="block text-sm font-medium text-slate-700 mb-1"><fmt:message key="admin.rewards.status" /></label>
                         <select id="rewardStatus" name="status" class="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white focus:ring-2 focus:ring-primary outline-none transition">
                             <option value="APPROVED">Đang hiển thị</option>
                             <option value="HIDDEN">Ẩn</option>
@@ -192,12 +195,12 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Nhà tài trợ (Nếu có)</label>
+                    <label class="block text-sm font-medium text-slate-700 mb-1"><fmt:message key="admin.rewards.sponsor" /></label>
                     <input type="text" id="rewardSponsor" name="sponsorName" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary outline-none transition">
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Hình ảnh</label>
+                    <label class="block text-sm font-medium text-slate-700 mb-1"><fmt:message key="admin.rewards.image" /></label>
                     <input type="file" id="rewardImage" name="image" accept="image/*" class="w-full px-3 py-2 border border-slate-200 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-primary hover:file:bg-emerald-100 transition">
                     <div id="previewContainer" class="mt-2 hidden">
                         <img id="imagePreview" src="" class="h-20 w-20 object-cover rounded-lg border border-slate-200">
@@ -207,8 +210,8 @@
         </div>
 
         <div class="p-5 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 shrink-0">
-            <button onclick="closeModal()" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-200 rounded-lg transition">Hủy</button>
-            <button onclick="saveReward()" class="px-4 py-2 text-sm font-bold text-white bg-primary hover:bg-primary-hover rounded-lg transition shadow-sm">Lưu lại</button>
+            <button onclick="closeModal()" class="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-200 rounded-lg transition"><fmt:message key="admin.common.cancel" /></button>
+            <button onclick="saveReward()" class="px-4 py-2 text-sm font-bold text-white bg-primary hover:bg-primary-hover rounded-lg transition shadow-sm"><fmt:message key="admin.common.save" /></button>
         </div>
     </div>
 </div>
@@ -218,7 +221,7 @@
 
     function openAddModal() {
         isEditMode = false;
-        document.getElementById('modalTitle').innerText = "Thêm quà tặng mới";
+        document.getElementById('modalTitle').innerText = "<fmt:message key='admin.rewards.add_modal' />";
         document.getElementById('rewardForm').reset();
         document.getElementById('rewardId').value = "";
         document.getElementById('previewContainer').classList.add('hidden');
@@ -227,7 +230,7 @@
 
     function openEditModal(id, name, desc, cost, stock, type, sponsor, status, imgUrl) {
         isEditMode = true;
-        document.getElementById('modalTitle').innerText = "Cập nhật quà tặng";
+        document.getElementById('modalTitle').innerText = "<fmt:message key='admin.rewards.edit_modal' />";
 
         document.getElementById('rewardId').value = id;
         document.getElementById('rewardName').value = name;
@@ -279,7 +282,7 @@
     }
 
     async function deleteReward(id) {
-        if (!confirm("Bạn có chắc chắn muốn xóa quà tặng này?")) return;
+        if (!confirm("<fmt:message key='admin.common.confirm_delete' />")) return;
 
         const formData = new FormData();
         formData.append('action', 'delete');

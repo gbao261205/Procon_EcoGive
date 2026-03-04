@@ -108,11 +108,16 @@
             </plugin>
         </plugins>
         <resources>
+            <!-- Cấu hình để copy file .env -->
             <resource>
                 <directory>${project.basedir}</directory>
                 <includes>
                     <include>.env</include>
                 </includes>
+            </resource>
+            <!-- QUAN TRỌNG: Thêm lại src/main/resources để copy file properties -->
+            <resource>
+                <directory>src/main/resources</directory>
             </resource>
         </resources>
     </build>

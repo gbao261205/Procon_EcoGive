@@ -2,11 +2,13 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
+<fmt:setBundle basename="messages" scope="session" />
+
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="${sessionScope.lang != null ? sessionScope.lang : 'vi'}">
 <head>
     <meta charset="UTF-8">
-    <title>Duyệt Doanh nghiệp - EcoGive Admin</title>
+    <title><fmt:message key="admin.verify.title" /> - EcoGive Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -21,8 +23,8 @@
     <!-- Header -->
     <header class="bg-white border-b border-slate-200 sticky top-0 z-10 px-8 py-4 flex justify-between items-center shadow-sm">
         <div>
-            <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Xác thực Doanh nghiệp</h1>
-            <p class="text-sm text-slate-500 mt-1">Duyệt các yêu cầu xác thực từ tài khoản doanh nghiệp.</p>
+            <h1 class="text-2xl font-bold text-slate-800 tracking-tight"><fmt:message key="admin.verify.title" /></h1>
+            <p class="text-sm text-slate-500 mt-1"><fmt:message key="admin.verify.subtitle" /></p>
         </div>
     </header>
 
@@ -32,10 +34,10 @@
                 <table class="w-full text-left border-collapse">
                     <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-bold tracking-wider">
                     <tr>
-                        <th class="px-6 py-4 border-b border-slate-100">Doanh nghiệp</th>
-                        <th class="px-6 py-4 border-b border-slate-100">Email</th>
-                        <th class="px-6 py-4 border-b border-slate-100">Tài liệu</th>
-                        <th class="px-6 py-4 border-b border-slate-100 text-right">Hành động</th>
+                        <th class="px-6 py-4 border-b border-slate-100"><fmt:message key="admin.verify.table.company" /></th>
+                        <th class="px-6 py-4 border-b border-slate-100"><fmt:message key="admin.verify.table.email" /></th>
+                        <th class="px-6 py-4 border-b border-slate-100"><fmt:message key="admin.verify.table.doc" /></th>
+                        <th class="px-6 py-4 border-b border-slate-100 text-right"><fmt:message key="admin.common.action" /></th>
                     </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 text-sm">
@@ -50,7 +52,7 @@
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                                             </svg>
-                                            Xem tài liệu
+                                            <fmt:message key="admin.verify.view_doc" />
                                         </a>
                                     </c:when>
                                     <c:otherwise>
@@ -63,12 +65,12 @@
                                     <a href="${pageContext.request.contextPath}/admin?action=approve-company&id=${req.userId}"
                                        onclick="return confirm('Xác nhận duyệt doanh nghiệp này?');"
                                        class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-sm transition-colors">
-                                        Duyệt
+                                        <fmt:message key="admin.verify.approve" />
                                     </a>
                                     <a href="${pageContext.request.contextPath}/admin?action=reject-company&id=${req.userId}"
                                        onclick="return confirm('Từ chối yêu cầu này?');"
                                        class="px-3 py-1.5 bg-white border border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 text-slate-600 text-xs font-bold rounded-lg transition-colors">
-                                        Từ chối
+                                        <fmt:message key="admin.verify.reject" />
                                     </a>
                                 </div>
                             </td>
@@ -77,7 +79,7 @@
                     <c:if test="${empty requests}">
                         <tr>
                             <td colspan="4" class="px-6 py-16 text-center text-slate-500">
-                                Không có yêu cầu nào đang chờ duyệt.
+                                <fmt:message key="admin.common.no_data" />
                             </td>
                         </tr>
                     </c:if>

@@ -1,10 +1,15 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+
+<fmt:setBundle basename="messages" scope="session" />
+
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="${sessionScope.lang != null ? sessionScope.lang : 'vi'}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tổng quan - EcoGive Admin</title>
+    <title><fmt:message key="admin.overview" /> - EcoGive Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
@@ -20,14 +25,14 @@
 <main class="md:ml-64 min-h-screen transition-all duration-300 flex flex-col">
     <header class="bg-white border-b border-slate-200 sticky top-0 z-10 px-8 py-4 flex justify-between items-center shadow-sm">
         <div>
-            <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Tổng quan</h1>
-            <p class="text-sm text-slate-500 mt-1">Xin chào Administrator, đây là báo cáo hôm nay.</p>
+            <h1 class="text-2xl font-bold text-slate-800 tracking-tight"><fmt:message key="admin.overview" /></h1>
+            <p class="text-sm text-slate-500 mt-1"><fmt:message key="admin.welcome" /></p>
         </div>
 
         <div class="flex items-center gap-3">
             <button onclick="confirmResetSeason()" class="hidden md:flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 text-xs font-bold rounded-xl border border-red-100 hover:bg-red-100 transition-colors shadow-sm">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-                Kết thúc Mùa giải
+                <fmt:message key="admin.end_season" />
             </button>
 
             <span class="hidden md:flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full border border-emerald-100">
@@ -35,7 +40,7 @@
                   <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                   <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                 </span>
-                Hệ thống ổn định
+                <fmt:message key="admin.system_stable" />
             </span>
             <button onclick="window.location.reload()" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" title="Tải lại dữ liệu">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/></svg>
@@ -49,7 +54,7 @@
             <a href="${pageContext.request.contextPath}/admin?action=items&status=PENDING" class="group bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-amber-200 transition-all relative overflow-hidden">
                 <div class="flex justify-between items-start mb-4">
                     <div>
-                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Tin chờ duyệt</p>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider"><fmt:message key="admin.pending_items" /></p>
                         <h3 class="text-3xl font-bold text-slate-800 mt-1 group-hover:text-amber-600 transition-colors">${pendingItems}</h3>
                     </div>
                     <div class="p-3 bg-amber-50 text-amber-600 rounded-xl group-hover:scale-110 transition-transform">
@@ -57,7 +62,7 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-1 text-xs font-medium text-amber-600">
-                    <span>Cần xử lý ngay</span>
+                    <span><fmt:message key="admin.urgent" /></span>
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                 </div>
             </a>
@@ -65,7 +70,7 @@
             <a href="${pageContext.request.contextPath}/admin?action=stations" class="group bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-rose-200 transition-all relative overflow-hidden">
                 <div class="flex justify-between items-start mb-4">
                     <div>
-                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Điểm tập kết</p>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider"><fmt:message key="admin.active_stations" /></p>
                         <h3 class="text-3xl font-bold text-slate-800 mt-1 group-hover:text-rose-600 transition-colors">${totalStations}</h3>
                     </div>
                     <div class="p-3 bg-rose-50 text-rose-600 rounded-xl group-hover:scale-110 transition-transform">
@@ -78,7 +83,7 @@
             <a href="${pageContext.request.contextPath}/admin?action=items" class="group bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-blue-200 transition-all relative overflow-hidden">
                 <div class="flex justify-between items-start mb-4">
                     <div>
-                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Tổng vật phẩm</p>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider"><fmt:message key="admin.total_items" /></p>
                         <h3 class="text-3xl font-bold text-slate-800 mt-1 group-hover:text-blue-600 transition-colors">${totalItems}</h3>
                     </div>
                     <div class="p-3 bg-blue-50 text-blue-600 rounded-xl group-hover:scale-110 transition-transform">
@@ -91,7 +96,7 @@
             <div class="group bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-purple-200 transition-all relative overflow-hidden">
                 <div class="flex justify-between items-start mb-4">
                     <div>
-                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Tổng EcoPoints</p>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider"><fmt:message key="admin.total_points" /></p>
                         <h3 class="text-3xl font-bold text-slate-800 mt-1 group-hover:text-purple-600 transition-colors">${totalEcoPoints}</h3>
                     </div>
                     <div class="p-3 bg-purple-50 text-purple-600 rounded-xl group-hover:scale-110 transition-transform">
@@ -110,14 +115,13 @@
                 <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm mb-6 text-emerald-400 ring-1 ring-white/20 shadow-lg">
                     <span class="text-3xl">🗺️</span>
                 </div>
-                <h3 class="text-2xl font-bold text-white mb-3">Bản đồ Thời gian thực</h3>
+                <h3 class="text-2xl font-bold text-white mb-3"><fmt:message key="admin.realtime_map" /></h3>
                 <p class="text-slate-300 mb-8 text-sm leading-relaxed">
-                    Theo dõi vị trí các vật phẩm, điểm thu gom và hoạt động trao đổi đang diễn ra trên toàn thành phố.
-                    Giúp bạn có cái nhìn tổng quan về mạng lưới EcoGive.
+                    <fmt:message key="admin.map_desc" />
                 </p>
                 <a href="${pageContext.request.contextPath}/home"
                    class="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white font-bold rounded-xl shadow-lg hover:bg-emerald-500 hover:scale-105 transition-all duration-300 group">
-                    <span>Truy cập Bản Đồ</span>
+                    <span><fmt:message key="admin.access_map" /></span>
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                     </svg>
@@ -129,8 +133,8 @@
             <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                 <div class="flex justify-between items-center mb-6">
                     <div>
-                        <h3 class="text-lg font-bold text-slate-800">Thống kê Giao dịch</h3>
-                        <p class="text-xs text-slate-400 mt-1">Số lượng giao dịch Give và Trade theo thời gian</p>
+                        <h3 class="text-lg font-bold text-slate-800"><fmt:message key="admin.transaction_stats" /></h3>
+                        <p class="text-xs text-slate-400 mt-1"><fmt:message key="admin.give_trade_stats" /></p>
                     </div>
                     <div>
                         <select id="yearFilter" class="bg-white border border-slate-200 text-slate-700 text-sm rounded-xl focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2.5 outline-none transition-all shadow-sm cursor-pointer font-medium">
@@ -143,8 +147,8 @@
             </div>
 
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col">
-                <h3 class="text-lg font-bold text-slate-800 mb-1">Danh mục vật phẩm</h3>
-                <p class="text-xs text-slate-400 mb-6">Tỷ lệ phân bố theo loại rác thải</p>
+                <h3 class="text-lg font-bold text-slate-800 mb-1"><fmt:message key="admin.item_categories" /></h3>
+                <p class="text-xs text-slate-400 mb-6"><fmt:message key="admin.waste_distribution" /></p>
 
                 <div class="relative h-56 w-full flex justify-center mb-4">
                     <canvas id="categoryChart"></canvas>

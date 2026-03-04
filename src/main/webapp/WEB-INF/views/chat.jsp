@@ -1,10 +1,13 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<fmt:setBundle basename="messages" scope="session" />
+
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="${sessionScope.lang != null ? sessionScope.lang : 'vi'}">
 <head>
     <meta charset="UTF-8">
-    <title>Tin nhắn - EcoGive</title>
+    <title><fmt:message key="chat.title" /> - EcoGive</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
     <!-- Fonts: Plus Jakarta Sans (Modern & Geometric) -->
@@ -125,12 +128,12 @@
             <div class="flex items-center gap-2 md:gap-4">
                 <a href="${pageContext.request.contextPath}/home" class="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-white/50 hover:bg-white text-sm font-bold text-slate-600 hover:text-primary transition-all shadow-sm border border-white/60">
                     <span class="material-symbols-rounded text-[18px]">home</span>
-                    <span>Trang chủ</span>
+                    <span><fmt:message key="home.title" /></span>
                 </a>
                 <div class="flex items-center gap-3 md:pl-4 md:border-l border-slate-300/50">
                     <div class="text-right hidden md:block">
                         <div class="text-sm font-bold text-slate-800">${sessionScope.currentUser.displayName != null ? sessionScope.currentUser.displayName : sessionScope.currentUser.username}</div>
-                        <div class="text-[10px] font-semibold text-primary">Online</div>
+                        <div class="text-[10px] font-semibold text-primary"><fmt:message key="chat.online" /></div>
                     </div>
                     <div class="relative">
                         <img src="https://api.dicebear.com/9.x/notionists-neutral/svg?seed=${sessionScope.currentUser.username}"
@@ -148,12 +151,13 @@
             <div id="inboxPanel" class="w-full md:w-80 lg:w-96 bg-white/40 backdrop-blur-md border-r border-white/50 flex flex-col h-full absolute md:static top-0 left-0 transition-transform duration-300 ease-in-out transform translate-x-0 z-20">
                 <div class="p-4 md:p-5 pb-2">
                     <h2 class="font-bold text-slate-800 text-xl mb-4 flex items-center gap-2">
-                        Tin nhắn <span class="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full" id="msgCount">0</span>
+                        <fmt:message key="chat.title" /> <span class="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full" id="msgCount">0</span>
                     </h2>
                     <!-- Search Input with Glass Effect -->
                     <div class="relative group">
                         <span class="absolute left-3 top-3 text-slate-400 material-symbols-rounded text-[20px] group-focus-within:text-primary transition-colors">search</span>
-                        <input type="text" id="searchInput" oninput="searchFriends()" placeholder="Tìm kiếm bạn bè..." class="w-full pl-10 pr-4 py-2.5 bg-white/60 border border-white/50 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/50 focus:bg-white transition-all shadow-sm placeholder-slate-400">
+                        <fmt:message key="chat.search_placeholder" var="searchPlaceholder" />
+                        <input type="text" id="searchInput" oninput="searchFriends()" placeholder="${searchPlaceholder}" class="w-full pl-10 pr-4 py-2.5 bg-white/60 border border-white/50 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/50 focus:bg-white transition-all shadow-sm placeholder-slate-400">
                     </div>
                 </div>
 
@@ -161,7 +165,7 @@
                     <!-- Inbox items loaded via JS -->
                     <div class="flex flex-col items-center justify-center h-40 text-slate-400 animate-pulse">
                         <span class="material-symbols-rounded text-4xl mb-2">mark_chat_unread</span>
-                        <span class="text-xs font-medium">Đang tải hộp thư...</span>
+                        <span class="text-xs font-medium"><fmt:message key="home.loading" /></span>
                     </div>
                 </div>
             </div>
@@ -183,9 +187,9 @@
                         </div>
 
                         <div class="min-w-0 flex-1">
-                            <div id="chatTitle" class="font-bold text-slate-800 text-base truncate">Chọn hội thoại</div>
+                            <div id="chatTitle" class="font-bold text-slate-800 text-base truncate"><fmt:message key="chat.select_conversation" /></div>
                             <!-- Online Status (Hidden by default) -->
-                            <div id="chatStatus" class="text-[10px] font-medium text-slate-500 hidden">Truy cập gần đây</div>
+                            <div id="chatStatus" class="text-[10px] font-medium text-slate-500 hidden"><fmt:message key="chat.last_seen" /></div>
 
                             <!-- Item Context (Dropdown or Single) -->
                             <div id="chatItemContext" class="hidden mt-0.5">
@@ -217,23 +221,23 @@
                         <!-- Action Buttons -->
                         <button id="btnGiverConfirm" onclick="confirmTransaction('giver_confirm')" class="hidden group bg-gradient-to-r from-primary to-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-full hover:shadow-lg hover:shadow-emerald-200/50 transform hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-1.5">
                             <span class="material-symbols-rounded text-[16px] group-hover:animate-bounce">card_giftcard</span>
-                            <span class="hidden sm:inline">Xác nhận đã tặng</span><span class="sm:hidden">Cho</span>
+                            <span class="hidden sm:inline"><fmt:message key="chat.confirm_given" /></span><span class="sm:hidden">Cho</span>
                         </button>
                         <button id="btnReceiverConfirm" onclick="confirmTransaction('receiver_confirm')" class="hidden group bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-xs font-bold px-4 py-2 rounded-full hover:shadow-lg hover:shadow-blue-200/50 transform hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-1.5">
                             <span class="material-symbols-rounded text-[16px] group-hover:animate-bounce">check_circle</span>
-                            <span class="hidden sm:inline">Đã nhận được</span><span class="sm:hidden">Đã nhận</span>
+                            <span class="hidden sm:inline"><fmt:message key="chat.confirm_received" /></span><span class="sm:hidden">Đã nhận</span>
                         </button>
 
                         <!-- Nút Hủy Giao Dịch -->
-                        <button id="btnCancelTrans" onclick="confirmTransaction('cancel')" class="hidden group bg-white text-red-500 text-xs font-bold px-3 py-2 rounded-full border border-red-200 hover:bg-red-50 hover:shadow-md transition-all duration-300 flex items-center gap-1.5" title="Hủy giao dịch">
+                        <button id="btnCancelTrans" onclick="confirmTransaction('cancel')" class="hidden group bg-white text-red-500 text-xs font-bold px-3 py-2 rounded-full border border-red-200 hover:bg-red-50 hover:shadow-md transition-all duration-300 flex items-center gap-1.5" title="<fmt:message key='chat.cancel_transaction' />">
                             <span class="material-symbols-rounded text-[16px]">cancel</span>
-                            <span class="hidden sm:inline">Hủy giao dịch</span>
+                            <span class="hidden sm:inline"><fmt:message key="chat.cancel_transaction" /></span>
                         </button>
 
                         <!-- Nút Xin Lại (Mới) -->
                         <button id="btnRequestAgain" onclick="reRequestItem()" class="hidden group bg-gradient-to-r from-primary to-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-full hover:shadow-lg hover:shadow-emerald-200/50 transform hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-1.5">
                             <span class="material-symbols-rounded text-[16px]">volunteer_activism</span>
-                            <span class="hidden sm:inline">Xin món này</span><span class="sm:hidden">Xin lại</span>
+                            <span class="hidden sm:inline"><fmt:message key="chat.request_item" /></span><span class="sm:hidden">Xin lại</span>
                         </button>
 
                         <!-- Nút Batch Confirm (Mới - Màu Vàng) -->
@@ -245,16 +249,16 @@
                         <!-- Nút Xác Nhận Trao Đổi (MỚI - Thay thế Máy Trao Đổi) -->
                         <button id="btnTradeConfirm" onclick="confirmTrade()" class="hidden group bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold px-4 py-2 rounded-full hover:shadow-lg hover:shadow-purple-200/50 transform hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
                             <span class="material-symbols-rounded text-[16px]">handshake</span>
-                            <span class="hidden sm:inline" id="btnTradeLabel">Xác nhận đã trao đổi</span>
+                            <span class="hidden sm:inline" id="btnTradeLabel"><fmt:message key="chat.confirm_trade" /></span>
                         </button>
 
                         <!-- Nút Info (Luôn hiện) -->
-                        <button onclick="showUserProfile()" class="w-9 h-9 rounded-full bg-white text-slate-400 hover:text-primary hover:bg-emerald-50 transition flex items-center justify-center shadow-sm border border-slate-100" title="Thông tin người dùng">
+                        <button onclick="showUserProfile()" class="w-9 h-9 rounded-full bg-white text-slate-400 hover:text-primary hover:bg-emerald-50 transition flex items-center justify-center shadow-sm border border-slate-100" title="<fmt:message key='chat.user_info_tooltip' />">
                             <span class="material-symbols-rounded text-[20px]">info</span>
                         </button>
 
                         <!-- Nút Xóa (Luôn hiện) -->
-                        <button onclick="deleteConversation()" class="w-9 h-9 rounded-full bg-white text-red-400 hover:text-red-600 hover:bg-red-50 transition flex items-center justify-center shadow-sm border border-slate-100" title="Xóa cuộc trò chuyện">
+                        <button onclick="deleteConversation()" class="w-9 h-9 rounded-full bg-white text-red-400 hover:text-red-600 hover:bg-red-50 transition flex items-center justify-center shadow-sm border border-slate-100" title="<fmt:message key='chat.delete_tooltip' />">
                             <span class="material-symbols-rounded text-[20px]">delete</span>
                         </button>
                     </div>
@@ -267,7 +271,7 @@
                         <div class="w-32 h-32 bg-gradient-to-br from-slate-100 to-white rounded-full flex items-center justify-center shadow-inner">
                             <span class="material-symbols-rounded text-6xl text-slate-300">forum</span>
                         </div>
-                        <p class="text-sm font-semibold tracking-wide">Bắt đầu cuộc trò chuyện ý nghĩa</p>
+                        <p class="text-sm font-semibold tracking-wide"><fmt:message key="chat.empty_state" /></p>
                     </div>
                 </div>
 
@@ -275,16 +279,16 @@
                 <div id="quickReplies" class="px-6 py-3 flex gap-2 overflow-x-auto hidden no-scrollbar shrink-0 mask-linear-fade">
                     <button id="qrGiver" onclick="confirmTransaction('giver_confirm')"
                             class="hidden whitespace-nowrap bg-emerald-100/80 hover:bg-emerald-200 text-emerald-800 text-xs font-bold px-4 py-2 rounded-full border border-emerald-200 transition shadow-sm backdrop-blur-sm">
-                        🎁 Xác nhận đã tặng
+                        🎁 <fmt:message key="chat.confirm_given" />
                     </button>
                     <button id="qrReceiver1" onclick="confirmTransaction('receiver_confirm')"
                             class="hidden whitespace-nowrap bg-blue-100/80 hover:bg-blue-200 text-blue-800 text-xs font-bold px-4 py-2 rounded-full border border-blue-200 transition shadow-sm backdrop-blur-sm">
-                        ✅ Đã nhận được
+                        ✅ <fmt:message key="chat.confirm_received" />
                     </button>
                     <!-- Nút Quick Reply cho Trade (MỚI) -->
                     <button id="qrTradeConfirm" onclick="confirmTrade()"
                             class="hidden whitespace-nowrap bg-purple-100/80 hover:bg-purple-200 text-purple-800 text-xs font-bold px-4 py-2 rounded-full border border-purple-200 transition shadow-sm backdrop-blur-sm">
-                        🤝 Xác nhận đã trao đổi
+                        🤝 <fmt:message key="chat.confirm_trade" />
                     </button>
                     <button id="qrReceiver2" onclick="sendQuickReply('Bạn ơi, khi nào mình có thể qua lấy đồ được ạ?')"
                             class="hidden whitespace-nowrap bg-white/80 hover:bg-white text-slate-700 text-xs font-bold px-4 py-2 rounded-full border border-white/60 transition shadow-sm backdrop-blur-sm hover:text-primary">
@@ -306,9 +310,10 @@
                         <span class="material-symbols-rounded">add_photo_alternate</span>
                     </button>
                     <div class="flex-1 relative group">
+                        <fmt:message key="chat.type_message" var="typeMsgPlaceholder" />
                         <input type="text" id="chatInput" disabled
                                class="w-full border border-white/60 rounded-full pl-5 pr-12 py-3 text-sm bg-white/80 focus:bg-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all shadow-inner placeholder-slate-400"
-                               placeholder="Nhập tin nhắn...">
+                               placeholder="${typeMsgPlaceholder}">
                         <button onclick="sendMessage()" id="btnSend" disabled
                                 class="absolute right-1.5 top-1.5 w-9 h-9 rounded-full bg-gradient-to-r from-primary to-emerald-500 text-white flex items-center justify-center shadow-md hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100">
                             <span class="material-symbols-rounded text-[20px]">send</span>
@@ -327,17 +332,17 @@
         <div class="bg-white/95 backdrop-blur-xl p-6 rounded-3xl w-full max-w-md shadow-2xl border border-white/50 relative animate-scale-in">
             <h2 class="text-xl font-extrabold text-slate-800 mb-4 flex items-center gap-2">
                 <span class="material-symbols-rounded text-yellow-500">checklist</span>
-                Xác nhận nhận đồ
+                <fmt:message key="chat.batch_header" />
             </h2>
-            <p class="text-sm text-slate-500 mb-4">Chọn các món đồ bạn đã nhận được từ người tặng:</p>
+            <p class="text-sm text-slate-500 mb-4"><fmt:message key="chat.batch_desc" /></p>
 
             <div id="batchList" class="max-h-60 overflow-y-auto custom-scrollbar space-y-2 mb-6">
                 <!-- Items will be injected here -->
             </div>
 
             <div class="flex gap-3">
-                <button onclick="document.getElementById('batchConfirmModal').classList.add('hidden')" class="flex-1 bg-slate-100 text-slate-600 py-3 rounded-xl font-bold hover:bg-slate-200 transition">Đóng</button>
-                <button onclick="submitBatchConfirm()" class="flex-1 bg-gradient-to-r from-primary to-emerald-500 text-white py-3 rounded-xl font-bold hover:shadow-lg transition">Xác nhận</button>
+                <button onclick="document.getElementById('batchConfirmModal').classList.add('hidden')" class="flex-1 bg-slate-100 text-slate-600 py-3 rounded-xl font-bold hover:bg-slate-200 transition"><fmt:message key="chat.close" /></button>
+                <button onclick="submitBatchConfirm()" class="flex-1 bg-gradient-to-r from-primary to-emerald-500 text-white py-3 rounded-xl font-bold hover:shadow-lg transition"><fmt:message key="chat.confirm" /></button>
             </div>
         </div>
     </div>
@@ -367,7 +372,7 @@
                         </div>
                     </div>
                     <div class="bg-blue-50 p-3 rounded-2xl border border-blue-100">
-                        <div class="text-xs font-bold text-blue-600 uppercase mb-1">Uy tín</div>
+                        <div class="text-xs font-bold text-blue-600 uppercase mb-1"><fmt:message key="profile.reputation" /></div>
                         <div class="text-xl font-extrabold text-blue-700 flex items-center justify-center gap-1">
                             <span class="material-symbols-rounded text-lg">star</span>
                             <span id="profileReputation">0.0</span>
@@ -378,15 +383,15 @@
                 <div class="w-full space-y-3 text-left">
                     <div class="flex items-center gap-3 text-sm text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100">
                         <span class="material-symbols-rounded text-slate-400">volunteer_activism</span>
-                        <span>Đã tặng: <b id="profileGivenCount">0</b> món quà</span>
+                        <span><fmt:message key="profile.given_count" />: <b id="profileGivenCount">0</b></span>
                     </div>
                     <div class="flex items-center gap-3 text-sm text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100">
                         <span class="material-symbols-rounded text-slate-400">calendar_month</span>
-                        <span>Tham gia: <span id="profileJoinDate">...</span></span>
+                        <span><fmt:message key="profile.join_date" />: <span id="profileJoinDate">...</span></span>
                     </div>
                 </div>
 
-                <a id="profileLink" href="#" class="mt-6 w-full bg-slate-800 text-white font-bold py-3 rounded-xl hover:bg-slate-900 transition shadow-lg">Xem trang cá nhân</a>
+                <a id="profileLink" href="#" class="mt-6 w-full bg-slate-800 text-white font-bold py-3 rounded-xl hover:bg-slate-900 transition shadow-lg"><fmt:message key="chat.view_detail" /></a>
             </div>
         </div>
     </div>
@@ -397,11 +402,11 @@
             <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
                 <span class="text-3xl">⭐</span>
             </div>
-            <h2 class="text-xl font-extrabold text-slate-800 text-center mb-2">Đánh giá trải nghiệm</h2>
-            <p class="text-sm text-slate-500 text-center mb-6 font-medium">Hãy chia sẻ cảm nhận của bạn về người tặng nhé!</p>
+            <h2 class="text-xl font-extrabold text-slate-800 text-center mb-2"><fmt:message key="chat.rate_header" /></h2>
+            <p class="text-sm text-slate-500 text-center mb-6 font-medium"><fmt:message key="chat.rate_desc" /></p>
 
             <div class="mb-4">
-                <label class="block text-xs font-bold text-slate-700 uppercase mb-2 tracking-wider">Mức độ hài lòng</label>
+                <label class="block text-xs font-bold text-slate-700 uppercase mb-2 tracking-wider"><fmt:message key="chat.rating_label" /></label>
                 <div class="relative">
                     <select id="ratingValue" class="w-full p-3 pl-4 border border-slate-200 rounded-xl bg-white text-slate-700 font-bold focus:ring-2 focus:ring-yellow-400 outline-none appearance-none shadow-sm">
                         <option value="5">⭐⭐⭐⭐⭐ (Tuyệt vời)</option>
@@ -415,13 +420,14 @@
             </div>
 
             <div class="mb-6">
-                <label class="block text-xs font-bold text-slate-700 uppercase mb-2 tracking-wider">Lời nhắn (Tùy chọn)</label>
-                <textarea id="ratingComment" rows="3" class="w-full p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary outline-none resize-none bg-white shadow-inner" placeholder="Viết lời cảm ơn..."></textarea>
+                <label class="block text-xs font-bold text-slate-700 uppercase mb-2 tracking-wider"><fmt:message key="chat.comment_label" /></label>
+                <fmt:message key="chat.comment_placeholder" var="commentPlaceholder" />
+                <textarea id="ratingComment" rows="3" class="w-full p-3 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary outline-none resize-none bg-white shadow-inner" placeholder="${commentPlaceholder}"></textarea>
             </div>
 
             <div class="flex gap-3">
-                <button onclick="document.getElementById('ratingModal').classList.add('hidden')" class="flex-1 bg-slate-100 text-slate-600 py-3 rounded-xl font-bold hover:bg-slate-200 transition">Hủy</button>
-                <button onclick="submitRating()" class="flex-1 bg-gradient-to-r from-primary to-emerald-500 text-white py-3 rounded-xl font-bold hover:shadow-lg hover:shadow-emerald-200/50 transition transform hover:-translate-y-0.5">Gửi đánh giá</button>
+                <button onclick="document.getElementById('ratingModal').classList.add('hidden')" class="flex-1 bg-slate-100 text-slate-600 py-3 rounded-xl font-bold hover:bg-slate-200 transition"><fmt:message key="chat.cancel" /></button>
+                <button onclick="submitRating()" class="flex-1 bg-gradient-to-r from-primary to-emerald-500 text-white py-3 rounded-xl font-bold hover:shadow-lg hover:shadow-emerald-200/50 transition transform hover:-translate-y-0.5"><fmt:message key="chat.submit_rating" /></button>
             </div>
         </div>
     </div>

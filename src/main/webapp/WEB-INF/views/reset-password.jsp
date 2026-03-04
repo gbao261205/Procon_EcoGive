@@ -1,11 +1,14 @@
 <%@ page contentType="text/html; charset=UTF-8" language="java" %>
 <%@ page isELIgnored="false" %>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<fmt:setBundle basename="messages" scope="session" />
+
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="${sessionScope.lang != null ? sessionScope.lang : 'vi'}">
 <head>
     <meta charset="UTF-8">
-    <title>Đặt lại mật khẩu - EcoGive</title>
+    <title><fmt:message key="reset.title" /> - EcoGive</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- Tailwind CSS -->
@@ -235,8 +238,8 @@
                     <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-50 mb-4">
                         <span class="material-symbols-outlined text-primary" style="font-size: 32px;">key</span>
                     </div>
-                    <h1 class="text-xl md:text-2xl font-bold text-slate-900 mb-2">Đặt lại mật khẩu</h1>
-                    <p class="text-slate-500 text-sm px-2 md:px-4">Hãy tạo một mật khẩu mới mạnh mẽ và an toàn hơn.</p>
+                    <h1 class="text-xl md:text-2xl font-bold text-slate-900 mb-2"><fmt:message key="reset.header" /></h1>
+                    <p class="text-slate-500 text-sm px-2 md:px-4"><fmt:message key="reset.desc" /></p>
                 </div>
 
                 <!-- Thông báo lỗi -->
@@ -251,11 +254,12 @@
                     <input type="hidden" name="token" value="${token}">
 
                     <div>
-                        <label for="password" class="block text-sm font-medium text-slate-700 mb-1.5">Mật khẩu mới</label>
+                        <label for="password" class="block text-sm font-medium text-slate-700 mb-1.5"><fmt:message key="reset.new_pass" /></label>
                         <div class="relative">
+                            <fmt:message key="reset.pass_placeholder" var="passPlaceholder" />
                             <input type="password" id="password" name="password"
                                    class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all pr-10 text-base md:text-sm"
-                                   placeholder="••••••••" required minlength="6">
+                                   placeholder="${passPlaceholder}" required minlength="6">
                             <button type="button" class="toggle-password absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none" data-target="password">
                                 <span class="material-symbols-outlined text-[20px]">visibility</span>
                             </button>
@@ -263,30 +267,30 @@
                     </div>
 
                     <div>
-                        <label for="confirmPassword" class="block text-sm font-medium text-slate-700 mb-1.5">Xác nhận mật khẩu</label>
+                        <label for="confirmPassword" class="block text-sm font-medium text-slate-700 mb-1.5"><fmt:message key="reset.confirm_pass" /></label>
                         <div class="relative">
                             <input type="password" id="confirmPassword" name="confirmPassword"
                                    class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all pr-10 text-base md:text-sm"
-                                   placeholder="••••••••" required minlength="6">
+                                   placeholder="${passPlaceholder}" required minlength="6">
                             <button type="button" class="toggle-password absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none" data-target="confirmPassword">
                                 <span class="material-symbols-outlined text-[20px]">visibility</span>
                             </button>
                         </div>
                         <p id="passwordError" class="text-xs text-red-600 mt-1 hidden flex items-center gap-1">
                             <span class="material-symbols-outlined text-sm">error</span>
-                            Mật khẩu xác nhận không khớp.
+                            <fmt:message key="reset.mismatch" />
                         </p>
                     </div>
 
                     <button type="submit" id="submitButton"
                             class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all transform hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
-                        Đổi mật khẩu
+                        <fmt:message key="reset.button" />
                     </button>
                 </form>
             </div>
 
             <div class="mt-8 text-center w-full text-slate-400 text-xs z-0 pointer-events-auto">
-                © <script>document.write(new Date().getFullYear())</script> EcoGive. All rights reserved.
+                © <script>document.write(new Date().getFullYear())</script> <fmt:message key="footer.copyright" />
             </div>
 
             <!-- Spacer for bottom scrolling -->

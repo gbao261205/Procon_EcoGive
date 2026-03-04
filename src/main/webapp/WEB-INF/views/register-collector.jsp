@@ -1,11 +1,15 @@
 <%@ page contentType="text/html; charset=UTF-8" language="java" %>
 <%@ page isELIgnored="false" %>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+
+<fmt:setBundle basename="messages" scope="session" />
+
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="${sessionScope.lang != null ? sessionScope.lang : 'en'}">
 <head>
     <meta charset="UTF-8">
-    <title>Đăng ký Doanh nghiệp - EcoGive</title>
+    <title><fmt:message key="reg_col.title" /></title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- Tailwind CSS -->
@@ -288,8 +292,8 @@
                                 <span class="material-symbols-outlined text-primary" style="font-size: 40px;">spa</span>
                                 <span class="text-2xl font-bold tracking-tight text-[#111816]">EcoGive</span>
                             </div>
-                            <h1 class="text-2xl md:text-3xl font-bold text-slate-900">Đăng ký Đối tác 🤝</h1>
-                            <p class="text-slate-500 text-sm md:text-base">Điền thông tin doanh nghiệp để tham gia mạng lưới EcoGive.</p>
+                            <h1 class="text-2xl md:text-3xl font-bold text-slate-900"><fmt:message key="reg_col.header" /></h1>
+                            <p class="text-slate-500 text-sm md:text-base"><fmt:message key="reg_col.subtitle" /></p>
                         </div>
 
                         <c:if test="${not empty error}">
@@ -302,17 +306,17 @@
                         <form id="registerCompanyForm" method="post" action="${pageContext.request.contextPath}/register-collector" class="space-y-5">
                             <!-- Company Info Section -->
                             <div class="space-y-4">
-                                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-gray-100 pb-2 mb-4">Thông tin Doanh nghiệp</h3>
+                                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-gray-100 pb-2 mb-4"><fmt:message key="reg_col.info_title" /></h3>
 
                                 <div>
-                                    <label for="username" class="block text-sm font-medium text-slate-700 mb-1.5">Tên đăng nhập (ID)</label>
+                                    <label for="username" class="block text-sm font-medium text-slate-700 mb-1.5"><fmt:message key="reg_col.username" /></label>
                                     <input type="text" id="username" name="username" value="${username}"
                                            class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base md:text-sm"
                                            placeholder="Ví dụ: company123" required>
                                 </div>
 
                                 <div>
-                                    <label for="displayName" class="block text-sm font-medium text-slate-700 mb-1.5">Tên Doanh nghiệp / Tổ chức</label>
+                                    <label for="displayName" class="block text-sm font-medium text-slate-700 mb-1.5"><fmt:message key="reg_col.company_name" /></label>
                                     <input type="text" id="displayName" name="displayName" value="${displayName}"
                                            class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base md:text-sm"
                                            placeholder="Ví dụ: Công ty TNHH Môi trường Xanh" required>
@@ -320,13 +324,13 @@
 
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label for="email" class="block text-sm font-medium text-slate-700 mb-1.5">Email liên hệ</label>
+                                        <label for="email" class="block text-sm font-medium text-slate-700 mb-1.5"><fmt:message key="reg_col.email" /></label>
                                         <input type="email" id="email" name="email" value="${email}"
                                                class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base md:text-sm"
                                                placeholder="contact@company.com" required>
                                     </div>
                                     <div>
-                                        <label for="phoneNumber" class="block text-sm font-medium text-slate-700 mb-1.5">Số điện thoại</label>
+                                        <label for="phoneNumber" class="block text-sm font-medium text-slate-700 mb-1.5"><fmt:message key="reg_col.phone" /></label>
                                         <input type="tel" id="phoneNumber" name="phoneNumber" value="${phoneNumber}"
                                                class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base md:text-sm"
                                                placeholder="0912345678" required pattern="0[0-9]{9}" title="Số điện thoại phải bắt đầu bằng 0 và có 10 chữ số">
@@ -334,7 +338,7 @@
                                 </div>
 
                                 <div>
-                                    <label for="address" class="block text-sm font-medium text-slate-700 mb-1.5">Địa chỉ trụ sở</label>
+                                    <label for="address" class="block text-sm font-medium text-slate-700 mb-1.5"><fmt:message key="reg_col.address" /></label>
                                     <input type="text" id="address" name="address" value="${address}"
                                            class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base md:text-sm"
                                            placeholder="Số nhà, Đường, Phường/Xã, Quận/Huyện, Tỉnh/TP" required>
@@ -343,17 +347,17 @@
 
                             <!-- Security Section -->
                             <div class="space-y-4 pt-2">
-                                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-gray-100 pb-2 mb-4">Bảo mật</h3>
+                                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-gray-100 pb-2 mb-4"><fmt:message key="reg_col.security_title" /></h3>
 
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label for="password" class="block text-sm font-medium text-slate-700 mb-1.5">Mật khẩu</label>
+                                        <label for="password" class="block text-sm font-medium text-slate-700 mb-1.5"><fmt:message key="reg_col.password" /></label>
                                         <input type="password" id="password" name="password"
                                                class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base md:text-sm"
                                                placeholder="Tối thiểu 6 ký tự" required minlength="6">
                                     </div>
                                     <div>
-                                        <label for="confirmPassword" class="block text-sm font-medium text-slate-700 mb-1.5">Xác nhận mật khẩu</label>
+                                        <label for="confirmPassword" class="block text-sm font-medium text-slate-700 mb-1.5"><fmt:message key="reg_col.confirm_password" /></label>
                                         <input type="password" id="confirmPassword" name="confirmPassword"
                                                class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base md:text-sm"
                                                placeholder="Nhập lại mật khẩu" required minlength="6">
@@ -361,14 +365,14 @@
                                 </div>
                                 <p id="passwordError" class="text-xs text-red-600 font-medium hidden flex items-center gap-1">
                                     <span class="material-symbols-outlined text-sm">error</span>
-                                    Mật khẩu xác nhận không khớp.
+                                    <fmt:message key="reg_col.mismatch" />
                                 </p>
                             </div>
 
                             <div class="pt-4">
                                 <button type="submit" id="submitButton"
                                         class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all transform hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
-                                    <span id="buttonText">Đăng ký Đối tác</span>
+                                    <span id="buttonText"><fmt:message key="reg_col.button" /></span>
                                     <svg id="loadingSpinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -379,15 +383,15 @@
 
                         <div class="text-center">
                             <p class="text-sm text-slate-600">
-                                Đã có tài khoản?
+                                <fmt:message key="reg_col.have_account" />
                                 <a href="${pageContext.request.contextPath}/login" class="font-semibold text-primary hover:text-primary-hover hover:underline ml-1">
-                                    Đăng nhập ngay
+                                    <fmt:message key="reg_col.login_now" />
                                 </a>
                             </p>
                             <div class="mt-4 pt-4 border-t border-gray-100">
                                 <a href="${pageContext.request.contextPath}/register" class="text-xs text-slate-500 hover:text-slate-700 flex items-center justify-center gap-1">
                                     <span class="material-symbols-outlined text-sm">arrow_back</span>
-                                    Quay lại đăng ký người dùng cá nhân
+                                    <fmt:message key="reg_col.back_user" />
                                 </a>
                             </div>
                         </div>

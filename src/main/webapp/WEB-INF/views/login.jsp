@@ -1,11 +1,17 @@
 <%@ page contentType="text/html; charset=UTF-8" language="java" %>
 <%@ page isELIgnored="false" %>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+
+<!-- Thiết lập Resource Bundle -->
+<!-- SỬA ĐỔI: basename="messages" vì file nằm ở root classpath -->
+<fmt:setBundle basename="messages" scope="session" />
+
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="${sessionScope.lang != null ? sessionScope.lang : 'en'}">
 <head>
     <meta charset="UTF-8">
-    <title>Đăng nhập - EcoGive</title>
+    <title><fmt:message key="login.title" /></title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- Tailwind CSS -->
@@ -218,6 +224,16 @@
         </div>
     </div>
 
+    <!-- LANGUAGE SWITCHER -->
+    <div class="absolute top-6 right-20 z-50 flex gap-2">
+        <a href="${pageContext.request.contextPath}/language?lang=vi" class="w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform ${sessionScope.lang == 'vi' ? 'ring-2 ring-primary' : ''}">
+            <img src="https://flagcdn.com/w40/vn.png" alt="Tiếng Việt" class="w-6 h-4 object-cover rounded-sm">
+        </a>
+        <a href="${pageContext.request.contextPath}/language?lang=en" class="w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform ${sessionScope.lang == 'en' || sessionScope.lang == null ? 'ring-2 ring-primary' : ''}">
+            <img src="https://flagcdn.com/w40/gb.png" alt="English" class="w-6 h-4 object-cover rounded-sm">
+        </a>
+    </div>
+
     <!-- TOGGLE BG BUTTON -->
     <button onclick="toggleBackgroundMode()"
             id="btnToggleBg"
@@ -268,15 +284,15 @@
                                 <span class="material-symbols-outlined text-primary" style="font-size: 40px;">spa</span>
                                 <span class="text-2xl font-bold tracking-tight text-[#111816]">EcoGive</span>
                             </div>
-                            <h1 class="text-2xl md:text-3xl font-bold text-slate-900">Chào mừng trở lại! 👋</h1>
-                            <p class="text-slate-500 text-sm md:text-base">Vui lòng nhập thông tin để đăng nhập.</p>
+                            <h1 class="text-2xl md:text-3xl font-bold text-slate-900"><fmt:message key="login.welcome" /></h1>
+                            <p class="text-slate-500 text-sm md:text-base"><fmt:message key="login.subtitle" /></p>
                         </div>
 
                         <!-- Alerts -->
                         <c:if test="${param.success == 'true'}">
                             <div class="p-4 rounded-lg bg-green-50 border-l-4 border-green-500 text-green-700 text-sm flex items-start gap-3">
                                 <span class="material-symbols-outlined text-lg">check_circle</span>
-                                <span>Đăng ký thành công! Vui lòng đăng nhập để tiếp tục.</span>
+                                <span><fmt:message key="login.success" /></span>
                             </div>
                         </c:if>
 
@@ -296,29 +312,31 @@
 
                         <form id="loginForm" method="post" action="${pageContext.request.contextPath}/login" class="space-y-5">
                             <div>
-                                <label for="username" class="block text-sm font-medium text-slate-700 mb-1.5">Tên đăng nhập</label>
+                                <label for="username" class="block text-sm font-medium text-slate-700 mb-1.5"><fmt:message key="login.username" /></label>
                                 <div class="relative">
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                         <span class="material-symbols-outlined text-slate-400 text-[20px]">person</span>
                                     </div>
+                                    <fmt:message key="login.username.placeholder" var="usernamePlaceholder" />
                                     <input type="text" id="username" name="username" value="${username}"
                                            class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base md:text-sm"
-                                           placeholder="Nhập tên đăng nhập" required>
+                                           placeholder="${usernamePlaceholder}" required>
                                 </div>
                             </div>
 
                             <div>
                                 <div class="flex items-center justify-between mb-1.5">
-                                    <label for="password" class="block text-sm font-medium text-slate-700">Mật khẩu</label>
-                                    <a href="${pageContext.request.contextPath}/forgot-password" class="text-sm font-medium text-primary hover:text-primary-hover hover:underline">Quên mật khẩu?</a>
+                                    <label for="password" class="block text-sm font-medium text-slate-700"><fmt:message key="login.password" /></label>
+                                    <a href="${pageContext.request.contextPath}/forgot-password" class="text-sm font-medium text-primary hover:text-primary-hover hover:underline"><fmt:message key="login.forgot_password" /></a>
                                 </div>
                                 <div class="relative">
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                         <span class="material-symbols-outlined text-slate-400 text-[20px]">lock</span>
                                     </div>
+                                    <fmt:message key="login.password.placeholder" var="passwordPlaceholder" />
                                     <input type="password" id="password" name="password"
                                            class="w-full pl-10 pr-12 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base md:text-sm"
-                                           placeholder="••••••••" required>
+                                           placeholder="${passwordPlaceholder}" required>
                                     <button type="button" id="togglePassword"
                                             class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors focus:outline-none">
                                         <span class="material-symbols-outlined text-[20px]">visibility</span>
@@ -328,20 +346,20 @@
 
                             <div class="flex items-center">
                                 <input id="remember-me" name="remember-me" type="checkbox" class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded cursor-pointer">
-                                <label for="remember-me" class="ml-2 block text-sm text-slate-600 cursor-pointer select-none">Ghi nhớ đăng nhập</label>
+                                <label for="remember-me" class="ml-2 block text-sm text-slate-600 cursor-pointer select-none"><fmt:message key="login.remember_me" /></label>
                             </div>
 
                             <button type="submit"
                                     class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all transform hover:-translate-y-0.5 active:scale-95">
-                                Đăng nhập
+                                <fmt:message key="login.button" />
                             </button>
                         </form>
 
                         <div class="text-center">
                             <p class="text-sm text-slate-600">
-                                Chưa có tài khoản?
+                                <fmt:message key="login.no_account" />
                                 <a href="${pageContext.request.contextPath}/register" class="font-semibold text-primary hover:text-primary-hover hover:underline ml-1">
-                                    Đăng ký ngay
+                                    <fmt:message key="login.register_now" />
                                 </a>
                             </p>
                         </div>

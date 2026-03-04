@@ -1,11 +1,15 @@
 <%@ page contentType="text/html; charset=UTF-8" language="java" %>
 <%@ page isELIgnored="false" %>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+
+<fmt:setBundle basename="messages" scope="session" />
+
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="${sessionScope.lang != null ? sessionScope.lang : 'en'}">
 <head>
     <meta charset="UTF-8">
-    <title>Quên mật khẩu - EcoGive</title>
+    <title><fmt:message key="forgot.title" /></title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- Tailwind CSS -->
@@ -235,8 +239,8 @@
                     <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-50 mb-4">
                         <span class="material-symbols-outlined text-primary" style="font-size: 32px;">lock_reset</span>
                     </div>
-                    <h1 class="text-xl md:text-2xl font-bold text-slate-900 mb-2">Quên mật khẩu?</h1>
-                    <p class="text-slate-500 text-sm px-2 md:px-4">Đừng lo lắng! Hãy nhập email đã đăng ký, chúng tôi sẽ gửi hướng dẫn đặt lại mật khẩu cho bạn.</p>
+                    <h1 class="text-xl md:text-2xl font-bold text-slate-900 mb-2"><fmt:message key="forgot.header" /></h1>
+                    <p class="text-slate-500 text-sm px-2 md:px-4"><fmt:message key="forgot.desc" /></p>
                 </div>
 
                 <!-- Alerts -->
@@ -256,33 +260,34 @@
 
                 <form id="forgotPasswordForm" method="post" action="${pageContext.request.contextPath}/forgot-password" class="space-y-6">
                     <div>
-                        <label for="email" class="block text-sm font-medium text-slate-700 mb-1.5">Email đăng ký</label>
+                        <label for="email" class="block text-sm font-medium text-slate-700 mb-1.5"><fmt:message key="forgot.email_label" /></label>
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <span class="material-symbols-outlined text-slate-400 text-[20px]">mail</span>
                             </div>
+                            <fmt:message key="forgot.email_placeholder" var="emailPlaceholder" />
                             <input type="email" id="email" name="email"
                                    class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base md:text-sm"
-                                   placeholder="nhapemail@example.com" required>
+                                   placeholder="${emailPlaceholder}" required>
                         </div>
                     </div>
 
                     <button type="submit"
                             class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all transform hover:-translate-y-0.5 active:scale-95">
-                        Gửi liên kết đặt lại mật khẩu
+                        <fmt:message key="forgot.button" />
                     </button>
                 </form>
 
                 <div class="mt-8 text-center">
                     <a href="${pageContext.request.contextPath}/login" class="inline-flex items-center text-sm font-medium text-slate-500 hover:text-primary transition-colors">
                         <span class="material-symbols-outlined text-sm mr-2">arrow_back</span>
-                        Quay lại đăng nhập
+                        <fmt:message key="forgot.back" />
                     </a>
                 </div>
             </div>
 
             <div class="mt-8 text-center w-full text-slate-400 text-xs z-0 pointer-events-auto">
-                © <script>document.write(new Date().getFullYear())</script> EcoGive. All rights reserved.
+                © <script>document.write(new Date().getFullYear())</script> <fmt:message key="footer.copyright" />
             </div>
 
             <!-- Spacer for bottom scrolling -->
@@ -470,6 +475,23 @@
                 }
             }
         });
+
+        // Toggle Password Visibility
+        const togglePasswordBtn = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+
+        if (togglePasswordBtn && passwordInput) {
+            togglePasswordBtn.addEventListener('click', function () {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+
+                if (type === 'text') {
+                    this.innerHTML = '<span class="material-symbols-outlined text-[20px]">visibility_off</span>';
+                } else {
+                    this.innerHTML = '<span class="material-symbols-outlined text-[20px]">visibility</span>';
+                }
+            });
+        }
     </script>
 
 </body>
