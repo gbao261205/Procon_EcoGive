@@ -162,7 +162,7 @@
         <div id="recycling-machine" class="absolute bottom-[60px] right-[4%] z-40 pointer-events-auto transition-transform duration-300 group">
             <div id="tutorial-arrow" class="absolute -top-32 left -translate-x-1/2 w-48 flex flex-col items-center animate-bounce z-50 pointer-events-none opacity-80">
                 <div class="flex items-center gap-2 text-slate-600 font-extrabold text-xs tracking-widest uppercase bg-white/60 px-4 py-2 rounded-full backdrop-blur-md border border-white/80 shadow-lg">
-                    <span class="material-symbols-rounded text-primary text-base">pan_tool_alt</span> Kéo rác vào đây
+                    <span class="material-symbols-rounded text-primary text-base">pan_tool_alt</span> <fmt:message key="game.tutorial" />
                 </div>
                 <div class="w-0.5 h-8 bg-gradient-to-b from-white to-transparent mt-2"></div>
                 <span class="material-symbols-rounded text-white drop-shadow-lg text-4xl -mt-1">keyboard_arrow_down</span>
@@ -223,11 +223,22 @@
         </div>
     </div>
 
+    <!-- LANGUAGE SWITCHER -->
+    <div class="absolute top-6 right-20 z-50 flex gap-2">
+        <a href="${pageContext.request.contextPath}/language?lang=vi" class="w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform ${sessionScope.lang == 'vi' ? 'ring-2 ring-primary' : ''}">
+            <img src="https://flagcdn.com/w40/vn.png" alt="Tiếng Việt" class="w-6 h-4 object-cover rounded-sm">
+        </a>
+        <a href="${pageContext.request.contextPath}/language?lang=en" class="w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform ${sessionScope.lang == 'en' || sessionScope.lang == null ? 'ring-2 ring-primary' : ''}">
+            <img src="https://flagcdn.com/w40/gb.png" alt="English" class="w-6 h-4 object-cover rounded-sm">
+        </a>
+    </div>
+
     <!-- TOGGLE BG BUTTON -->
+    <fmt:message key="game.toggle_bg" var="toggleBgTitle" />
     <button onclick="toggleBackgroundMode()"
             id="btnToggleBg"
             class="absolute top-6 right-6 z-50 w-12 h-12 bg-white text-slate-700 rounded-full shadow-lg hover:text-purple-600 hover:scale-110 transition-all duration-300 flex items-center justify-center border border-slate-100 group cursor-pointer"
-            title="Chế độ nền: Động/Tĩnh">
+            title="${toggleBgTitle}">
         <span class="material-symbols-rounded group-hover:rotate-12 transition-transform duration-500 text-2xl">wallpaper</span>
     </button>
 
@@ -250,19 +261,19 @@
                             <span class="material-symbols-outlined text-primary" style="font-size: 36px;">spa</span>
                             EcoGive <span class="text-primary font-light">Partner</span>
                         </div>
-                        <p class="text-slate-400 text-sm">Dành cho Doanh nghiệp & Điểm thu gom</p>
+                        <p class="text-slate-400 text-sm"><fmt:message key="reg_col.branding_subtitle" /></p>
                     </div>
 
                     <div class="relative z-10">
-                        <h2 class="text-3xl font-bold mb-6 leading-tight">"Mở rộng mạng lưới,<br>Kiến tạo tương lai."</h2>
+                        <h2 class="text-3xl font-bold mb-6 leading-tight"><fmt:message key="reg_col.slogan" /></h2>
                         <div class="space-y-6">
                             <div class="flex gap-4">
                                 <div class="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center text-primary flex-shrink-0">
                                     <span class="material-symbols-outlined">map</span>
                                 </div>
                                 <div>
-                                    <h3 class="font-semibold text-white">Quản lý điểm thu gom</h3>
-                                    <p class="text-sm text-slate-400 mt-1">Dễ dàng thêm và quản lý các địa điểm thu gom trên bản đồ số.</p>
+                                    <h3 class="font-semibold text-white"><fmt:message key="reg_col.feature1_title" /></h3>
+                                    <p class="text-sm text-slate-400 mt-1"><fmt:message key="reg_col.feature1_desc" /></p>
                                 </div>
                             </div>
 
@@ -271,8 +282,8 @@
                                     <span class="material-symbols-outlined">bar_chart</span>
                                 </div>
                                 <div>
-                                    <h3 class="font-semibold text-white">Thống kê & Báo cáo</h3>
-                                    <p class="text-sm text-slate-400 mt-1">Theo dõi hiệu quả thu gom và tác động môi trường theo thời gian thực.</p>
+                                    <h3 class="font-semibold text-white"><fmt:message key="reg_col.feature2_title" /></h3>
+                                    <p class="text-sm text-slate-400 mt-1"><fmt:message key="reg_col.feature2_desc" /></p>
                                 </div>
                             </div>
                         </div>
@@ -310,38 +321,44 @@
 
                                 <div>
                                     <label for="username" class="block text-sm font-medium text-slate-700 mb-1.5"><fmt:message key="reg_col.username" /></label>
+                                    <fmt:message key="reg_col.username.placeholder" var="usernamePlaceholder" />
                                     <input type="text" id="username" name="username" value="${username}"
                                            class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base md:text-sm"
-                                           placeholder="Ví dụ: company123" required>
+                                           placeholder="${usernamePlaceholder}" required>
                                 </div>
 
                                 <div>
                                     <label for="displayName" class="block text-sm font-medium text-slate-700 mb-1.5"><fmt:message key="reg_col.company_name" /></label>
+                                    <fmt:message key="reg_col.company_name.placeholder" var="companyNamePlaceholder" />
                                     <input type="text" id="displayName" name="displayName" value="${displayName}"
                                            class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base md:text-sm"
-                                           placeholder="Ví dụ: Công ty TNHH Môi trường Xanh" required>
+                                           placeholder="${companyNamePlaceholder}" required>
                                 </div>
 
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label for="email" class="block text-sm font-medium text-slate-700 mb-1.5"><fmt:message key="reg_col.email" /></label>
+                                        <fmt:message key="reg_col.email.placeholder" var="emailPlaceholder" />
                                         <input type="email" id="email" name="email" value="${email}"
                                                class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base md:text-sm"
-                                               placeholder="contact@company.com" required>
+                                               placeholder="${emailPlaceholder}" required>
                                     </div>
                                     <div>
                                         <label for="phoneNumber" class="block text-sm font-medium text-slate-700 mb-1.5"><fmt:message key="reg_col.phone" /></label>
+                                        <fmt:message key="reg_col.phone.placeholder" var="phonePlaceholder" />
+                                        <fmt:message key="reg_col.phone.title" var="phoneTitle" />
                                         <input type="tel" id="phoneNumber" name="phoneNumber" value="${phoneNumber}"
                                                class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base md:text-sm"
-                                               placeholder="0912345678" required pattern="0[0-9]{9}" title="Số điện thoại phải bắt đầu bằng 0 và có 10 chữ số">
+                                               placeholder="${phonePlaceholder}" required pattern="0[0-9]{9}" title="${phoneTitle}">
                                     </div>
                                 </div>
 
                                 <div>
                                     <label for="address" class="block text-sm font-medium text-slate-700 mb-1.5"><fmt:message key="reg_col.address" /></label>
+                                    <fmt:message key="reg_col.address.placeholder" var="addressPlaceholder" />
                                     <input type="text" id="address" name="address" value="${address}"
                                            class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base md:text-sm"
-                                           placeholder="Số nhà, Đường, Phường/Xã, Quận/Huyện, Tỉnh/TP" required>
+                                           placeholder="${addressPlaceholder}" required>
                                 </div>
                             </div>
 
@@ -352,15 +369,17 @@
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label for="password" class="block text-sm font-medium text-slate-700 mb-1.5"><fmt:message key="reg_col.password" /></label>
+                                        <fmt:message key="reg_col.password.placeholder" var="passwordPlaceholder" />
                                         <input type="password" id="password" name="password"
                                                class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base md:text-sm"
-                                               placeholder="Tối thiểu 6 ký tự" required minlength="6">
+                                               placeholder="${passwordPlaceholder}" required minlength="6">
                                     </div>
                                     <div>
                                         <label for="confirmPassword" class="block text-sm font-medium text-slate-700 mb-1.5"><fmt:message key="reg_col.confirm_password" /></label>
+                                        <fmt:message key="reg_col.confirm_password.placeholder" var="confirmPasswordPlaceholder" />
                                         <input type="password" id="confirmPassword" name="confirmPassword"
                                                class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base md:text-sm"
-                                               placeholder="Nhập lại mật khẩu" required minlength="6">
+                                               placeholder="${confirmPasswordPlaceholder}" required minlength="6">
                                     </div>
                                 </div>
                                 <p id="passwordError" class="text-xs text-red-600 font-medium hidden flex items-center gap-1">

@@ -161,7 +161,7 @@
         <div id="recycling-machine" class="absolute bottom-[60px] right-[4%] z-40 pointer-events-auto transition-transform duration-300 group">
             <div id="tutorial-arrow" class="absolute -top-32 left -translate-x-1/2 w-48 flex flex-col items-center animate-bounce z-50 pointer-events-none opacity-80">
                 <div class="flex items-center gap-2 text-slate-600 font-extrabold text-xs tracking-widest uppercase bg-white/60 px-4 py-2 rounded-full backdrop-blur-md border border-white/80 shadow-lg">
-                    <span class="material-symbols-rounded text-primary text-base">pan_tool_alt</span> Kéo rác vào đây
+                    <span class="material-symbols-rounded text-primary text-base">pan_tool_alt</span> <fmt:message key="game.tutorial" />
                 </div>
                 <div class="w-0.5 h-8 bg-gradient-to-b from-white to-transparent mt-2"></div>
                 <span class="material-symbols-rounded text-white drop-shadow-lg text-4xl -mt-1">keyboard_arrow_down</span>
@@ -222,11 +222,22 @@
         </div>
     </div>
 
+    <!-- LANGUAGE SWITCHER -->
+    <div class="absolute top-6 right-20 z-50 flex gap-2">
+        <a href="${pageContext.request.contextPath}/language?lang=vi" class="w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform ${sessionScope.lang == 'vi' ? 'ring-2 ring-primary' : ''}">
+            <img src="https://flagcdn.com/w40/vn.png" alt="Tiếng Việt" class="w-6 h-4 object-cover rounded-sm">
+        </a>
+        <a href="${pageContext.request.contextPath}/language?lang=en" class="w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform ${sessionScope.lang == 'en' || sessionScope.lang == null ? 'ring-2 ring-primary' : ''}">
+            <img src="https://flagcdn.com/w40/gb.png" alt="English" class="w-6 h-4 object-cover rounded-sm">
+        </a>
+    </div>
+
     <!-- TOGGLE BG BUTTON -->
+    <fmt:message key="game.toggle_bg" var="toggleBgTitle" />
     <button onclick="toggleBackgroundMode()"
             id="btnToggleBg"
             class="absolute top-6 right-6 z-50 w-12 h-12 bg-white text-slate-700 rounded-full shadow-lg hover:text-purple-600 hover:scale-110 transition-all duration-300 flex items-center justify-center border border-slate-100 group cursor-pointer"
-            title="Chế độ nền: Động/Tĩnh">
+            title="${toggleBgTitle}">
         <span class="material-symbols-rounded group-hover:rotate-12 transition-transform duration-500 text-2xl">wallpaper</span>
     </button>
 
@@ -249,23 +260,23 @@
                             <span class="material-symbols-outlined text-white" style="font-size: 36px;">spa</span>
                             EcoGive
                         </div>
-                        <p class="text-emerald-100 text-sm">Kết nối - Chia sẻ - Tái tạo</p>
+                        <p class="text-emerald-100 text-sm"><fmt:message key="register.branding_subtitle" /></p>
                     </div>
 
                     <div class="relative z-10">
-                        <h2 class="text-3xl font-bold mb-4 leading-tight">"Tham gia cộng đồng xanh."</h2>
+                        <h2 class="text-3xl font-bold mb-4 leading-tight"><fmt:message key="register.slogan" /></h2>
                         <ul class="space-y-3 text-emerald-100 opacity-90">
                             <li class="flex items-center gap-2">
                                 <span class="material-symbols-outlined text-emerald-200">check_circle</span>
-                                Tích điểm đổi quà hấp dẫn
+                                <fmt:message key="register.feature1" />
                             </li>
                             <li class="flex items-center gap-2">
                                 <span class="material-symbols-outlined text-emerald-200">check_circle</span>
-                                Theo dõi hành trình bảo vệ môi trường
+                                <fmt:message key="register.feature2" />
                             </li>
                             <li class="flex items-center gap-2">
                                 <span class="material-symbols-outlined text-emerald-200">check_circle</span>
-                                Kết nối với các điểm thu gom uy tín
+                                <fmt:message key="register.feature3" />
                             </li>
                         </ul>
                     </div>

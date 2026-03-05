@@ -163,7 +163,7 @@
         <div id="recycling-machine" class="absolute bottom-[60px] right-[4%] z-40 pointer-events-auto transition-transform duration-300 group">
             <div id="tutorial-arrow" class="absolute -top-32 left -translate-x-1/2 w-48 flex flex-col items-center animate-bounce z-50 pointer-events-none opacity-80">
                 <div class="flex items-center gap-2 text-slate-600 font-extrabold text-xs tracking-widest uppercase bg-white/60 px-4 py-2 rounded-full backdrop-blur-md border border-white/80 shadow-lg">
-                    <span class="material-symbols-rounded text-primary text-base">pan_tool_alt</span> Kéo rác vào đây
+                    <span class="material-symbols-rounded text-primary text-base">pan_tool_alt</span> <fmt:message key="game.tutorial" />
                 </div>
                 <div class="w-0.5 h-8 bg-gradient-to-b from-white to-transparent mt-2"></div>
                 <span class="material-symbols-rounded text-white drop-shadow-lg text-4xl -mt-1">keyboard_arrow_down</span>
@@ -235,10 +235,11 @@
     </div>
 
     <!-- TOGGLE BG BUTTON -->
+    <fmt:message key="game.toggle_bg" var="toggleBgTitle" />
     <button onclick="toggleBackgroundMode()"
             id="btnToggleBg"
             class="absolute top-6 right-6 z-50 w-12 h-12 bg-white text-slate-700 rounded-full shadow-lg hover:text-purple-600 hover:scale-110 transition-all duration-300 flex items-center justify-center border border-slate-100 group cursor-pointer"
-            title="Chế độ nền: Động/Tĩnh">
+            title="${toggleBgTitle}">
         <span class="material-symbols-rounded group-hover:rotate-12 transition-transform duration-500 text-2xl">wallpaper</span>
     </button>
 
@@ -261,12 +262,12 @@
                             <span class="material-symbols-outlined text-white" style="font-size: 36px;">spa</span>
                             EcoGive
                         </div>
-                        <p class="text-emerald-100 text-sm">Nền tảng chia sẻ & tái chế cộng đồng</p>
+                        <p class="text-emerald-100 text-sm"><fmt:message key="login.branding_subtitle" /></p>
                     </div>
 
                     <div class="relative z-10">
-                        <h2 class="text-3xl font-bold mb-4 leading-tight">"Hành động nhỏ,<br>Thay đổi lớn."</h2>
-                        <p class="text-emerald-100 opacity-90">Tham gia cùng hàng ngàn người khác để biến rác thải thành tài nguyên và lan tỏa lối sống xanh.</p>
+                        <h2 class="text-3xl font-bold mb-4 leading-tight"><fmt:message key="login.slogan" /></h2>
+                        <p class="text-emerald-100 opacity-90"><fmt:message key="login.slogan_desc" /></p>
                     </div>
 
                     <!-- Decorative Circle -->
