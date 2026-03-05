@@ -226,16 +226,16 @@
                     <div class="h-px bg-slate-100 my-1 md:hidden"></div>
                     <a href="${pageContext.request.contextPath}/profile" class="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors">
                         <span class="material-symbols-outlined text-slate-400">person</span>
-                        <span>Hồ sơ của tôi</span>
+                        <span><fmt:message key="user_menu.profile" /></span>
                     </a>
                     <a href="${pageContext.request.contextPath}/redeem" class="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors">
                         <span class="material-symbols-outlined text-slate-400">redeem</span>
-                        <span>Đổi quà</span>
+                        <span><fmt:message key="user_menu.redeem" /></span>
                     </a>
                     <div class="h-px bg-slate-100 my-1"></div>
                     <a href="${pageContext.request.contextPath}/logout" class="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors">
                         <span class="material-symbols-outlined">logout</span>
-                        <span>Đăng xuất</span>
+                        <span><fmt:message key="user_menu.logout" /></span>
                     </a>
                 </div>
             </div>
@@ -353,7 +353,7 @@
             <input type="hidden" id="filterItemCategory" value="">
             <div id="itemCategoryChips" class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
                 <button onclick="selectItemCategory('', this)" class="item-chip-btn whitespace-nowrap px-4 py-2 rounded-full bg-primary text-white text-xs font-bold border border-primary transition shadow-sm">
-                    Tất cả
+                    <fmt:message key="list.filter.all" />
                 </button>
                 <!-- Category chips will be loaded here by JS -->
             </div>
@@ -397,7 +397,7 @@
 
             <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
                 <button onclick="selectPointType('', this)" class="chip-btn whitespace-nowrap px-4 py-2 rounded-full bg-primary text-white text-xs font-bold border border-primary transition shadow-sm active-chip">
-                    Tất cả
+                    <fmt:message key="list.filter.all" />
                 </button>
                 <c:forEach var="t" items="${pointTypes}">
                     <button onclick="selectPointType('${t.typeCode}', this)" class="chip-btn whitespace-nowrap px-4 py-2 rounded-full bg-slate-50 text-slate-600 text-xs font-bold border border-slate-200 hover:bg-slate-100 transition flex items-center gap-1">
@@ -652,7 +652,7 @@
                 <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-xl backdrop-blur-sm">🏆</div>
                 <div>
                     <h3 class="font-bold text-lg"><fmt:message key="home.leaderboard" /></h3>
-                    <p class="text-[10px] opacity-90">Top thành viên tích cực nhất</p>
+                    <p class="text-[10px] opacity-90"><fmt:message key="leaderboard.subtitle" /></p>
                 </div>
             </div>
             <button onclick="toggleLeaderboardModal()" class="text-white/80 hover:text-white transition p-2">
@@ -695,8 +695,8 @@
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-xl backdrop-blur-sm">🤖</div>
             <div>
-                <h3 class="font-bold text-sm">Trợ lý EcoBot</h3>
-                <p class="text-[10px] opacity-90">Hỏi tôi về cách xử lý rác!</p>
+                <h3 class="font-bold text-sm"><fmt:message key="ai.title" /></h3>
+                <p class="text-[10px] opacity-90"><fmt:message key="ai.subtitle" /></p>
             </div>
         </div>
         <button onclick="toggleAiModal()" class="text-white/80 hover:text-white transition p-2">
@@ -707,23 +707,24 @@
         <div class="flex items-start gap-2">
             <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs shrink-0 border border-blue-200">🤖</div>
             <div class="bg-white border border-slate-200 p-3 rounded-2xl rounded-tl-none shadow-sm max-w-[85%] text-slate-700">
-                Xin chào! Bạn đang có loại rác thải nào cần xử lý? (VD: Pin cũ, thuốc hết hạn, đồ điện tử...)
+                <fmt:message key="ai.welcome" />
             </div>
         </div>
 
         <!-- Quick Actions -->
         <div class="grid grid-cols-1 gap-2 mt-2 px-2">
             <button onclick="quickAction('guide')" class="text-left text-xs bg-white hover:bg-blue-50 text-blue-600 py-2.5 px-3 rounded-xl border border-blue-100 shadow-sm transition flex items-center gap-2">
-                <span class="material-symbols-outlined text-sm">help</span> Cách tích điểm EcoPoints?
+                <span class="material-symbols-outlined text-sm">help</span> <fmt:message key="ai.quick.points" />
             </button>
             <button onclick="quickAction('recycle')" class="text-left text-xs bg-white hover:bg-green-50 text-green-600 py-2.5 px-3 rounded-xl border border-green-100 shadow-sm transition flex items-center gap-2">
-                <span class="material-symbols-outlined text-sm">recycling</span> Hướng dẫn cách tái chế
+                <span class="material-symbols-outlined text-sm">recycling</span> <fmt:message key="ai.quick.recycle" />
             </button>
         </div>
     </div>
     <div class="p-3 border-t border-slate-100 bg-white shrink-0 pb-safe md:pb-3">
         <div class="flex gap-2">
-            <input type="text" id="aiInput" class="flex-1 border border-slate-200 rounded-full px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="Nhập câu hỏi...">
+            <fmt:message key="ai.input.placeholder" var="aiPlaceholder" />
+            <input type="text" id="aiInput" class="flex-1 border border-slate-200 rounded-full px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="${aiPlaceholder}">
             <button onclick="sendAiQuestion()" class="bg-blue-600 text-white w-9 h-9 rounded-full flex items-center justify-center hover:bg-blue-700 transition shadow-sm shrink-0">
                 <span class="material-symbols-outlined text-[18px]">send</span>
             </button>
@@ -815,6 +816,36 @@
     const currentUserRole = "${sessionScope.currentUser != null ? sessionScope.currentUser.role : ''}";
     const currentUserId = currentUserIdStr ? Number(currentUserIdStr) : null;
     const MAPTILER_API_KEY = 'N9qb9p6GF8fszXu3BPWt';
+
+    // --- JS MESSAGES (POPUP & LIST) ---
+    const JS_MSG = {
+        // Map Popups
+        points: "<fmt:message key='map.popup.points' />",
+        giver: "<fmt:message key='map.popup.giver' />",
+        manage: "<fmt:message key='map.popup.manage' />",
+        request: "<fmt:message key='map.popup.request' />",
+        trade: "<fmt:message key='map.popup.trade' />",
+        login: "<fmt:message key='map.popup.login_to_receive' />",
+        directions: "<fmt:message key='map.popup.directions' />",
+        viewDetail: "<fmt:message key='map.popup.view_detail' />",
+        pointCompany: "<fmt:message key='map.popup.point_company' />",
+        pointPublic: "<fmt:message key='map.popup.point_public' />",
+        enterprise: "<fmt:message key='map.popup.enterprise' />",
+        message: "<fmt:message key='map.popup.message' />",
+        profile: "<fmt:message key='map.popup.profile' />",
+
+        // List Items & Points
+        loadingMore: "<fmt:message key='list.status.loading_more' />",
+        loadingInitial: "<fmt:message key='list.status.loading_initial' />",
+        emptyItems: "<fmt:message key='list.empty.items' />",
+        emptyPoints: "<fmt:message key='list.empty.points' />",
+        itemOwner: "<fmt:message key='list.item.owner' />",
+        btnGet: "<fmt:message key='list.btn.get' />",
+        btnTrade: "<fmt:message key='list.btn.trade' />",
+        btnViewLocation: "<fmt:message key='list.btn.view_location' />",
+        itemsCount: "<fmt:message key='list.items_count' />",
+        itemsCount0: "<fmt:message key='list.items_count_0' />"
+    };
 
     // Global Maps for Display
     let categoryMap = {};
@@ -1032,38 +1063,38 @@
 
                     if (currentUserId) {
                         if (item.giverId === currentUserId) {
-                            actionBtn = `<button onclick="openManageChat(\${item.itemId})" class="w-full bg-slate-100 text-slate-700 text-xs font-bold py-2 rounded-lg hover:bg-slate-200 border border-slate-200 transition">Quản lý & Chốt đơn 📩</button>`;
+                            actionBtn = `<button onclick="openManageChat(\${item.itemId})" class="w-full bg-slate-100 text-slate-700 text-xs font-bold py-2 rounded-lg hover:bg-slate-200 border border-slate-200 transition">\${JS_MSG.manage} 📩</button>`;
                         } else {
                             // Cập nhật nút bấm trong Popup
                             actionBtn = `
                                 <div class="flex flex-col gap-1 mt-2">
-                                    <button onclick="requestItem(\${item.itemId})" class="w-full bg-primary text-white text-xs font-bold py-2 rounded-lg hover:bg-primary-hover shadow-md transition">Xin món này 🎁</button>
-                                    <button onclick="openTradeProposal(\${item.itemId})" class="w-full bg-white text-primary text-xs font-bold py-2 rounded-lg border border-primary hover:bg-emerald-50 transition">Trao đổi 🔄</button>
+                                    <button onclick="requestItem(\${item.itemId})" class="w-full bg-primary text-white text-xs font-bold py-2 rounded-lg hover:bg-primary-hover shadow-md transition">\${JS_MSG.request} 🎁</button>
+                                    <button onclick="openTradeProposal(\${item.itemId})" class="w-full bg-white text-primary text-xs font-bold py-2 rounded-lg border border-primary hover:bg-emerald-50 transition">\${JS_MSG.trade} 🔄</button>
                                 </div>
                             `;
                         }
                     } else {
-                        actionBtn = `<a href="${pageContext.request.contextPath}/login" class="block w-full text-center bg-slate-100 text-slate-700 text-xs font-bold py-2 rounded-lg hover:bg-slate-200 transition">Đăng nhập để nhận</a>`;
+                        actionBtn = `<a href="${pageContext.request.contextPath}/login" class="block w-full text-center bg-slate-100 text-slate-700 text-xs font-bold py-2 rounded-lg hover:bg-slate-200 transition">\${JS_MSG.login}</a>`;
                     }
 
-                    const directionsBtn = `<a href="https://www.google.com/maps/search/?api=1&query=\${item.location.latitude},\${item.location.longitude}" target="_blank" class="block w-full bg-white text-slate-600 text-xs font-bold py-2 rounded-lg hover:bg-slate-50 border border-slate-200 mt-2 text-center transition">🗺️ Chỉ đường</a>`;
+                    const directionsBtn = `<a href="https://www.google.com/maps/search/?api=1&query=\${item.location.latitude},\${item.location.longitude}" target="_blank" class="block w-full bg-white text-slate-600 text-xs font-bold py-2 rounded-lg hover:bg-slate-50 border border-slate-200 mt-2 text-center transition">🗺️ \${JS_MSG.directions}</a>`;
 
                     let addressHtml = '';
                     if (item.address) {
                         addressHtml = `<p class="text-xs text-slate-500 mb-2 flex items-center gap-1"><span class="text-[10px]">📍</span> \${item.address}</p>`;
                     }
 
-                    const detailBtn = `<button onclick="openItemDetail(\${item.itemId})" class="block w-full bg-white text-primary text-xs font-bold py-2 rounded-lg border border-primary mb-2 hover:bg-emerald-50 transition">🔍 Xem chi tiết</button>`;
+                    const detailBtn = `<button onclick="openItemDetail(\${item.itemId})" class="block w-full bg-white text-primary text-xs font-bold py-2 rounded-lg border border-primary mb-2 hover:bg-emerald-50 transition">🔍 \${JS_MSG.viewDetail}</button>`;
 
                     const content = `
                         <div>
                             <div class="relative">
                                 <img src="\${imgUrl}" class="custom-popup-img">
-                                <div class="absolute top-2 right-2 bg-white/90 backdrop-blur px-2 py-1 rounded text-[10px] font-bold text-primary shadow-sm">\${item.ecoPoints || 0} Points</div>
+                                <div class="absolute top-2 right-2 bg-white/90 backdrop-blur px-2 py-1 rounded text-[10px] font-bold text-primary shadow-sm">\${item.ecoPoints || 0} \${JS_MSG.points}</div>
                             </div>
                             <div class="custom-popup-body">
                                 <h3 class="font-bold text-sm text-slate-800 mb-1 line-clamp-1">\${item.title}</h3>
-                                <p class="text-xs text-slate-500 mb-2">Người tặng: <span class="font-medium text-slate-700">\${displayName}</span></p>
+                                <p class="text-xs text-slate-500 mb-2">\${JS_MSG.giver}: <span class="font-medium text-slate-700">\${displayName}</span></p>
                                 \${addressHtml}
                                 \${detailBtn}
                                 \${actionBtn}
@@ -1195,13 +1226,13 @@
                 if (isCompany) {
                     if (showCompany) {
                         icon = yellowIcon;
-                        popupHeader = `<div class="bg-yellow-100 text-yellow-800 text-[10px] font-bold px-2 py-1 rounded mb-2 inline-block border border-yellow-200">🏢 Điểm thu gom Doanh nghiệp</div>`;
+                        popupHeader = `<div class="bg-yellow-100 text-yellow-800 text-[10px] font-bold px-2 py-1 rounded mb-2 inline-block border border-yellow-200">🏢 \${JS_MSG.pointCompany}</div>`;
                         shouldShow = true;
                     }
                 } else {
                     if (showPublic) {
                         icon = greenIcon;
-                        popupHeader = `<div class="bg-green-100 text-green-800 text-[10px] font-bold px-2 py-1 rounded mb-2 inline-block border border-green-200">♻️ Điểm tập kết công cộng</div>`;
+                        popupHeader = `<div class="bg-green-100 text-green-800 text-[10px] font-bold px-2 py-1 rounded mb-2 inline-block border border-green-200">♻️ \${JS_MSG.pointPublic}</div>`;
                         shouldShow = true;
                     }
                 }
@@ -1213,8 +1244,8 @@
                     if (isCompany && p.ownerId) {
                         extraActions = `
                             <div class="flex gap-2 mt-2">
-                                <button onclick="openChatWithCompany(\${p.ownerId}, '\${ownerDisplayName}')" class="flex-1 bg-white text-primary text-xs font-bold py-2 rounded-lg border border-primary hover:bg-emerald-50 transition">Nhắn tin</button>
-                                <a href="${pageContext.request.contextPath}/profile?userId=\${p.ownerId}" class="flex-1 bg-slate-100 text-slate-700 text-xs font-bold py-2 rounded-lg hover:bg-slate-200 text-center transition">Hồ sơ</a>
+                                <button onclick="openChatWithCompany(\${p.ownerId}, '\${ownerDisplayName}')" class="flex-1 bg-white text-primary text-xs font-bold py-2 rounded-lg border border-primary hover:bg-emerald-50 transition">\${JS_MSG.message}</button>
+                                <a href="${pageContext.request.contextPath}/profile?userId=\${p.ownerId}" class="flex-1 bg-slate-100 text-slate-700 text-xs font-bold py-2 rounded-lg hover:bg-slate-200 text-center transition">\${JS_MSG.profile}</a>
                             </div>
                         `;
                     }
@@ -1222,20 +1253,11 @@
     <div class="text-center p-4">
         \${popupHeader}
         <h3 class="font-bold text-slate-800 text-sm mb-1">\${p.name}</h3>
-        \${isCompany && ownerDisplayName ? '<p class="text-xs text-slate-500 mb-1">Doanh nghiệp: <span class="font-bold text-slate-700">' + ownerDisplayName + '</span></p>' : ''}
+        \${isCompany && ownerDisplayName ? '<p class="text-xs text-slate-500 mb-1">' + JS_MSG.enterprise + ': <span class="font-bold text-slate-700">' + ownerDisplayName + '</span></p>' : ''}
         <p class="text-xs text-slate-500 mb-3">📍 \${p.address}</p>
-        <a href="https://www.google.com/maps/search/?api=1&query=\${p.latitude},\${p.longitude}" target="_blank" class="block w-full bg-slate-50 text-slate-600 text-xs font-bold py-2 rounded-lg hover:bg-slate-100 border border-slate-200 transition">🗺️ Chỉ đường</a>
+        <a href="https://www.google.com/maps/search/?api=1&query=\${p.latitude},\${p.longitude}" target="_blank" class="block w-full bg-slate-50 text-slate-600 text-xs font-bold py-2 rounded-lg hover:bg-slate-100 border border-slate-200 transition">🗺️ \${JS_MSG.directions}</a>
         \${extraActions}
     </div>`;
-                    // const content = `
-                    //     <div class="text-center p-4">
-                    //         \${popupHeader}
-                    //         <h3 class="font-bold text-slate-800 text-sm mb-1">\${p.name}</h3>
-                    //         \${isCompany && ownerDisplayName ? `<p class="text-xs text-slate-500 mb-1">Doanh nghiệp: <span class="font-bold text-slate-700">\${ownerDisplayName}</span></p>` : ''}
-                    //         <p class="text-xs text-slate-500 mb-3">📍 \${p.address}</p>
-                    //         <a href="https://www.google.com/maps/search/?api=1&query=\${p.latitude},\${p.longitude}" target="_blank" class="block w-full bg-slate-50 text-slate-600 text-xs font-bold py-2 rounded-lg hover:bg-slate-100 border border-slate-200 transition">🗺️ Chỉ đường</a>
-                    //         \${extraActions}
-                    //     </div>`;
                     const marker = L.marker([p.latitude, p.longitude], {icon: icon}).addTo(map).bindPopup(content);
                     pointLayers.push(marker);
                 }
@@ -1272,10 +1294,10 @@
     function quickAction(type) {
         const input = document.getElementById('aiInput');
         if (type === 'guide') {
-            input.value = "Làm thế nào để tích điểm EcoPoints?";
+            input.value = "<fmt:message key='ai.query.points' />";
             sendAiQuestion();
         } else if (type === 'recycle') {
-            input.value = "Hướng dẫn cách tái chế: ";
+            input.value = "<fmt:message key='ai.query.recycle' />";
             input.focus();
         }
     }
@@ -1286,7 +1308,7 @@
         if(!question) return;
         appendAiMessage(question, 'user');
         input.value = '';
-        const loadingId = appendAiMessage("Đang suy nghĩ...", 'bot', true);
+        const loadingId = appendAiMessage("<fmt:message key='ai.thinking' />", 'bot', true);
         try {
             const formData = new URLSearchParams(); formData.append('question', question);
             const res = await fetch('${pageContext.request.contextPath}/api/ai-assistant', { method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'}, body: formData });
@@ -1322,7 +1344,7 @@
                 html += '</div>';
                 appendAiHtml(html);
             }
-        } catch (e) { document.getElementById(loadingId).innerText = "Lỗi kết nối server!"; }
+        } catch (e) { document.getElementById(loadingId).innerText = "<fmt:message key='ai.error' />"; }
     }
     function appendAiMessage(text, type, isTemp = false) {
         const chatBox = document.getElementById('aiChatBody');
@@ -1598,7 +1620,7 @@
 
     async function loadLeaderboard() {
         const listEl = document.getElementById('leaderboardList');
-        listEl.innerHTML = '<div class="text-center text-slate-500 py-4">Đang tải dữ liệu...</div>';
+        listEl.innerHTML = '<div class="text-center text-slate-500 py-4"><fmt:message key="leaderboard.loading" /></div>';
 
         try {
             const res = await fetch('${pageContext.request.contextPath}/api/leaderboard');
@@ -1606,7 +1628,7 @@
 
             listEl.innerHTML = '';
             if (users.length === 0) {
-                listEl.innerHTML = '<div class="text-center text-slate-500 py-4">Chưa có dữ liệu</div>';
+                listEl.innerHTML = '<div class="text-center text-slate-500 py-4"><fmt:message key="leaderboard.empty" /></div>';
                 return;
             }
 
@@ -1626,7 +1648,7 @@
                 }
 
                 // Check if this user is me
-                const isMe = (currentUserId && u.userId === currentUserId) ? ' <span class="text-slate-400 font-normal text-xs">(bạn)</span>' : '';
+                const isMe = (currentUserId && u.userId === currentUserId) ? ' <span class="text-slate-400 font-normal text-xs"><fmt:message key="leaderboard.you" /></span>' : '';
 
                 listEl.innerHTML += `
                     <div class="flex items-center gap-3 p-3 mb-2 rounded-xl \${rankClass} transition hover:scale-[1.02]">
@@ -1646,7 +1668,7 @@
                 `;
             });
         } catch (e) {
-            listEl.innerHTML = '<div class="text-center text-red-500 py-4">Lỗi tải bảng xếp hạng</div>';
+            listEl.innerHTML = '<div class="text-center text-red-500 py-4"><fmt:message key="leaderboard.error" /></div>';
         }
     }
 
@@ -1715,10 +1737,10 @@
         const listEl = document.getElementById('allItemsList');
         const loadingDiv = document.createElement('div');
         loadingDiv.className = 'text-center text-slate-500 py-4 text-xs loading-indicator';
-        loadingDiv.innerText = 'Đang tải thêm...';
+        loadingDiv.innerText = JS_MSG.loadingMore;
 
         if (currentPageItems === 1) {
-            listEl.innerHTML = '<div class="text-center text-slate-500 py-8">Đang tải vật phẩm...</div>';
+            listEl.innerHTML = `<div class="text-center text-slate-500 py-8">\${JS_MSG.loadingInitial}</div>`;
         } else {
             listEl.appendChild(loadingDiv);
         }
@@ -1744,7 +1766,9 @@
             if (currentPageItems === 1) {
                 listEl.innerHTML = ''; // Clear loading placeholder
                 if (totalItems !== undefined) {
-                    document.getElementById('itemsCount').innerText = `\${totalItems} items nearby`;
+                    // Format message with parameter
+                    const msg = totalItems === 0 ? JS_MSG.itemsCount0 : JS_MSG.itemsCount.replace('{0}', totalItems);
+                    // document.getElementById('itemsCount').innerText = msg; // Uncomment if you have this element
                 }
             } else {
                 const existingLoadingDiv = listEl.querySelector('.loading-indicator');
@@ -1756,10 +1780,7 @@
             }
 
             if (items.length === 0 && currentPageItems === 1) {
-                listEl.innerHTML = '<div class="text-center text-slate-500 py-8">Không có vật phẩm nào phù hợp.</div>';
-                if (totalItems !== undefined) {
-                    document.getElementById('itemsCount').innerText = `0 items nearby`;
-                }
+                listEl.innerHTML = `<div class="text-center text-slate-500 py-8">\${JS_MSG.emptyItems}</div>`;
                 return;
             }
 
@@ -1782,13 +1803,13 @@
                 let requestBtn = '';
                 if (currentUserId && item.giverId === currentUserId) {
                     // Owner: No request button
-                    requestBtn = '<span class="text-xs font-bold text-slate-400 px-4 py-2">Vật phẩm của bạn</span>';
+                    requestBtn = `<span class="text-xs font-bold text-slate-400 px-4 py-2">\${JS_MSG.itemOwner}</span>`;
                 } else {
                     // --- FIX: Simplify onclick handlers ---
                     requestBtn = `
                         <div class="flex gap-2">
-                            <button onclick="event.stopPropagation(); requestItem(\${item.itemId});" class="bg-primary text-white text-xs font-bold px-4 py-2 rounded-full hover:bg-primary-hover transition shadow-sm">Xin</button>
-                            <button onclick="event.stopPropagation(); openTradeProposal(\${item.itemId});" class="bg-white text-primary text-xs font-bold px-4 py-2 rounded-full border border-primary hover:bg-emerald-50 transition shadow-sm">Đổi 🔄</button>
+                            <button onclick="event.stopPropagation(); requestItem(\${item.itemId});" class="bg-primary text-white text-xs font-bold px-4 py-2 rounded-full hover:bg-primary-hover transition shadow-sm">\${JS_MSG.btnGet}</button>
+                            <button onclick="event.stopPropagation(); openTradeProposal(\${item.itemId});" class="bg-white text-primary text-xs font-bold px-4 py-2 rounded-full border border-primary hover:bg-emerald-50 transition shadow-sm">\${JS_MSG.btnTrade}</button>
                         </div>
                     `;
                 }
@@ -1878,7 +1899,7 @@
         const listEl = document.getElementById('allPointsList');
         const loadingDiv = document.createElement('div');
         loadingDiv.className = 'text-center text-slate-500 py-4 text-xs';
-        loadingDiv.innerText = 'Đang tải thêm...';
+        loadingDiv.innerText = JS_MSG.loadingMore;
         listEl.appendChild(loadingDiv);
 
         try {
@@ -1905,7 +1926,7 @@
             }
 
             if (points.length === 0 && currentPagePoints === 1) {
-                listEl.innerHTML = '<div class="text-center text-slate-500 py-8">Không có điểm tập kết nào phù hợp.</div>';
+                listEl.innerHTML = `<div class="text-center text-slate-500 py-8">\${JS_MSG.emptyPoints}</div>`;
                 return;
             }
 
@@ -1920,13 +1941,13 @@
                 if (isCompany) {
                     actionHtml = `
                         <div class="flex gap-2 w-full justify-end">
-                            <button onclick="openChatWithCompany(\${p.ownerId}, '\${ownerDisplayName}')" class="bg-white text-primary text-xs font-bold px-4 py-2 rounded-full border border-primary hover:bg-emerald-50 transition shadow-sm">Nhắn tin</button>
-                            <a href="${pageContext.request.contextPath}/profile?userId=\${p.ownerId}" class="bg-slate-100 text-slate-700 text-xs font-bold px-4 py-2 rounded-full hover:bg-slate-200 transition shadow-sm">Hồ sơ</a>
-                            <button onclick="flyToLocation(\${p.latitude}, \${p.longitude}, '\${p.name}'); document.getElementById('allPointsModal').classList.add('hidden');" class="bg-primary text-white text-xs font-bold px-4 py-2 rounded-full hover:bg-primary-hover transition shadow-sm">Xem vị trí</button>
+                            <button onclick="openChatWithCompany(\${p.ownerId}, '\${ownerDisplayName}')" class="bg-white text-primary text-xs font-bold px-4 py-2 rounded-full border border-primary hover:bg-emerald-50 transition shadow-sm">\${JS_MSG.message}</button>
+                            <a href="${pageContext.request.contextPath}/profile?userId=\${p.ownerId}" class="bg-slate-100 text-slate-700 text-xs font-bold px-4 py-2 rounded-full hover:bg-slate-200 transition shadow-sm">\${JS_MSG.profile}</a>
+                            <button onclick="flyToLocation(\${p.latitude}, \${p.longitude}, '\${p.name}'); document.getElementById('allPointsModal').classList.add('hidden');" class="bg-primary text-white text-xs font-bold px-4 py-2 rounded-full hover:bg-primary-hover transition shadow-sm">\${JS_MSG.btnViewLocation}</button>
                         </div>
                     `;
                 } else {
-                    actionHtml = `<button onclick="flyToLocation(\${p.latitude}, \${p.longitude}, '\${p.name}'); document.getElementById('allPointsModal').classList.add('hidden');" class="text-primary text-xs font-bold hover:underline">Xem chi tiết</button>`;
+                    actionHtml = `<button onclick="flyToLocation(\${p.latitude}, \${p.longitude}, '\${p.name}'); document.getElementById('allPointsModal').classList.add('hidden');" class="text-primary text-xs font-bold hover:underline">\${JS_MSG.viewDetail}</button>`;
                 }
 
                 // Tags
@@ -1953,7 +1974,7 @@
         </div>
 
         <!-- Row 2 -->
-        \${isCompany && ownerDisplayName ? '<p class="text-xs text-slate-500 mt-1">Doanh nghiệp: <span class="font-bold text-slate-700">' + ownerDisplayName + '</span></p>' : ''}
+        \${isCompany && ownerDisplayName ? '<p class="text-xs text-slate-500 mt-1">' + JS_MSG.enterprise + ': <span class="font-bold text-slate-700">' + ownerDisplayName + '</span></p>' : ''}
         <p class="text-slate-500 text-sm mt-2">\${p.address}</p>
 
         <!-- Row 3: Tags -->
@@ -1967,29 +1988,6 @@
         </div>
     </div>
 `;
-                // const pointHtml = `
-                //     <div class="bg-white rounded-xl p-3 md:p-4 shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
-                //         <!-- Row 1 -->
-                //         <div class="flex justify-between items-start">
-                //             <h4 class="font-bold text-base md:text-lg text-slate-800">\${p.name}</h4>
-                //             <span class="bg-emerald-50 text-emerald-700 rounded-lg px-2 py-1 text-xs font-bold whitespace-nowrap">\${distStr}</span>
-                //         </div>
-                //
-                //         <!-- Row 2 -->
-                //         \${isCompany && ownerDisplayName ? `<p class="text-xs text-slate-500 mt-1">Doanh nghiệp: <span class="font-bold text-slate-700">\${ownerDisplayName}</span></p>` : ''}
-                //         <p class="text-slate-500 text-sm mt-2">\${p.address}</p>
-                //
-                //         <!-- Row 3: Tags -->
-                //         <div class="flex flex-wrap gap-2 mt-3">
-                //              \${tagsHtml}
-                //         </div>
-                //
-                //         <!-- Row 4: Footer -->
-                //         <div class="border-t border-slate-50 pt-3 mt-3 flex justify-end items-center">
-                //             \${actionHtml}
-                //         </div>
-                //     </div>
-                // `;
                 listEl.insertAdjacentHTML('beforeend', pointHtml);
             });
 
