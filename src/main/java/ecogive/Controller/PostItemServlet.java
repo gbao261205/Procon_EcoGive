@@ -15,6 +15,7 @@ import jakarta.servlet.http.*;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 
@@ -68,14 +69,18 @@ public class PostItemServlet extends HttpServlet {
             }
             // -------------------------------------
             
-            // --- SỬA ĐỔI: Tính điểm dựa trên công thức ---
-            // EcoPoint = [ Điểm Danh Mục * Mức % Tình Trạng ]
+            // --- SỬA ĐỔI: Tính điểm dựa trên công thức (Có làm tròn) ---
+            // EcoPoint = [ Điểm Danh Mục * (Condition / 100) ]
+            // Lưu ý: Điểm này là điểm chuẩn. Nếu sau này giao dịch là TRADE, hệ thống sẽ tính lại 50% khi hoàn tất.
             BigDecimal ecoPoints = BigDecimal.ZERO;
             Category category = categoryDAO.findById(categoryId);
             if (category != null) {
                 BigDecimal basePoints = category.getFixedPoints();
-                BigDecimal conditionFactor = new BigDecimal(condition).divide(new BigDecimal(100));
-                ecoPoints = basePoints.multiply(conditionFactor);
+                // Chia lấy 2 số thập phân, làm tròn lên
+                BigDecimal conditionFactor = new BigDecimal(condition).divide(new BigDecimal(100), 2, RoundingMode.HALF_UP);
+                
+                // Nhân và set scale kết quả cuối cùng
+                ecoPoints = basePoints.multiply(conditionFactor).setScale(2, RoundingMode.HALF_UP);
             }
             // -------------------------------
 

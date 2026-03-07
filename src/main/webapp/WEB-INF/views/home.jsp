@@ -441,47 +441,49 @@
         </button>
         <h2 class="text-xl md:text-2xl font-bold mb-6 text-slate-800 flex items-center gap-2">
             <span class="material-symbols-outlined text-primary">volunteer_activism</span>
-            Đăng tin Tặng đồ
+            <fmt:message key="post.title" />
         </h2>
 
         <!-- Step 1 -->
         <div id="step1" class="modal-step space-y-4">
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Tên vật phẩm</label>
-                <input type="text" id="itemName" placeholder="VD: Sách giáo khoa cũ..." class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary outline-none transition" required />
+                <label class="block text-sm font-medium text-slate-700 mb-1"><fmt:message key="post.item_name" /></label>
+                <fmt:message key="post.item_name_placeholder" var="itemNamePlaceholder" />
+                <input type="text" id="itemName" placeholder="${itemNamePlaceholder}" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary outline-none transition" required />
             </div>
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Danh mục</label>
+                <label class="block text-sm font-medium text-slate-700 mb-1"><fmt:message key="post.category" /></label>
                 <select id="itemCategory" class="w-full p-3 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-primary outline-none transition" required onchange="updateEcoPoints()">
-                    <option value="" disabled selected>-- Chọn danh mục --</option>
+                    <option value="" disabled selected><fmt:message key="post.category_select" /></option>
                 </select>
             </div>
 
             <!-- MỚI: Dropdown Tình trạng -->
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Tình trạng</label>
+                <label class="block text-sm font-medium text-slate-700 mb-1"><fmt:message key="post.condition" /></label>
                 <select id="itemCondition" class="w-full p-3 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-primary outline-none transition" required onchange="updateEcoPoints()">
-                    <option value="100">Mới 100% (Nguyên seal)</option>
-                    <option value="90">Như mới (90-99%)</option>
-                    <option value="80">Tốt (80-89%)</option>
-                    <option value="70">Khá (70-79%)</option>
-                    <option value="50">Trung bình (50-69%)</option>
-                    <option value="30">Cũ (< 50%)</option>
+                    <option value="100"><fmt:message key="post.condition.100" /></option>
+                    <option value="90"><fmt:message key="post.condition.90" /></option>
+                    <option value="80"><fmt:message key="post.condition.80" /></option>
+                    <option value="70"><fmt:message key="post.condition.70" /></option>
+                    <option value="50"><fmt:message key="post.condition.50" /></option>
+                    <option value="30"><fmt:message key="post.condition.30" /></option>
                 </select>
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Điểm thưởng (EcoPoints)</label>
+                <label class="block text-sm font-medium text-slate-700 mb-1"><fmt:message key="post.eco_points" /></label>
                 <div class="relative">
                     <input type="number" id="itemEcoPoints" class="w-full p-3 border border-slate-200 rounded-xl bg-slate-50 text-slate-600 font-bold cursor-not-allowed" readonly />
                     <span class="absolute right-4 top-3.5 text-primary font-bold flex items-center gap-1"><span class="material-symbols-outlined text-sm">eco</span></span>
                 </div>
             </div>
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Mô tả chi tiết</label>
-                <textarea id="itemDescription" placeholder="Tình trạng, kích thước, lưu ý..." rows="3" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary outline-none transition resize-none" required></textarea>
+                <label class="block text-sm font-medium text-slate-700 mb-1"><fmt:message key="post.description" /></label>
+                <fmt:message key="post.description_placeholder" var="descPlaceholder" />
+                <textarea id="itemDescription" placeholder="${descPlaceholder}" rows="3" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary outline-none transition resize-none" required></textarea>
             </div>
-            <button onclick="nextStep(2)" class="w-full bg-primary text-white p-3 rounded-xl font-bold hover:bg-primary-hover transition shadow-md mt-2">Tiếp tục</button>
+            <button onclick="nextStep(2)" class="w-full bg-primary text-white p-3 rounded-xl font-bold hover:bg-primary-hover transition shadow-md mt-2"><fmt:message key="post.continue" /></button>
         </div>
 
         <!-- Step 2 -->
@@ -490,19 +492,20 @@
                 <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-2">
                     <span class="material-symbols-outlined text-slate-400 text-3xl">add_a_photo</span>
                 </div>
-                <p class="text-sm text-slate-500">Chụp ảnh vật phẩm rõ nét để người nhận dễ hình dung</p>
+                <p class="text-sm text-slate-500"><fmt:message key="post.photo_hint" /></p>
             </div>
             <input type="file" id="itemPhoto" accept="image/*" class="w-full p-3 border border-slate-200 rounded-xl file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-primary hover:file:bg-emerald-100 transition" required />
-            <button onclick="nextStep(3)" class="w-full bg-primary text-white p-3 rounded-xl font-bold hover:bg-primary-hover transition shadow-md mt-4">Tiếp tục</button>
+            <button onclick="nextStep(3)" class="w-full bg-primary text-white p-3 rounded-xl font-bold hover:bg-primary-hover transition shadow-md mt-4"><fmt:message key="post.continue" /></button>
         </div>
 
         <!-- Step 3 -->
         <div id="step3" class="modal-step hidden space-y-4">
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Địa chỉ lấy đồ</label>
+                <label class="block text-sm font-medium text-slate-700 mb-1"><fmt:message key="post.address" /></label>
                 <div class="flex gap-2 relative">
                     <div class="flex-1 relative">
-                        <input type="text" id="itemAddress" placeholder="Nhập địa chỉ (VD: 123 Lê Lợi...)" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary outline-none" autocomplete="off" />
+                        <fmt:message key="post.address_placeholder" var="addressPlaceholder" />
+                        <input type="text" id="itemAddress" placeholder="${addressPlaceholder}" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary outline-none" autocomplete="off" />
                         <ul id="suggestionList" class="absolute left-0 right-0 top-full bg-white border border-slate-200 rounded-xl shadow-lg z-[9999] max-h-60 overflow-y-auto hidden mt-1"></ul>
                     </div>
                     <button onclick="searchAddress('itemAddress', 'miniMap', 'locationMarker')" class="bg-blue-600 text-white px-4 rounded-xl font-bold hover:bg-blue-700 transition">
@@ -513,7 +516,7 @@
             <div class="rounded-xl overflow-hidden border border-slate-200">
                 <div id="miniMap" class="h-56 w-full"></div>
             </div>
-            <button onclick="submitItem()" class="w-full bg-primary text-white p-3 rounded-xl font-bold hover:bg-primary-hover transition shadow-lg mt-2">Đăng tin ngay</button>
+            <button onclick="submitItem()" class="w-full bg-primary text-white p-3 rounded-xl font-bold hover:bg-primary-hover transition shadow-lg mt-2"><fmt:message key="post.submit" /></button>
         </div>
     </div>
 </div>
@@ -524,14 +527,15 @@
         <button onclick="document.getElementById('addPointModal').classList.add('hidden')" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 transition">
             <span class="material-symbols-outlined">close</span>
         </button>
-        <h2 id="addPointModalTitle" class="text-2xl font-bold mb-6 text-primary text-center">Thêm Điểm Tập Kết</h2>
+        <h2 id="addPointModalTitle" class="text-2xl font-bold mb-6 text-primary text-center"><fmt:message key="add_point.title" /></h2>
         <div class="space-y-4">
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Tên điểm</label>
-                <input type="text" id="pointName" placeholder="VD: Trạm Pin Q1" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary outline-none" required />
+                <label class="block text-sm font-medium text-slate-700 mb-1"><fmt:message key="add_point.name" /></label>
+                <fmt:message key="add_point.name_placeholder" var="pointNamePlaceholder" />
+                <input type="text" id="pointName" placeholder="${pointNamePlaceholder}" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary outline-none" required />
             </div>
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Loại hình</label>
+                <label class="block text-sm font-medium text-slate-700 mb-1"><fmt:message key="add_point.type" /></label>
                 <select id="pointType" class="w-full p-3 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-primary outline-none">
                     <c:forEach var="t" items="${pointTypes}">
                         <option value="${t.typeCode}">${t.icon} ${t.displayName}</option>
@@ -539,10 +543,11 @@
                 </select>
             </div>
             <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Địa chỉ</label>
+                <label class="block text-sm font-medium text-slate-700 mb-1"><fmt:message key="add_point.address" /></label>
                 <div class="flex gap-2 relative">
                     <div class="flex-1 relative">
-                        <input type="text" id="pointAddress" placeholder="Nhập địa chỉ..." class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary outline-none" autocomplete="off" />
+                        <fmt:message key="add_point.address_placeholder" var="pointAddressPlaceholder" />
+                        <input type="text" id="pointAddress" placeholder="${pointAddressPlaceholder}" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary outline-none" autocomplete="off" />
                         <ul id="pointSuggestionList" class="absolute left-0 right-0 top-full bg-white border border-slate-200 rounded-xl shadow-lg z-[9999] max-h-60 overflow-y-auto hidden mt-1"></ul>
                     </div>
                     <button onclick="searchAddress('pointAddress', 'pointMiniMap', 'pointMarker')" class="bg-blue-600 text-white px-4 rounded-xl font-bold hover:bg-blue-700 transition">
@@ -551,12 +556,12 @@
                 </div>
             </div>
             <div>
-                <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Vị trí (Kéo để chỉnh)</label>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-2"><fmt:message key="add_point.location_hint" /></label>
                 <div class="rounded-xl overflow-hidden border border-slate-200">
                     <div id="pointMiniMap" class="h-48 w-full z-0"></div>
                 </div>
             </div>
-            <button onclick="submitCollectionPoint()" class="w-full bg-primary text-white p-3 rounded-xl font-bold hover:bg-primary-hover transition shadow-md mt-2">Xác nhận Thêm</button>
+            <button onclick="submitCollectionPoint()" class="w-full bg-primary text-white p-3 rounded-xl font-bold hover:bg-primary-hover transition shadow-md mt-2"><fmt:message key="add_point.submit" /></button>
         </div>
     </div>
 </div>
@@ -713,10 +718,10 @@
 
         <!-- Quick Actions -->
         <div class="grid grid-cols-1 gap-2 mt-2 px-2">
-            <button onclick="quickAction('guide')" class="text-left text-xs bg-white hover:bg-blue-50 text-blue-600 py-2.5 px-3 rounded-xl border border-blue-100 shadow-sm transition flex items-center gap-2">
+            <button onclick="quickAction('guide', '<fmt:message key="ai.query.points" />')" class="text-left text-xs bg-white hover:bg-blue-50 text-blue-600 py-2.5 px-3 rounded-xl border border-blue-100 shadow-sm transition flex items-center gap-2">
                 <span class="material-symbols-outlined text-sm">help</span> <fmt:message key="ai.quick.points" />
             </button>
-            <button onclick="quickAction('recycle')" class="text-left text-xs bg-white hover:bg-green-50 text-green-600 py-2.5 px-3 rounded-xl border border-green-100 shadow-sm transition flex items-center gap-2">
+            <button onclick="quickAction('recycle', '<fmt:message key="ai.query.recycle" />')" class="text-left text-xs bg-white hover:bg-green-50 text-green-600 py-2.5 px-3 rounded-xl border border-green-100 shadow-sm transition flex items-center gap-2">
                 <span class="material-symbols-outlined text-sm">recycling</span> <fmt:message key="ai.quick.recycle" />
             </button>
         </div>
@@ -844,7 +849,15 @@
         btnTrade: "<fmt:message key='list.btn.trade' />",
         btnViewLocation: "<fmt:message key='list.btn.view_location' />",
         itemsCount: "<fmt:message key='list.items_count' />",
-        itemsCount0: "<fmt:message key='list.items_count_0' />"
+        itemsCount0: "<fmt:message key='list.items_count_0' />",
+
+        // Add Point
+        addPointTitle: "<fmt:message key='add_point.title' />",
+        addPointTitleCompany: "<fmt:message key='add_point.title_company' />",
+        addPointConfirm: "<fmt:message key='add_point.confirm' />",
+        addPointSuccess: "<fmt:message key='add_point.success' />",
+        addPointError: "<fmt:message key='add_point.error' />",
+        addPointErrorInput: "<fmt:message key='add_point.error_input' />"
     };
 
     // Global Maps for Display
@@ -1291,14 +1304,28 @@
     function toggleAiModal() { const modal = document.getElementById('aiModal'); modal.classList.toggle('hidden'); if(!modal.classList.contains('hidden')) { document.getElementById('aiInput').focus(); } }
     document.getElementById('aiInput').addEventListener('keypress', function(e) { if(e.key === 'Enter') sendAiQuestion(); });
 
-    function quickAction(type) {
+    // --- SỬA ĐỔI: Hàm quickAction nhận CODE và PAYLOAD ---
+    function quickAction(code, payload) {
         const input = document.getElementById('aiInput');
-        if (type === 'guide') {
-            input.value = "<fmt:message key='ai.query.points' />";
-            sendAiQuestion();
-        } else if (type === 'recycle') {
-            input.value = "<fmt:message key='ai.query.recycle' />";
+
+        // Nếu có payload (câu lệnh thực tế), dùng nó. Nếu không, fallback về logic cũ (không khuyến khích)
+        if (payload) {
+            input.value = payload;
+        } else {
+            // Fallback logic (chỉ dùng khi payload null - không nên xảy ra với code mới)
+            if (code === 'name') input.value = "tìm sản phẩm tên:";
+            else if (code === 'category') input.value = "tìm sản phẩm thuộc danh mục:";
+            else if (code === 'point') input.value = "tìm điểm thu gom";
+            else if (code === 'guide') input.value = "cách tích điểm";
+            else if (code === 'recycle') input.value = "hướng dẫn cách tái chế:";
+        }
+
+        if (code === 'name' || code === 'category' || code === 'recycle') {
+            // Những loại này cần người dùng nhập thêm thông tin -> Focus
             input.focus();
+        } else {
+            // Những loại này là câu hỏi trọn vẹn -> Gửi luôn
+            sendAiQuestion();
         }
     }
 
@@ -1310,31 +1337,44 @@
         input.value = '';
         const loadingId = appendAiMessage("<fmt:message key='ai.thinking' />", 'bot', true);
         try {
-            const formData = new URLSearchParams(); formData.append('question', question);
+            const formData = new URLSearchParams();
+            formData.append('question', question);
+            // Gửi kèm ngôn ngữ hiện tại
+            formData.append('lang', '${sessionScope.lang}');
+
             const res = await fetch('${pageContext.request.contextPath}/api/ai-assistant', { method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'}, body: formData });
             const data = await res.json();
             document.getElementById(loadingId).remove();
             appendAiMessage(data.answer, 'bot');
 
+            // --- SỬA ĐỔI: Xử lý Quick Replies dạng Object {text, code, payload} ---
             if (data.quickReplies && data.quickReplies.length > 0) {
                 let html = '<div class="grid grid-cols-1 gap-2 mt-2 px-2">';
 
-                data.quickReplies.forEach(text => {
-                    let actionType = '';
-                    if (text.includes("tên")) actionType = 'name';
-                    else if (text.includes("danh mục")) actionType = 'category';
-                    else if (text.includes("điểm thu gom")) actionType = 'point';
-                    else if (text.includes("tích điểm")) actionType = 'guide';
-                    else if (text.includes("tái chế")) actionType = 'recycle';
+                data.quickReplies.forEach(qr => {
+                    let text, code, payload;
+                    if (typeof qr === 'string') {
+                        // Fallback cho dữ liệu cũ (nếu có)
+                        text = qr;
+                        code = 'unknown';
+                        payload = qr;
+                    } else {
+                        text = qr.text;
+                        code = qr.code;
+                        payload = qr.payload;
+                    }
 
-                    if (actionType) {
-                        html += `<button onclick="quickAction('\${actionType}')" class="text-left text-xs bg-white hover:bg-blue-50 text-blue-600 py-2 px-3 rounded-xl border border-blue-100 shadow-sm transition">\${text}</button>`;
+                    if (code) {
+                        // Escape payload để tránh lỗi cú pháp JS
+                        const safePayload = payload ? payload.replace(/'/g, "\\'") : "";
+                        html += `<button onclick="quickAction('\${code}', '\${safePayload}')" class="text-left text-xs bg-white hover:bg-blue-50 text-blue-600 py-2 px-3 rounded-xl border border-blue-100 shadow-sm transition">\${text}</button>`;
                     }
                 });
 
                 html += '</div>';
                 appendAiHtml(html);
             }
+            // -----------------------------------------------------------
 
             if (data.suggestions && data.suggestions.length > 0) {
                 let html = '<div class="flex flex-col gap-2 mt-2">';
@@ -1375,9 +1415,9 @@
 
             // --- MỚI: Đổi tiêu đề modal nếu là COMPANY ---
             if (currentUserRole === 'COLLECTOR_COMPANY') {
-                document.getElementById('addPointModalTitle').innerText = "Thêm Điểm Thu Gom Doanh Nghiệp";
+                document.getElementById('addPointModalTitle').innerText = JS_MSG.addPointTitleCompany;
             } else {
-                document.getElementById('addPointModalTitle').innerText = "Thêm Điểm Tập Kết";
+                document.getElementById('addPointModalTitle').innerText = JS_MSG.addPointTitle;
             }
             // ---------------------------------------------
 
@@ -1400,8 +1440,8 @@
         const name = document.getElementById('pointName').value;
         const type = document.getElementById('pointType').value;
         const address = document.getElementById('pointAddress').value;
-        if (!name || !address) { alert("Vui lòng nhập đủ thông tin!"); return; }
-        if (!confirm("Xác nhận tạo điểm tập kết này?")) return;
+        if (!name || !address) { alert(JS_MSG.addPointErrorInput); return; }
+        if (!confirm(JS_MSG.addPointConfirm)) return;
         const formData = new URLSearchParams();
         formData.append("name", name); formData.append("type", type);
         formData.append("address", address);
@@ -1412,11 +1452,11 @@
             });
             const data = await res.json();
             if (data.status === 'success') {
-                alert("✅ " + data.message);
+                alert("✅ " + (data.message || JS_MSG.addPointSuccess));
                 document.getElementById('addPointModal').classList.add('hidden');
                 loadCollectionPoints();
-            } else { alert("❌ Lỗi: " + data.message); }
-        } catch (e) { alert("❌ Lỗi kết nối server"); }
+            } else { alert("❌ " + (data.message || JS_MSG.addPointError)); }
+        } catch (e) { alert("❌ " + JS_MSG.addPointError); }
     }
 
     // --- ĐĂNG TIN ---
@@ -1438,8 +1478,15 @@
     function updateEcoPoints() {
         const select = document.getElementById('itemCategory');
         const selectedOption = select.options[select.selectedIndex];
-        const points = selectedOption.getAttribute('data-points');
-        document.getElementById('itemEcoPoints').value = points ? points : '';
+        const basePoints = parseFloat(selectedOption.getAttribute('data-points')) || 0;
+
+        const conditionSelect = document.getElementById('itemCondition');
+        const condition = parseInt(conditionSelect.value) || 100;
+
+        // Công thức: Base * (Condition/100)
+        const points = basePoints * (condition / 100);
+
+        document.getElementById('itemEcoPoints').value = points.toFixed(2);
     }
 
     async function loadCategories() {
