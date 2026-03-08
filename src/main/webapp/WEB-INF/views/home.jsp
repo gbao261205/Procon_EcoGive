@@ -114,10 +114,10 @@
 
         <!-- Language Switcher -->
         <div class="flex items-center gap-2 mr-2">
-            <a href="${pageContext.request.contextPath}/language?lang=en" class="w-6 h-6 md:w-8 md:h-8 rounded-full overflow-hidden border-2 ${sessionScope.lang == 'en' || sessionScope.lang == null ? 'border-primary' : 'border-transparent'} hover:scale-110 transition-transform" title="English">
+            <a href="${pageContext.request.contextPath}/language?lang=en" class="hidden w-6 h-6 md:w-8 md:h-8 rounded-full overflow-hidden border-2 ${sessionScope.lang == 'en' || sessionScope.lang == null ? 'border-primary' : 'border-transparent'} hover:scale-110 transition-transform" title="English">
                 <img src="https://flagcdn.com/w40/gb.png" class="w-full h-full object-cover">
             </a>
-            <a href="${pageContext.request.contextPath}/language?lang=vi" class="w-6 h-6 md:w-8 md:h-8 rounded-full overflow-hidden border-2 ${sessionScope.lang == 'vi' ? 'border-primary' : 'border-transparent'} hover:scale-110 transition-transform" title="Tiếng Việt">
+            <a href="${pageContext.request.contextPath}/language?lang=vi" class="hidden w-6 h-6 md:w-8 md:h-8 rounded-full overflow-hidden border-2 ${sessionScope.lang == 'vi' ? 'border-primary' : 'border-transparent'} hover:scale-110 transition-transform" title="Tiếng Việt">
                 <img src="https://flagcdn.com/w40/vn.png" class="w-full h-full object-cover">
             </a>
         </div>

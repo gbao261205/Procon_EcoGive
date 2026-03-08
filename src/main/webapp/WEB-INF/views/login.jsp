@@ -225,7 +225,7 @@
     </div>
 
     <!-- LANGUAGE SWITCHER -->
-    <div class="absolute top-6 right-20 z-50 flex gap-2">
+    <div class="hidden absolute top-6 right-20 z-50 flex gap-2">
         <a href="${pageContext.request.contextPath}/language?lang=vi" class="w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform ${sessionScope.lang == 'vi' ? 'ring-2 ring-primary' : ''}">
             <img src="https://flagcdn.com/w40/vn.png" alt="Tiếng Việt" class="w-6 h-4 object-cover rounded-sm">
         </a>
